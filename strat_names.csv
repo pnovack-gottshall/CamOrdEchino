@@ -1,0 +1,1120 @@
+"interval_no","record_type","scale_no","scale_level","interval_name","abbrev","parent_no","color","max_ma","min_ma","reference_no"
+555,"int",NA,NA,"Porterfieldian","",NA,"",0,0,8960
+32,"int",1,4,"Holocene","",12,"#FEF2E0",0.0117,0,47900
+3002,"int",1,5,"Holocene","",32,"#FEF2E0",0.0117,0,47900
+1088,"int",NA,NA,"Tarantian","",NA,"",0.126,0.012,42499
+922,"int",1,5,"Late Pleistocene","",33,"#FFF2D3",0.126,0.0117,15443
+237,"int",NA,NA,"Rancholabrean","",NA,"",0.3,0.012,5959
+239,"int",NA,NA,"Sheridanian","",NA,"",0.3,0.012,5959
+943,"int",NA,NA,"Haweran","",NA,"",0.34,0,18155
+718,"int",NA,NA,"Lujanian","",NA,"",0.781,0.012,9569
+1089,"int",NA,NA,"Ionian","",NA,"",0.781,0.126,42499
+923,"int",1,5,"Middle Pleistocene","",33,"#FFF2C7",0.781,0.126,15443
+719,"int",NA,NA,"Ensenadan","",NA,"",1.2,0.781,9569
+944,"int",NA,NA,"Castlecliffian","",NA,"",1.63,0.34,18155
+241,"int",NA,NA,"Sappan","",NA,"",1.8,0.3,5959
+238,"int",NA,NA,"Irvingtonian","",NA,"",1.8,0.3,5959
+240,"int",NA,NA,"Cudahyan","",NA,"",1.8,0.3,5959
+740,"int",1,5,"Calabrian","",33,"#FFF2BA",1.806,0.781,47900
+945,"int",NA,NA,"Nukumaruan","",NA,"",2.4,1.63,18155
+924,"int",NA,NA,"Early Pleistocene","",NA,"",2.588,0.781,15443
+295,"int",NA,NA,"MN 17","",NA,"",2.588,1.806,8851
+1038,"int",NA,NA,"Nihewanian","",NA,"",2.588,0.012,23736
+12,"int",1,3,"Quaternary","",1,"#F9F97F",2.588,0,47900
+33,"int",1,4,"Pleistocene","",12,"#FFF2AE",2.588,0.0117,47900
+741,"int",1,5,"Gelasian","",33,"#FFEDB3",2.588,1.806,47900
+720,"int",NA,NA,"Uquian","",NA,"",3,1.2,9569
+946,"int",NA,NA,"Mangapanian","",NA,"",3,2.4,18155
+288,"int",NA,NA,"Villanyian","",NA,"",3.2,2.588,8851
+296,"int",NA,NA,"MN 16","",NA,"",3.2,2.588,8851
+81,"int",NA,NA,"Late Pliocene","",NA,"",3.6,2.588,5954
+947,"int",NA,NA,"Waipipian","",NA,"",3.6,3,18155
+96,"int",1,5,"Piacenzian","",34,"#FFFFBF",3.6,2.588,47900
+721,"int",NA,NA,"Chapadmalalan","",NA,"",4,3,9569
+297,"int",NA,NA,"MN 15","",NA,"",4.2,3.2,8851
+1039,"int",NA,NA,"Yushean","",NA,"",4.9,2.588,23736
+219,"int",NA,NA,"Blancan","",NA,"",4.9,1.8,5954
+242,"int",NA,NA,"""Senecan""","",NA,"",4.9,1.8,5959
+298,"int",NA,NA,"MN 14","",NA,"",4.9,4.2,8851
+243,"int",NA,NA,"Rexroadian","",NA,"",4.9,1.8,5959
+289,"int",NA,NA,"Ruscinian","",NA,"",5.333,3.2,8851
+925,"int",NA,NA,"Wanganui","",NA,"",5.333,0,18155
+948,"int",NA,NA,"Opoitian","",NA,"",5.333,3.6,18155
+82,"int",NA,NA,"Early Pliocene","",NA,"",5.333,3.6,5954
+34,"int",1,4,"Pliocene","",25,"#FFFF99",5.333,2.588,47900
+97,"int",1,5,"Zanclean","",34,"#FFFFB3",5.333,3.6,47900
+949,"int",NA,NA,"Kapitean","",NA,"",6.5,5.333,18155
+722,"int",NA,NA,"Montehermosan","",NA,"",6.8,4,9569
+299,"int",NA,NA,"MN 13","",NA,"",7.246,4.9,8851
+98,"int",1,5,"Messinian","",35,"#FFFF73",7.246,5.333,47900
+300,"int",NA,NA,"MN 12","",NA,"",7.75,7.246,8851
+301,"int",NA,NA,"MN 11","",NA,"",8.7,7.75,8851
+290,"int",NA,NA,"Turolian","",NA,"",8.7,5.333,8851
+723,"int",NA,NA,"Huayquerian","",NA,"",9,6.8,9569
+302,"int",NA,NA,"MN 10","",NA,"",9.7,8.7,8851
+724,"int",NA,NA,"Chasicoan","",NA,"",10,9,9569
+246,"int",NA,NA,"early Early Hemphillian","",NA,"",10.3,4.9,5959
+220,"int",NA,NA,"Hemphillian","",NA,"",10.3,4.9,5954
+244,"int",NA,NA,"Late Hemphillian","",NA,"",10.3,4.9,5959
+245,"int",NA,NA,"late Early Hemphillian","",NA,"",10.3,4.9,5959
+926,"int",NA,NA,"Taranaki","",NA,"",10.92,5.333,18155
+1040,"int",NA,NA,"Baodean","",NA,"",11.1,4.9,23736
+303,"int",NA,NA,"MN 9","",NA,"",11.1,9.7,8851
+1044,"int",NA,NA,"Pannonian","",NA,"",11.608,7.246,23788
+950,"int",NA,NA,"Tongaporutuan","",NA,"",11.608,6.5,18155
+83,"int",NA,NA,"Late Miocene","",NA,"",11.608,5.333,5954
+291,"int",NA,NA,"Vallesian","",NA,"",11.608,8.7,8851
+99,"int",1,5,"Tortonian","",35,"#FFFF66",11.62,7.246,47900
+725,"int",NA,NA,"Mayoan","",NA,"",11.8,10,9569
+1045,"int",NA,NA,"Sarmatian","",NA,"",12.7,11.608,23788
+951,"int",NA,NA,"Waiauan","",NA,"",12.7,11.608,18155
+304,"int",NA,NA,"MN 7 + 8","",NA,"",12.75,11.1,8851
+248,"int",NA,NA,"Early Clarendonian","",NA,"",13.6,10.3,5959
+221,"int",NA,NA,"Clarendonian","",NA,"",13.6,10.3,5954
+247,"int",NA,NA,"Late Clarendonian","",NA,"",13.6,10.3,5959
+1041,"int",NA,NA,"Tunggurian","",NA,"",13.65,11.1,23736
+1046,"int",NA,NA,"Badenian","",NA,"",13.65,12.7,23788
+952,"int",NA,NA,"Lillburnian","",NA,"",13.65,12.7,18155
+305,"int",NA,NA,"MN 6","",NA,"",13.65,12.75,8851
+726,"int",NA,NA,"Laventan","",NA,"",13.8,11.8,9569
+100,"int",1,5,"Serravallian","",35,"#FFFF59",13.82,11.62,47900
+727,"int",NA,NA,"Colloncuran","",NA,"",15.5,13.8,9569
+953,"int",NA,NA,"Clifdenian","",NA,"",15.9,13.65,18155
+927,"int",NA,NA,"Southland","",NA,"",15.9,10.92,18155
+292,"int",NA,NA,"Astaracian","",NA,"",15.97,11.608,8851
+306,"int",NA,NA,"MN 5","",NA,"",15.97,13.65,8851
+249,"int",NA,NA,"late Late Barstovian","",NA,"",15.97,13.6,5959
+84,"int",NA,NA,"Middle Miocene","",NA,"",15.97,11.608,5954
+250,"int",NA,NA,"early Late Barstovian","",NA,"",15.97,13.6,5959
+251,"int",NA,NA,"Early Barstovian","",NA,"",15.97,13.6,5959
+222,"int",NA,NA,"Barstovian","",NA,"",15.97,13.6,5954
+101,"int",1,5,"Langhian","",35,"#FFFF4D",15.97,13.82,47900
+728,"int",NA,NA,"Friasian","",NA,"",16.3,15.5,9569
+307,"int",NA,NA,"MN 4","",NA,"",16.9,15.97,8851
+1042,"int",NA,NA,"Shanwangian","",NA,"",16.9,13.65,23736
+729,"int",NA,NA,"Santacrucian","",NA,"",17.5,16.3,9569
+954,"int",NA,NA,"Altonian","",NA,"",19,15.9,18155
+293,"int",NA,NA,"Orleanian","",NA,"",20,15.97,8851
+308,"int",NA,NA,"MN 3","",NA,"",20,16.9,8851
+223,"int",NA,NA,"Hemingfordian","",NA,"",20.43,15.97,5954
+252,"int",NA,NA,"Late Hemingfordian","",NA,"",20.43,15.97,5959
+253,"int",NA,NA,"Early Hemingfordian","",NA,"",20.43,15.97,5959
+102,"int",1,5,"Burdigalian","",35,"#FFFF41",20.44,15.97,47900
+730,"int",NA,NA,"Colhuehuapian","",NA,"",21,17.5,9569
+955,"int",NA,NA,"Otaian","",NA,"",21.7,19,18155
+928,"int",NA,NA,"Pareora","",NA,"",21.7,15.9,18155
+309,"int",NA,NA,"MN 2","",NA,"",22.4,20,8851
+310,"int",NA,NA,"MN 1","",NA,"",23.03,22.4,8851
+1043,"int",NA,NA,"Xiejiaan","",NA,"",23.03,16.9,23736
+85,"int",NA,NA,"Early Miocene","",NA,"",23.03,15.97,5954
+294,"int",NA,NA,"Agenian","",NA,"",23.03,20,8851
+25,"int",1,3,"Neogene","Ng",1,"#FFE619",23.03,2.588,47900
+35,"int",1,4,"Miocene","",25,"#FFFF00",23.03,5.333,47900
+103,"int",1,5,"Aquitanian","",35,"#FFFF33",23.03,20.44,47900
+285,"int",NA,NA,"Harrisonian","",NA,"",24.8,20.43,8850
+956,"int",NA,NA,"Waitakian","",NA,"",25.2,21.7,18155
+286,"int",NA,NA,"Monroecreekian","",NA,"",26.3,24.8,8850
+957,"int",NA,NA,"Duntroonian","",NA,"",27.3,25.2,18155
+104,"int",1,5,"Chattian","",36,"#FEE6AA",28.1,23.03,47900
+1016,"int",NA,NA,"MP 26","",NA,"",28.4,23.03,19210
+1012,"int",NA,NA,"MP 30","",NA,"",28.4,23.03,19210
+1013,"int",NA,NA,"MP 29","",NA,"",28.4,23.03,19210
+997,"int",NA,NA,"Tabenbulakian","",NA,"",28.4,23.03,18322
+86,"int",NA,NA,"Late Oligocene","",NA,"",28.4,23.03,5954
+1014,"int",NA,NA,"MP 28","",NA,"",28.4,23.03,19210
+1015,"int",NA,NA,"MP 27","",NA,"",28.4,23.03,19210
+731,"int",NA,NA,"Deseadan","",NA,"",29,21,9569
+287,"int",NA,NA,"Geringian","",NA,"",30.8,26.3,8850
+256,"int",NA,NA,"late Early Arikareean","",NA,"",30.8,20.43,5959
+257,"int",NA,NA,"early Early Arikareean","",NA,"",30.8,20.43,5959
+224,"int",NA,NA,"Arikareean","",NA,"",30.8,20.43,5954
+254,"int",NA,NA,"late Late Arikareean","",NA,"",30.8,20.43,5959
+255,"int",NA,NA,"early Late Arikareean","",NA,"",30.8,20.43,5959
+225,"int",NA,NA,"Whitneyan","",NA,"",33.3,30.8,5954
+1020,"int",NA,NA,"MP 22","",NA,"",33.9,28.4,19210
+999,"int",NA,NA,"Kekeamuan","",NA,"",33.9,28.4,18322
+1021,"int",NA,NA,"MP 21","",NA,"",33.9,28.4,19210
+1017,"int",NA,NA,"MP 25","",NA,"",33.9,23.03,19210
+87,"int",NA,NA,"Early Oligocene","",NA,"",33.9,28.4,5954
+1018,"int",NA,NA,"MP 24","",NA,"",33.9,28.4,19210
+1019,"int",NA,NA,"MP 23","",NA,"",33.9,28.4,19210
+226,"int",NA,NA,"Orellan","",NA,"",33.9,33.3,5954
+998,"int",NA,NA,"Hsandagolian","",NA,"",33.9,23.03,18322
+36,"int",1,4,"Oligocene","",26,"#FDC07A",33.9,23.03,47900
+105,"int",1,5,"Rupelian","",36,"#FED99A",33.9,28.1,47900
+958,"int",NA,NA,"Whaingaroan","",NA,"",34.3,27.3,18155
+929,"int",NA,NA,"Landon","",NA,"",34.3,21.7,18155
+959,"int",NA,NA,"Runangan","",NA,"",36,34.3,18155
+732,"int",NA,NA,"Tinguirirican","",NA,"",36,29,9569
+227,"int",NA,NA,"Chadronian","",NA,"",37.2,33.9,5954
+1025,"int",NA,NA,"MP 17B","",NA,"",37.2,33.9,19210
+260,"int",NA,NA,"Early Chadronian","",NA,"",37.2,33.9,5959
+1000,"int",NA,NA,"Houldjinian","",NA,"",37.2,33.9,18322
+1026,"int",NA,NA,"MP 17A","",NA,"",37.2,33.9,19210
+258,"int",NA,NA,"Late Chadronian","",NA,"",37.2,33.9,5959
+1022,"int",NA,NA,"MP 20","",NA,"",37.2,33.9,19210
+1001,"int",NA,NA,"Ergilian","",NA,"",37.2,33.9,18322
+960,"int",NA,NA,"Kaiatan","",NA,"",37.2,36,18155
+259,"int",NA,NA,"Middle Chadronian","",NA,"",37.2,33.9,5959
+1023,"int",NA,NA,"MP 19","",NA,"",37.2,33.9,19210
+1002,"int",NA,NA,"Ulangochuian","",NA,"",37.2,33.9,18322
+1024,"int",NA,NA,"MP 18","",NA,"",37.2,33.9,19210
+88,"int",NA,NA,"Late Eocene","",NA,"",37.2,33.9,5954
+106,"int",1,5,"Priabonian","",37,"#FDCDA1",38,33.9,47900
+228,"int",NA,NA,"Duchesnean","",NA,"",40.4,37.2,5954
+1027,"int",NA,NA,"MP 16","",NA,"",40.4,37.2,19210
+107,"int",1,5,"Bartonian","",37,"#FDC091",41.3,38,47900
+733,"int",NA,NA,"Divisaderan","",NA,"",42,36,9569
+961,"int",NA,NA,"Bortonian","",NA,"",43,37.2,18155
+930,"int",NA,NA,"Arnold","",NA,"",43,34.3,18155
+262,"int",NA,NA,"Early Uintan","",NA,"",46.2,40.4,5959
+229,"int",NA,NA,"Uintan","",NA,"",46.2,40.4,5954
+261,"int",NA,NA,"Late Uintan","",NA,"",46.2,40.4,5959
+962,"int",NA,NA,"Porangan","",NA,"",46.2,43,18155
+108,"int",1,5,"Lutetian","",37,"#FCB482",47.8,41.3,47900
+734,"int",NA,NA,"Mustersan","",NA,"",48,42,9569
+1004,"int",NA,NA,"Irdinmanhan","",NA,"",48.6,37.2,18322
+1030,"int",NA,NA,"MP 13","",NA,"",48.6,40.4,19210
+1005,"int",NA,NA,"Arshantan","",NA,"",48.6,37.2,18322
+1031,"int",NA,NA,"MP 12","",NA,"",48.6,40.4,19210
+1032,"int",NA,NA,"MP 11","",NA,"",48.6,40.4,19210
+89,"int",NA,NA,"Middle Eocene","",NA,"",48.6,37.2,5954
+1028,"int",NA,NA,"MP 15","",NA,"",48.6,40.4,19210
+1003,"int",NA,NA,"Sharamurunian","",NA,"",48.6,37.2,18322
+1029,"int",NA,NA,"MP 14","",NA,"",48.6,40.4,19210
+963,"int",NA,NA,"Heretaungan","",NA,"",49.5,46.2,18155
+265,"int",NA,NA,"Gardnerbuttian","",NA,"",50.3,46.2,5959
+230,"int",NA,NA,"Bridgerian","",NA,"",50.3,46.2,5954
+263,"int",NA,NA,"Twinbuttean","",NA,"",50.3,46.2,5959
+264,"int",NA,NA,"Blacksforkian","",NA,"",50.3,46.2,5959
+964,"int",NA,NA,"Mangaorapan","",NA,"",53,49.5,18155
+269,"int",NA,NA,"Sandcouleean","",NA,"",55.8,50.3,5959
+1034,"int",NA,NA,"MP 8 + 9","",NA,"",55.8,48.6,19210
+1035,"int",NA,NA,"MP 7","",NA,"",55.8,48.6,19210
+735,"int",NA,NA,"Casamayoran","",NA,"",55.8,48,9569
+266,"int",NA,NA,"Lostcabinian","",NA,"",55.8,50.3,5959
+90,"int",NA,NA,"Early Eocene","",NA,"",55.8,48.6,5954
+1006,"int",NA,NA,"Bumbanian","",NA,"",55.8,48.6,18322
+965,"int",NA,NA,"Waipawan","",NA,"",55.8,53,18155
+267,"int",NA,NA,"Lysitean","",NA,"",55.8,50.3,5959
+268,"int",NA,NA,"Graybullian","",NA,"",55.8,50.3,5959
+1033,"int",NA,NA,"MP 10","",NA,"",55.8,48.6,19210
+231,"int",NA,NA,"Wasatchian","",NA,"",55.8,50.3,5954
+37,"int",1,4,"Eocene","",26,"#FDB46C",56,33.9,47900
+109,"int",1,5,"Ypresian","",37,"#FCA773",56,47.8,47900
+232,"int",NA,NA,"Clarkforkian","",NA,"",56.8,55.8,5954
+270,"int",NA,NA,"Cf3","",NA,"",56.8,55.8,5959
+271,"int",NA,NA,"Cf2","",NA,"",56.8,55.8,5959
+272,"int",NA,NA,"Cf1","",NA,"",56.8,55.8,5959
+736,"int",NA,NA,"Riochican","",NA,"",57,55.8,9569
+91,"int",NA,NA,"Late Paleocene","",NA,"",58.7,55.8,5954
+1036,"int",NA,NA,"MP 6","",NA,"",58.7,55.8,19210
+1007,"int",NA,NA,"Gashatan","",NA,"",58.7,55.8,18322
+737,"int",NA,NA,"Itaboraian","",NA,"",59,57,9569
+110,"int",1,5,"Thanetian","",38,"#FDBF6F",59.2,56,47900
+743,"int",1,5,"Selandian","",38,"#FEBF65",61.6,59.2,47900
+278,"int",NA,NA,"Ti1","",NA,"",61.7,56.8,5959
+274,"int",NA,NA,"Ti5","",NA,"",61.7,56.8,5959
+233,"int",NA,NA,"Tiffanian","",NA,"",61.7,56.8,5954
+275,"int",NA,NA,"Ti4","",NA,"",61.7,56.8,5959
+276,"int",NA,NA,"Ti3","",NA,"",61.7,56.8,5959
+783,"int",NA,NA,"Middle Paleocene","",NA,"",61.7,58.7,15443
+277,"int",NA,NA,"Ti2","",NA,"",61.7,56.8,5959
+273,"int",NA,NA,"Ti6","",NA,"",61.7,56.8,5959
+738,"int",NA,NA,"Peligran","",NA,"",62.5,59,9569
+279,"int",NA,NA,"To3","",NA,"",63.3,61.7,5959
+280,"int",NA,NA,"To2","",NA,"",63.3,61.7,5959
+234,"int",NA,NA,"Torrejonian","",NA,"",63.3,61.7,5954
+281,"int",NA,NA,"To1","",NA,"",63.3,61.7,5959
+236,"int",NA,NA,"Puercan","",NA,"",66,63.3,5954
+283,"int",NA,NA,"Pu2","",NA,"",66,63.3,5959
+931,"int",NA,NA,"Dannevirke","",NA,"",66,43,18155
+739,"int",NA,NA,"Tiupampan","",NA,"",66,62.5,9569
+284,"int",NA,NA,"Pu1","",NA,"",66,63.3,5959
+13,"int",NA,NA,"Tertiary","",NA,"",66,2.588,5954
+1037,"int",NA,NA,"MP 1 - 5","",NA,"",66,55.8,19210
+235,"int",NA,NA,"Dragonian","",NA,"",66,61.7,5954
+92,"int",NA,NA,"Early Paleocene","",NA,"",66,61.7,5954
+966,"int",NA,NA,"Teurian","",NA,"",66,55.8,18155
+282,"int",NA,NA,"Pu3","",NA,"",66,63.3,5959
+1,"int",1,2,"Cenozoic","Cz",751,"#F2F91D",66,0,47900
+26,"int",1,3,"Paleogene","Pg",1,"#FD9A52",66,23.03,47900
+38,"int",1,4,"Paleocene","",26,"#FDA75F",66,56,47900
+111,"int",1,5,"Danian","",38,"#FDB462",66,61.6,47900
+744,"int",NA,NA,"Lancian","",NA,"",70.6,66,2237
+655,"int",NA,NA,"Early Maastrichtian","",NA,"",70.6,66,9098
+745,"int",NA,NA,"Edmontonian","",NA,"",70.6,66,2237
+654,"int",NA,NA,"Late Maastrichtian","",NA,"",70.6,66,9098
+112,"int",1,5,"Maastrichtian","",39,"#F2FA8C",72.1,66,47900
+967,"int",NA,NA,"Haumurian","",NA,"",83.5,66,18155
+747,"int",NA,NA,"Aquilan","",NA,"",83.5,70.6,2237
+656,"int",NA,NA,"Late Campanian","",NA,"",83.5,70.6,9098
+657,"int",NA,NA,"Middle Campanian","",NA,"",83.5,70.6,9098
+658,"int",NA,NA,"Early Campanian","",NA,"",83.5,70.6,9098
+746,"int",NA,NA,"Judithian","",NA,"",83.5,70.6,2237
+113,"int",1,5,"Campanian","",39,"#E6F47F",83.6,72.1,47900
+661,"int",NA,NA,"Early Santonian","",NA,"",85.8,83.5,9098
+968,"int",NA,NA,"Piripauan","",NA,"",85.8,83.5,18155
+659,"int",NA,NA,"Late Santonian","",NA,"",85.8,83.5,9098
+660,"int",NA,NA,"Middle Santonian","",NA,"",85.8,83.5,9098
+114,"int",1,5,"Santonian","",39,"#D9EF74",86.3,83.6,47900
+932,"int",NA,NA,"Mata","",NA,"",86.5,66,18155
+664,"int",NA,NA,"Early Coniacian","",NA,"",89.3,85.8,9098
+969,"int",NA,NA,"Teratan","",NA,"",89.3,85.8,18155
+662,"int",NA,NA,"Late Coniacian","",NA,"",89.3,85.8,9098
+663,"int",NA,NA,"Middle Coniacian","",NA,"",89.3,85.8,9098
+93,"int",NA,NA,"Senonian","",NA,"",89.3,66,5954
+115,"int",1,5,"Coniacian","",39,"#CCE968",89.8,86.3,47900
+970,"int",NA,NA,"Mangaotanean","",NA,"",92.1,89.3,18155
+667,"int",NA,NA,"Early Turonian","",NA,"",93.5,89.3,9098
+665,"int",NA,NA,"Late Turonian","",NA,"",93.5,89.3,9098
+666,"int",NA,NA,"Middle Turonian","",NA,"",93.5,89.3,9098
+116,"int",1,5,"Turonian","",39,"#BFE35D",93.9,89.8,47900
+933,"int",NA,NA,"Raukumara","",NA,"",95.2,86.5,18155
+971,"int",NA,NA,"Arowhanan","",NA,"",95.2,92.1,18155
+668,"int",NA,NA,"Late Cenomanian","",NA,"",99.6,93.5,9098
+669,"int",NA,NA,"Middle Cenomanian","",NA,"",99.6,93.5,9098
+972,"int",NA,NA,"Ngaterian","",NA,"",99.6,95.2,18155
+670,"int",NA,NA,"Early Cenomanian","",NA,"",99.6,93.5,9098
+39,"int",1,4,"Late Cretaceous","",14,"#A6D84A",100.5,66,47900
+117,"int",1,5,"Cenomanian","",39,"#B3DE53",100.5,93.9,47900
+973,"int",NA,NA,"Motuan","",NA,"",103.3,99.6,18155
+671,"int",NA,NA,"Late Albian","",NA,"",105.3,99.6,9098
+974,"int",NA,NA,"Urutawan","",NA,"",108.4,103.3,18155
+934,"int",NA,NA,"Clarence","",NA,"",108.4,95.2,18155
+672,"int",NA,NA,"Middle Albian","",NA,"",109,105.3,9098
+673,"int",NA,NA,"Early Albian","",NA,"",112.03,109,9098
+118,"int",1,5,"Albian","",40,"#CCEA97",113,100.5,47900
+674,"int",NA,NA,"Late Aptian","",NA,"",122.46,112.03,9098
+119,"int",1,5,"Aptian","",40,"#BFE48A",125,113,47900
+675,"int",NA,NA,"Early Aptian","",NA,"",125.45,122.46,9098
+975,"int",NA,NA,"Korangan","",NA,"",125.45,108.4,18155
+120,"int",1,5,"Barremian","",40,"#B3DF7F",129.4,125,47900
+94,"int",NA,NA,"Gallic","",NA,"",130,89.3,5954
+677,"int",NA,NA,"Early Barremian","",NA,"",130,125.45,9098
+676,"int",NA,NA,"Late Barremian","",NA,"",130,125.45,9098
+121,"int",1,5,"Hauterivian","",40,"#A6D975",132.9,129.4,47900
+679,"int",NA,NA,"Early Hauterivian","",NA,"",136.4,130,9098
+678,"int",NA,NA,"Late Hauterivian","",NA,"",136.4,130,9098
+122,"int",1,5,"Valanginian","",40,"#99D36A",139.8,132.9,47900
+680,"int",NA,NA,"Late Valanginian","",NA,"",140.2,136.4,9098
+681,"int",NA,NA,"Early Valanginian","",NA,"",140.2,136.4,9098
+935,"int",NA,NA,"Taitai","",NA,"",145,108.4,18155
+684,"int",NA,NA,"Early Berriasian","",NA,"",145,140.2,9098
+95,"int",NA,NA,"Neocomian","",NA,"",145,130,5954
+682,"int",NA,NA,"Late Berriasian","",NA,"",145,140.2,9098
+683,"int",NA,NA,"Middle Berriasian","",NA,"",145,140.2,9098
+14,"int",1,3,"Cretaceous","K",2,"#7FC64E",145,66,47900
+40,"int",1,4,"Early Cretaceous","",14,"#8CCD57",145,100.5,47900
+123,"int",1,5,"Berriasian","",40,"#8CCD60",145,139.8,47900
+976,"int",NA,NA,"Puaroan","",NA,"",148.5,145,18155
+936,"int",NA,NA,"Oteke","",NA,"",148.5,145,18155
+687,"int",NA,NA,"Early Tithonian","",NA,"",150.8,145,9098
+685,"int",NA,NA,"Late Tithonian","",NA,"",150.8,145,9098
+686,"int",NA,NA,"Middle Tithonian","",NA,"",150.8,145,9098
+124,"int",1,5,"Tithonian","",41,"#D9F1F7",152.1,145,47900
+977,"int",NA,NA,"Ohauan","",NA,"",153.5,148.5,18155
+689,"int",NA,NA,"Early Kimmeridgian","",NA,"",155.7,150.8,9098
+688,"int",NA,NA,"Late Kimmeridgian","",NA,"",155.7,150.8,9098
+125,"int",1,5,"Kimmeridgian","",41,"#CCECF4",157.3,152.1,47900
+690,"int",NA,NA,"Late Oxfordian","",NA,"",161.2,155.7,9098
+978,"int",NA,NA,"Heterian","",NA,"",161.2,153.5,18155
+692,"int",NA,NA,"Early Oxfordian","",NA,"",161.2,155.7,9098
+691,"int",NA,NA,"Middle Oxfordian","",NA,"",161.2,155.7,9098
+41,"int",1,4,"Late Jurassic","",15,"#B3E3EE",163.5,145,47900
+126,"int",1,5,"Oxfordian","",41,"#BFE7F1",163.5,157.3,47900
+485,"int",NA,NA,"Early Callovian","",NA,"",164.7,161.2,8933
+483,"int",NA,NA,"Late Callovian","",NA,"",164.7,161.2,8933
+484,"int",NA,NA,"Middle Callovian","",NA,"",164.7,161.2,8933
+127,"int",1,5,"Callovian","",42,"#BFE7E5",166.1,163.5,47900
+694,"int",NA,NA,"Middle Bathonian","",NA,"",167.7,164.7,9098
+693,"int",NA,NA,"Late Bathonian","",NA,"",167.7,164.7,9098
+695,"int",NA,NA,"Early Bathonian","",NA,"",167.7,164.7,9098
+128,"int",1,5,"Bathonian","",42,"#B3E2E3",168.3,166.1,47900
+495,"int",NA,NA,"Epizigzagiceras","",NA,"",168.4,167.7,8933
+129,"int",1,5,"Bajocian","",42,"#A6DDE0",170.3,168.3,47900
+486,"int",NA,NA,"Late Bajocian","",NA,"",171.6,167.7,8933
+526,"int",NA,NA,"Subfurcatum","",NA,"",171.6,167.7,8933
+499,"int",NA,NA,"Crassicostatus","",NA,"",171.6,168.4,8933
+527,"int",NA,NA,"Humphresianum","",NA,"",171.6,168.4,8933
+500,"int",NA,NA,"Widebayense","",NA,"",171.6,168.4,8933
+496,"int",NA,NA,"Rotundum","",NA,"",171.6,168.4,8933
+528,"int",NA,NA,"Sauzei","",NA,"",171.6,167.7,8933
+524,"int",NA,NA,"Parkinsoni","",NA,"",171.6,167.7,8933
+497,"int",NA,NA,"Oblatum","",NA,"",171.6,168.4,8933
+529,"int",NA,NA,"Laeviuscula","",NA,"",171.6,167.7,8933
+487,"int",NA,NA,"Early Bajocian","",NA,"",171.6,168.4,8933
+525,"int",NA,NA,"Garantiana","",NA,"",171.6,167.7,8933
+498,"int",NA,NA,"Kirschneri","",NA,"",171.6,168.4,8933
+530,"int",NA,NA,"Discites","",NA,"",171.6,167.7,8933
+42,"int",1,4,"Middle Jurassic","",15,"#80CFD8",174.1,163.5,47900
+130,"int",1,5,"Aalenian","",42,"#9AD9DD",174.1,170.3,47900
+503,"int",NA,NA,"Westermanni","",NA,"",175.6,171.6,8933
+698,"int",NA,NA,"Early Aalenian","",NA,"",175.6,171.6,9098
+531,"int",NA,NA,"Concavum","",NA,"",175.6,171.6,8933
+697,"int",NA,NA,"Middle Aalenian","",NA,"",175.6,171.6,9098
+532,"int",NA,NA,"Murchisonae","",NA,"",175.6,171.6,8933
+696,"int",NA,NA,"Late Aalenian","",NA,"",175.6,171.6,9098
+937,"int",NA,NA,"Kawhia","",NA,"",175.6,148.5,18155
+501,"int",NA,NA,"Howelli","",NA,"",175.6,171.6,8933
+533,"int",NA,NA,"Opalinum","",NA,"",175.6,171.6,8933
+979,"int",NA,NA,"Temaikan","",NA,"",175.6,161.2,18155
+502,"int",NA,NA,"Scissum","",NA,"",175.6,171.6,8933
+535,"int",NA,NA,"Thouarsense","",NA,"",180.1,175.6,8933
+504,"int",NA,NA,"Yakounensis","",NA,"",180.1,175.6,8933
+488,"int",NA,NA,"Late Toarcian","",NA,"",180.1,175.6,8933
+505,"int",NA,NA,"Hillebrandti","",NA,"",180.1,175.6,8933
+506,"int",NA,NA,"Crassicosta","",NA,"",180.1,175.6,8933
+489,"int",NA,NA,"Middle Toarcian","",NA,"",182,175.6,8933
+536,"int",NA,NA,"Variabilis","",NA,"",182,175.6,8933
+537,"int",NA,NA,"Bifrons","",NA,"",182,175.6,8933
+534,"int",NA,NA,"Levesquei","",NA,"",182,175.6,8933
+507,"int",NA,NA,"Planulata","",NA,"",182,180.1,8933
+131,"int",1,5,"Toarcian","",43,"#99CEE3",182.7,174.1,47900
+490,"int",NA,NA,"Early Toarcian","",NA,"",183,182,8933
+508,"int",NA,NA,"Kanense","",NA,"",183,182,8933
+538,"int",NA,NA,"Falciferum","",NA,"",183,182,8933
+539,"int",NA,NA,"Tenuicostatum","",NA,"",183,182,8933
+509,"int",NA,NA,"Carlottense","",NA,"",184.1,183,8933
+510,"int",NA,NA,"Kunae","",NA,"",185.7,184.1,8933
+511,"int",NA,NA,"Freboldi","",NA,"",186.7,185.7,8933
+512,"int",NA,NA,"Whiteavesi","",NA,"",189.6,186.7,8933
+544,"int",NA,NA,"Jamesoni","",NA,"",189.6,183,8933
+540,"int",NA,NA,"Spinatum","",NA,"",189.6,183,8933
+492,"int",NA,NA,"Early Pliensbachian","",NA,"",189.6,183,8933
+513,"int",NA,NA,"Imlayi","",NA,"",189.6,186.7,8933
+541,"int",NA,NA,"Margaritatus","",NA,"",189.6,183,8933
+491,"int",NA,NA,"Late Pliensbachian","",NA,"",189.6,183,8933
+542,"int",NA,NA,"Davoei","",NA,"",189.6,183,8933
+543,"int",NA,NA,"Ibex","",NA,"",189.6,183,8933
+980,"int",NA,NA,"Ururoan","",NA,"",189.6,175.6,18155
+514,"int",NA,NA,"Tetraspidoceras","",NA,"",190.7,186.7,8933
+132,"int",1,5,"Pliensbachian","",43,"#80C5DD",190.8,182.7,47900
+517,"int",NA,NA,"Arnioceras arnouldi","",NA,"",196.5,189.6,8933
+549,"int",NA,NA,"Semicostatum","",NA,"",196.5,189.6,8933
+545,"int",NA,NA,"Raricostatum","",NA,"",196.5,189.6,8933
+518,"int",NA,NA,"Coroniceras","",NA,"",196.5,190.7,8933
+550,"int",NA,NA,"Bucklandi","",NA,"",196.5,189.6,8933
+494,"int",NA,NA,"Early Sinemurian","",NA,"",196.5,189.6,8933
+546,"int",NA,NA,"Oxynotum","",NA,"",196.5,189.6,8933
+515,"int",NA,NA,"Plesechioceras harbledownense","",NA,"",196.5,190.7,8933
+547,"int",NA,NA,"Obtusum","",NA,"",196.5,189.6,8933
+493,"int",NA,NA,"Late Sinemurian","",NA,"",196.5,189.6,8933
+516,"int",NA,NA,"Asteroceras varians","",NA,"",196.5,190.7,8933
+548,"int",NA,NA,"Turneri","",NA,"",196.5,189.6,8933
+519,"int",NA,NA,"Canadensis","",NA,"",196.6,190.7,8933
+520,"int",NA,NA,"Pseudaetomoceras","",NA,"",196.6,196.5,8933
+133,"int",1,5,"Sinemurian","",43,"#67BCD8",199.3,190.8,47900
+521,"int",NA,NA,"Franziceras","",NA,"",201.3,196.6,8933
+553,"int",NA,NA,"Planorbis","",NA,"",201.3,196.5,8933
+981,"int",NA,NA,"Aratauran","",NA,"",201.3,189.6,18155
+522,"int",NA,NA,"Euphyllites","",NA,"",201.3,196.6,8933
+701,"int",NA,NA,"Early Hettangian","",NA,"",201.3,196.5,9098
+523,"int",NA,NA,"Psiloceras","",NA,"",201.3,196.5,8933
+551,"int",NA,NA,"Angulata","",NA,"",201.3,196.5,8933
+700,"int",NA,NA,"Middle Hettangian","",NA,"",201.3,196.5,9098
+699,"int",NA,NA,"Late Hettangian","",NA,"",201.3,196.5,9098
+938,"int",NA,NA,"Herangi","",NA,"",201.3,175.6,18155
+552,"int",NA,NA,"Liasicus","",NA,"",201.3,196.5,8933
+15,"int",1,3,"Jurassic","J",2,"#34B2C9",201.3,145,47900
+43,"int",1,4,"Early Jurassic","",15,"#42AED0",201.3,174.1,47900
+134,"int",1,5,"Hettangian","",43,"#4EB3D3",201.3,199.3,47900
+1103,"int",NA,NA,"Misikella posthernsteini-hernsteini","",NA,"",205.6,201.6,42599
+1104,"int",NA,NA,"Misikella bidentata-posthernsteini","",NA,"",205.6,201.6,42599
+982,"int",NA,NA,"Otapirian","",NA,"",205.6,201.6,18155
+1101,"int",NA,NA,"Misikella ultima","",NA,"",205.6,201.6,42599
+1102,"int",NA,NA,"Misikella rhaetica","",NA,"",205.6,201.6,42599
+135,"int",1,5,"Rhaetian","",44,"#E3B9DB",208.5,201.3,47900
+983,"int",NA,NA,"Warepan","",NA,"",212,205.6,18155
+702,"int",NA,NA,"Sevatian","",NA,"",212,205.6,9098
+703,"int",NA,NA,"Alaunian","",NA,"",215.56,212,9098
+704,"int",NA,NA,"Lacian","",NA,"",221.5,215.56,9098
+984,"int",NA,NA,"Otamitan","",NA,"",221.5,212,18155
+985,"int",NA,NA,"Oretian","",NA,"",227.5,221.5,18155
+939,"int",NA,NA,"Balfour","",NA,"",227.5,201.6,18155
+136,"int",1,5,"Norian","",44,"#D6AAD3",228,208.5,47900
+705,"int",NA,NA,"Tuvalian","",NA,"",232,221.5,9098
+706,"int",NA,NA,"Julian","",NA,"",235,232,9098
+44,"int",1,4,"Late Triassic","",16,"#BD8CC3",237,201.3,47900
+137,"int",1,5,"Carnian","",44,"#C99BCB",237,228,47900
+986,"int",NA,NA,"Kaihikuan","",NA,"",238.5,227.5,18155
+708,"int",NA,NA,"Fassanian","",NA,"",242,235,9098
+1050,"int",NA,NA,"Bukobayian","",NA,"",242,235,29103
+707,"int",NA,NA,"Longobardian","",NA,"",242,235,9098
+138,"int",1,5,"Ladinian","",45,"#C983BF",242,237,47900
+987,"int",NA,NA,"Etalian","",NA,"",244.5,238.5,18155
+712,"int",NA,NA,"Aegean","",NA,"",247.2,242,9098
+709,"int",NA,NA,"Illyrian","",NA,"",247.2,242,9098
+710,"int",NA,NA,"Pelsonian","",NA,"",247.2,242,9098
+1051,"int",NA,NA,"Donguzian","",NA,"",247.2,235,29103
+711,"int",NA,NA,"Bithynian","",NA,"",247.2,242,9098
+45,"int",1,4,"Middle Triassic","",16,"#B168B1",247.2,237,47900
+139,"int",1,5,"Anisian","",45,"#BC75B7",247.2,242,47900
+652,"int",1,5,"Olenekian","",46,"#B051A5",251.2,247.2,47900
+1048,"int",NA,NA,"Yarengian","",NA,"",251.3,247.2,29103
+1053,"int",NA,NA,"Fedorovkian","",NA,"",251.3,247.2,29103
+713,"int",NA,NA,"Smithian","",NA,"",251.3,247.2,9098
+140,"int",NA,NA,"Spathian","",NA,"",251.3,247.2,5954
+988,"int",NA,NA,"Malakovian","",NA,"",251.3,244.5,18155
+1052,"int",NA,NA,"Gamian","",NA,"",252.17,247.2,29103
+1057,"int",NA,NA,"Vokhmian","",NA,"",252.17,247.2,29103
+940,"int",NA,NA,"Gore","",NA,"",252.17,227.5,18155
+1049,"int",NA,NA,"Vetlugian","",NA,"",252.17,247.2,29103
+1054,"int",NA,NA,"Ustmylian","",NA,"",252.17,247.2,29103
+714,"int",NA,NA,"Dienerian","",NA,"",252.17,251.3,9098
+1055,"int",NA,NA,"Sludkian","",NA,"",252.17,247.2,29103
+141,"int",NA,NA,"Nammalian","",NA,"",252.17,247.2,5954
+989,"int",NA,NA,"Nelsonian","",NA,"",252.17,247.2,18155
+1056,"int",NA,NA,"Rybinskian","",NA,"",252.17,247.2,29103
+142,"int",NA,NA,"Griesbachian","",NA,"",252.17,251.3,5954
+2,"int",1,2,"Mesozoic","Mz",751,"#67C5CA",252.17,66,47900
+16,"int",1,3,"Triassic","Tr",2,"#812B92",252.17,201.3,47900
+46,"int",1,4,"Early Triassic","",16,"#983999",252.17,247.2,47900
+653,"int",1,5,"Induan","",46,"#A4469F",252.17,251.2,47900
+990,"int",NA,NA,"Makarewan","",NA,"",253,252.17,18155
+991,"int",NA,NA,"Waiitian","",NA,"",253,252.3,18155
+1105,"int",NA,NA,"Meishanian","",NA,"",253.5,252.3,42679
+475,"int",NA,NA,"Dewey Lake","",NA,"",254,252.3,5954
+1106,"int",NA,NA,"Baoqingian","",NA,"",254,253.5,42679
+913,"int",NA,NA,"Chhidru","",NA,"",254,252.3,15443
+715,"int",1,5,"Changhsingian","",771,"#FCC0B2",254.17,252.17,9184
+1107,"int",NA,NA,"Laoshanian","",NA,"",258.1,254,42679
+1108,"int",NA,NA,"Laibinian","",NA,"",259,258.1,42679
+914,"int",NA,NA,"Kalabagh","",NA,"",259,254,15443
+144,"int",NA,NA,"Longtanian","",NA,"",259,254,5954
+47,"int",NA,NA,"Zechstein","",NA,"",259,252.3,5954
+476,"int",NA,NA,"Rustler","",NA,"",259,254,5954
+941,"int",NA,NA,"DUrville","",NA,"",259,251.3,18155
+1059,"int",NA,NA,"Early Vyatkian","",NA,"",259,252.3,29103
+992,"int",NA,NA,"Puruhauan","",NA,"",259,253,18155
+477,"int",NA,NA,"Salado","",NA,"",259,254,5954
+852,"int",NA,NA,"Vyatkian","",NA,"",259,252.3,15443
+478,"int",NA,NA,"Castile","",NA,"",259,254,5954
+771,"int",1,4,"Lopingian","",17,"#FBA794",259.9,252.17,47900
+716,"int",1,5,"Wuchiapingian","",771,"#FCB4A2",259.9,254.17,9184
+479,"int",NA,NA,"Capitan","",NA,"",265,259,5954
+466,"int",NA,NA,"Ohre","",NA,"",265,259,5954
+1058,"int",NA,NA,"Late Vyatkian","",NA,"",265,252.3,29103
+915,"int",NA,NA,"Wargal","",NA,"",265,254,15443
+906,"int",NA,NA,"Pamirian","",NA,"",265,252.3,15443
+467,"int",NA,NA,"Aller","",NA,"",265,259,5954
+1060,"int",NA,NA,"Late Severodvinian","",NA,"",265,254,29103
+1061,"int",NA,NA,"Early Severodvinian","",NA,"",265,252.3,29103
+993,"int",NA,NA,"Flettian","",NA,"",265,259,18155
+917,"int",NA,NA,"Lengwuan","",NA,"",265,259,15443
+853,"int",NA,NA,"Severodvinian","",NA,"",265,254,15443
+465,"int",NA,NA,"Buntsandstein","",NA,"",265,252.3,5954
+145,"int",1,5,"Capitanian","",772,"#FB9A85",265.1,259.9,5954
+854,"int",NA,NA,"Urzhumian","",NA,"",268,265,15443
+470,"int",NA,NA,"Hauptdolomitstinkschiefer","",NA,"",268,265,5954
+480,"int",NA,NA,"Word","",NA,"",268,265,5954
+907,"int",NA,NA,"Murgabian","",NA,"",268,265,15443
+468,"int",NA,NA,"Leine","",NA,"",268,265,5954
+1062,"int",NA,NA,"Late Urzhumian","",NA,"",268,265,29103
+469,"int",NA,NA,"Stassfurt Evaporites","",NA,"",268,265,5954
+1063,"int",NA,NA,"Early Urzhumian","",NA,"",268,265,29103
+904,"int",NA,NA,"Tatarian","",NA,"",268,252.3,15443
+146,"int",1,5,"Wordian","",772,"#FB8D76",268.8,265.1,5954
+772,"int",1,4,"Guadalupian","",17,"#FB745C",272.3,259.9,47900
+717,"int",1,5,"Roadian","",772,"#FB8069",272.3,268.8,9184
+918,"int",NA,NA,"Kuhfengian","",NA,"",272.5,265,15443
+1065,"int",NA,NA,"Early Kazanian","",NA,"",272.5,268,29103
+905,"int",NA,NA,"Kazanian","",NA,"",272.5,268,15443
+855,"int",NA,NA,"Povolzhian","",NA,"",272.5,268,15443
+856,"int",NA,NA,"Sokian","",NA,"",272.5,268,15443
+916,"int",NA,NA,"Amb","",NA,"",272.5,265,15443
+908,"int",NA,NA,"Kubergandian","",NA,"",272.5,268,15443
+1047,"int",NA,NA,"Biarmian","",NA,"",272.5,268,29103
+1064,"int",NA,NA,"Late Kazanian","",NA,"",272.5,268,29103
+994,"int",NA,NA,"Barettian","",NA,"",273,265,18155
+148,"int",1,5,"Kungurian","",773,"#E38776",279.3,272.3,5954
+909,"int",NA,NA,"Bolorian","",NA,"",279.5,272.5,15443
+859,"int",NA,NA,"Saranian","",NA,"",279.5,272.5,15443
+919,"int",NA,NA,"Luodianian","",NA,"",279.5,272.5,15443
+471,"int",NA,NA,"Werra","",NA,"",279.5,272.5,5954
+1066,"int",NA,NA,"Sheshmian","",NA,"",279.5,272.5,29103
+147,"int",NA,NA,"Ufimian","",NA,"",279.5,272.5,5954
+472,"int",NA,NA,"Zechsteinkalk","",NA,"",279.5,272.5,5954
+1067,"int",NA,NA,"Solikamskian","",NA,"",279.5,272.5,29103
+857,"int",NA,NA,"Irenian","",NA,"",279.5,272.5,15443
+473,"int",NA,NA,"Kupferschiefer","",NA,"",279.5,272.5,5954
+858,"int",NA,NA,"Filipovian","",NA,"",279.5,272.5,15443
+474,"int",NA,NA,"Weissliegendes","",NA,"",279.5,272.5,5954
+995,"int",NA,NA,"Mangapirian","",NA,"",280,273,18155
+910,"int",NA,NA,"Yakhtashian","",NA,"",290.1,272.5,15443
+860,"int",NA,NA,"Sarginian","",NA,"",290.1,279.5,15443
+996,"int",NA,NA,"Telfordian","",NA,"",290.1,280,18155
+481,"int",NA,NA,"Leonard","",NA,"",290.1,268,5954
+861,"int",NA,NA,"Irginian","",NA,"",290.1,279.5,15443
+942,"int",NA,NA,"Aparima","",NA,"",290.1,259,18155
+862,"int",NA,NA,"Burtsevian","",NA,"",290.1,279.5,15443
+149,"int",1,5,"Artinskian","",773,"#E37B68",290.1,279.3,5954
+863,"int",NA,NA,"Sterlitamakian","",NA,"",293,290.1,15443
+864,"int",NA,NA,"Tastubian","",NA,"",295,293,15443
+920,"int",NA,NA,"Longlinian","",NA,"",295,279.5,15443
+911,"int",NA,NA,"Khoridzhian","",NA,"",295,290.1,15443
+150,"int",1,5,"Sakmarian","",773,"#E36F5C",295.5,290.1,5954
+865,"int",NA,NA,"Shikhanian","",NA,"",296.4,295,15443
+482,"int",NA,NA,"Wolfcamp","",NA,"",296.4,268,5954
+894,"int",NA,NA,"Bursumian","",NA,"",296.4,295,15443
+866,"int",NA,NA,"Uskalykian","",NA,"",297.45,296.4,15443
+850,"int",NA,NA,"Lebach","",NA,"",298.9,295,15443
+48,"int",NA,NA,"Rotliegendes","",NA,"",298.9,254,5954
+921,"int",NA,NA,"Zisongian","",NA,"",298.9,290.1,15443
+912,"int",NA,NA,"Sebisurkhian","",NA,"",298.9,295,15443
+867,"int",NA,NA,"Sjuranian","",NA,"",298.9,297.45,15443
+849,"int",NA,NA,"Autunian","",NA,"",298.9,295,15443
+895,"int",NA,NA,"Mapingian","",NA,"",298.9,295,15443
+17,"int",1,3,"Permian","P",3,"#F04028",298.9,252.17,47900
+773,"int",1,4,"Cisuralian","",17,"#EF5845",298.9,272.3,47900
+151,"int",1,5,"Asselian","",773,"#E36350",298.9,295.5,5954
+868,"int",NA,NA,"Melekhovian","",NA,"",300.2,298.9,15443
+851,"int",NA,NA,"Kuzel","",NA,"",301.2,298.9,15443
+152,"int",NA,NA,"Noginian","",NA,"",301.2,300.2,5954
+869,"int",NA,NA,"Pavlovoposadian","",NA,"",302.2,301.2,15443
+448,"int",NA,NA,"Stephanian C","",NA,"",303.4,301.2,5954
+870,"int",NA,NA,"Rusavkian","",NA,"",303.4,302.2,15443
+153,"int",NA,NA,"Klazminskian","",NA,"",303.4,301.2,5954
+456,"int",NA,NA,"Virgilian","",NA,"",303.4,298.9,5954
+49,"int",1,5,"Gzhelian","",27,"#CCD4C7",303.7,298.9,5954
+154,"int",NA,NA,"Dorogovilovian","",NA,"",304.8,303.4,5954
+449,"int",NA,NA,"Stephanian B","",NA,"",304.8,303.4,5954
+457,"int",NA,NA,"Missourian","",NA,"",305.9,303.4,5954
+155,"int",NA,NA,"Khamovnichean","",NA,"",305.9,304.8,5954
+450,"int",NA,NA,"Stephanian A","",NA,"",305.9,304.8,5954
+896,"int",NA,NA,"Xiaodushanian","",NA,"",306.95,298.9,15443
+156,"int",NA,NA,"Krevyakian","",NA,"",306.95,305.9,5954
+445,"int",NA,NA,"Stephanian","",NA,"",306.95,298.9,5954
+774,"int",NA,NA,"Late Pennsylvanian","",NA,"",306.95,298.9,15443
+50,"int",1,5,"Kasimovian","",27,"#BFD0C5",307,303.7,5954
+157,"int",NA,NA,"Myachkovian","",NA,"",309,306.95,5954
+871,"int",NA,NA,"Peskovian","",NA,"",309,305.9,15443
+452,"int",NA,NA,"Westphalian D","",NA,"",311.45,306.95,5954
+451,"int",NA,NA,"Cantabrian","",NA,"",311.45,305.9,5954
+158,"int",NA,NA,"Podolskian","",NA,"",311.45,309,5954
+159,"int",NA,NA,"Kashirian","",NA,"",313.8,311.45,5954
+458,"int",NA,NA,"Desmoinesian","",NA,"",313.8,305.9,5954
+775,"int",NA,NA,"Middle Pennsylvanian","",NA,"",314.6,306.95,15443
+453,"int",NA,NA,"Westphalian C","",NA,"",314.6,311.45,5954
+160,"int",NA,NA,"Vereian","",NA,"",314.6,313.8,5954
+897,"int",NA,NA,"Dalanian","",NA,"",314.6,303.4,15443
+454,"int",NA,NA,"Westphalian B","",NA,"",314.6,314.6,5954
+872,"int",NA,NA,"Tsninian","",NA,"",314.6,311.45,15443
+51,"int",1,5,"Moscovian","",27,"#B3CBB9",315.2,307,5954
+163,"int",NA,NA,"Yeadonian","",NA,"",318.1,314.6,5954
+873,"int",NA,NA,"Prikarnian","",NA,"",318.1,314.6,15443
+164,"int",NA,NA,"Marsdenian","",NA,"",318.1,314.6,5954
+874,"int",NA,NA,"Severokeltmenian","",NA,"",318.1,314.6,15443
+165,"int",NA,NA,"Kinderscoutian","",NA,"",318.1,314.6,5954
+161,"int",NA,NA,"Melekesian","",NA,"",318.1,314.6,5954
+776,"int",NA,NA,"Early Pennsylvanian","",NA,"",318.1,314.6,15443
+875,"int",NA,NA,"Krasnopolyanian","",NA,"",318.1,314.6,15443
+459,"int",NA,NA,"Atokan","",NA,"",318.1,311.45,5954
+898,"int",NA,NA,"Huashibanian","",NA,"",318.1,314.6,15443
+166,"int",NA,NA,"Alportian","",NA,"",318.1,314.6,5954
+455,"int",NA,NA,"Westphalian A","",NA,"",318.1,314.6,5954
+162,"int",NA,NA,"Cheremshanian","",NA,"",318.1,314.6,5954
+446,"int",NA,NA,"Westphalian","",NA,"",318.1,306.95,5954
+876,"int",NA,NA,"Voznesenian","",NA,"",318.1,314.6,15443
+899,"int",NA,NA,"Luosuan","",NA,"",318.1,314.6,15443
+460,"int",NA,NA,"Morrowan","",NA,"",318.1,314.6,5954
+167,"int",NA,NA,"Chokierian","",NA,"",318.1,314.6,5954
+27,"int",1,4,"Pennsylvanian","",18,"#99C2B5",323.2,298.9,47900
+52,"int",1,5,"Bashkirian","",27,"#99C2B6",323.2,315.2,5954
+447,"int",NA,NA,"Namurian","",NA,"",326.4,314.6,5954
+877,"int",NA,NA,"Zapaltyubian","",NA,"",326.4,314.6,15443
+900,"int",NA,NA,"Dewunian","",NA,"",326.4,318.1,15443
+168,"int",NA,NA,"Arnsbergian","",NA,"",326.4,318.1,5954
+777,"int",NA,NA,"Late Mississippian","",NA,"",326.4,318.1,15443
+878,"int",NA,NA,"Protvian","",NA,"",326.4,318.1,15443
+169,"int",NA,NA,"Pendleian","",NA,"",326.4,318.1,5954
+879,"int",NA,NA,"Steshevian","",NA,"",326.4,318.1,15443
+880,"int",NA,NA,"Tarussian","",NA,"",326.4,318.1,15443
+53,"int",1,5,"Serpukhovian","",28,"#BFC26B",330.9,323.2,5954
+170,"int",NA,NA,"Brigantian","",NA,"",336,326.4,5954
+881,"int",NA,NA,"Venevian","",NA,"",336,326.4,15443
+461,"int",NA,NA,"Chesterian","",NA,"",339.4,318.1,5954
+882,"int",NA,NA,"Mikhailovian","",NA,"",339.4,336,15443
+901,"int",NA,NA,"Shangsian","",NA,"",339.4,326.4,15443
+171,"int",NA,NA,"Asbian","",NA,"",339.4,336,5954
+883,"int",NA,NA,"Aleksian","",NA,"",342.8,339.4,15443
+884,"int",NA,NA,"Tulian","",NA,"",342.8,339.4,15443
+172,"int",NA,NA,"Holkerian","",NA,"",342.8,339.4,5954
+173,"int",NA,NA,"Arundian","",NA,"",345,342.8,5954
+462,"int",NA,NA,"Meramecian","",NA,"",345,336,5954
+885,"int",NA,NA,"Bobrikovian","",NA,"",345,342.8,15443
+886,"int",NA,NA,"Radaevian","",NA,"",345.3,345,15443
+778,"int",NA,NA,"Middle Mississippian","",NA,"",345.3,326.4,15443
+174,"int",NA,NA,"Chadian","",NA,"",345.3,345,5954
+902,"int",NA,NA,"Jiusian","",NA,"",345.3,339.4,15443
+54,"int",1,5,"Visean","",28,"#A6B96C",346.7,330.9,5954
+887,"int",NA,NA,"Kosvinian","",NA,"",353.8,345,15443
+888,"int",NA,NA,"Kizolovian","",NA,"",353.8,345.3,15443
+463,"int",NA,NA,"Osagean","",NA,"",353.8,342.8,5954
+175,"int",NA,NA,"Ivorian","",NA,"",353.8,345.3,5954
+891,"int",NA,NA,"Upinian","",NA,"",358.9,353.8,15443
+892,"int",NA,NA,"Malevian","",NA,"",358.9,353.8,15443
+893,"int",NA,NA,"Gumerovian","",NA,"",358.9,353.8,15443
+889,"int",NA,NA,"Cherepetsian","",NA,"",358.9,353.8,15443
+903,"int",NA,NA,"Tangbagouan","",NA,"",358.9,345.3,15443
+464,"int",NA,NA,"Kinderhookian","",NA,"",358.9,353.8,5954
+779,"int",NA,NA,"Early Mississippian","",NA,"",358.9,345.3,15443
+176,"int",NA,NA,"Hastarian","",NA,"",358.9,353.8,5954
+890,"int",NA,NA,"Karakubian","",NA,"",358.9,353.8,15443
+18,"int",1,3,"Carboniferous","C",3,"#67A599",358.9,298.9,47900
+28,"int",1,4,"Mississippian","",18,"#678F66",358.9,323.2,47900
+55,"int",1,5,"Tournaisian","",28,"#8CB06C",358.9,346.7,5954
+1068,"int",NA,NA,"Late Famennian","",NA,"",364.7,360.7,33105
+1069,"int",NA,NA,"Middle Famennian","",NA,"",370.6,364.7,33105
+177,"int",1,5,"Famennian","",56,"#F2EDC5",372.2,358.9,47900
+402,"int",NA,NA,"Pickwell Down","",NA,"",376.1,360.7,5954
+434,"int",NA,NA,"Canadaway","",NA,"",376.1,360.7,5954
+416,"int",NA,NA,"Wocklum","",NA,"",376.1,360.7,5954
+1070,"int",NA,NA,"Early Famennian","",NA,"",376.1,370.6,33105
+417,"int",NA,NA,"Dasberg","",NA,"",376.1,360.7,5954
+399,"int",NA,NA,"Pilton","",NA,"",376.1,353.8,5954
+418,"int",NA,NA,"Hemberg","",NA,"",376.1,360.7,5954
+400,"int",NA,NA,"Baggy","",NA,"",376.1,360.7,5954
+432,"int",NA,NA,"Conewangoan","",NA,"",376.1,360.7,5954
+419,"int",NA,NA,"Nehden","",NA,"",376.1,360.7,5954
+401,"int",NA,NA,"Upcott","",NA,"",376.1,360.7,5954
+433,"int",NA,NA,"Conneaut","",NA,"",376.1,360.7,5954
+1071,"int",NA,NA,"Late Frasnian","",NA,"",379.5,376.1,33105
+1072,"int",NA,NA,"Middle Frasnian","",NA,"",382.4,379.5,33105
+56,"int",1,4,"Late Devonian","",19,"#F1E19D",382.7,358.9,47900
+178,"int",1,5,"Frasnian","",56,"#F2EDAD",382.7,372.2,47900
+435,"int",NA,NA,"West Falls","",NA,"",383.7,376.1,5954
+1073,"int",NA,NA,"Early Frasnian","",NA,"",383.7,382.4,33105
+436,"int",NA,NA,"Sonyea","",NA,"",383.7,376.1,5954
+410,"int",NA,NA,"Famennien","",NA,"",383.7,360.7,5954
+179,"int",1,5,"Givetian","",57,"#F1E185",387.7,382.7,47900
+1078,"int",NA,NA,"Early Givetian","",NA,"",388.1,383.7,33153
+438,"int",NA,NA,"Taghanic","",NA,"",388.1,383.7,5954
+420,"int",NA,NA,"Adorf","",NA,"",388.1,376.1,5954
+411,"int",NA,NA,"Frasnien","",NA,"",388.1,376.1,5954
+1077,"int",NA,NA,"Middle Givetian","",NA,"",388.1,383.7,33153
+439,"int",NA,NA,"Tioughnioga","",NA,"",388.1,383.7,5954
+421,"int",NA,NA,"Givet","",NA,"",388.1,383.7,5954
+412,"int",NA,NA,"Givetien","",NA,"",388.1,383.7,5954
+403,"int",NA,NA,"Morte","",NA,"",388.1,376.1,5954
+426,"int",NA,NA,"Srbsko","",NA,"",388.1,383.7,5954
+404,"int",NA,NA,"Ilfracombe","",NA,"",388.1,383.7,5954
+437,"int",NA,NA,"Genesee","",NA,"",388.1,376.1,5954
+1076,"int",NA,NA,"Late Givetian","",NA,"",388.1,383.7,33153
+440,"int",NA,NA,"Cazenovian","",NA,"",391.9,383.7,5954
+422,"int",NA,NA,"Eifel","",NA,"",391.9,388.1,5954
+427,"int",NA,NA,"Chotec","",NA,"",391.9,388.1,5954
+441,"int",NA,NA,"Southwood","",NA,"",391.9,388.1,5954
+405,"int",NA,NA,"Hangman","",NA,"",391.9,388.1,5954
+57,"int",1,4,"Middle Devonian","",19,"#F1C868",393.3,382.7,47900
+180,"int",1,5,"Eifelian","",57,"#F1D576",393.3,387.7,47900
+1074,"int",NA,NA,"Late Emsian","",NA,"",402.5,391.9,33153
+181,"int",1,5,"Emsian","",58,"#E5D075",407.6,393.3,47900
+406,"int",NA,NA,"Lynton","",NA,"",409.1,388.1,5954
+429,"int",NA,NA,"Zlichovian","",NA,"",409.1,391.9,5954
+443,"int",NA,NA,"Deer Park","",NA,"",409.1,391.9,5954
+413,"int",NA,NA,"Couvinien","",NA,"",409.1,383.7,5954
+423,"int",NA,NA,"Ems","",NA,"",409.1,391.9,5954
+1075,"int",NA,NA,"Early Emsian","",NA,"",409.1,402.5,33153
+428,"int",NA,NA,"Daleje","",NA,"",409.1,388.1,5954
+442,"int",NA,NA,"Sawkill","",NA,"",409.1,391.9,5954
+182,"int",1,5,"Pragian","",58,"#E5C468",410.8,407.6,47900
+407,"int",NA,NA,"Brecon","",NA,"",412.3,391.9,5954
+430,"int",NA,NA,"Pragian (Czechoslovakia)","",NA,"",412.3,391.9,5954
+414,"int",NA,NA,"Coblencien","",NA,"",412.3,391.9,5954
+424,"int",NA,NA,"Siegen","",NA,"",412.3,409.1,5954
+415,"int",NA,NA,"Gedinnine","",NA,"",416,412.3,5954
+425,"int",NA,NA,"Gedinne","",NA,"",416,412.3,5954
+444,"int",NA,NA,"Helderberg","",NA,"",416,391.9,5954
+408,"int",NA,NA,"Ditton","",NA,"",416,412.3,5954
+431,"int",NA,NA,"Lochkovian (Czechoslovakia)","",NA,"",416,409.1,5954
+409,"int",NA,NA,"Downton","",NA,"",418.7,412.3,5954
+19,"int",1,3,"Devonian","D",3,"#CB8C37",419.2,358.9,47900
+58,"int",1,4,"Early Devonian","",19,"#E5AC4D",419.2,393.3,47900
+183,"int",1,5,"Lochkovian","",58,"#E5B75A",419.2,410.8,47900
+841,"int",NA,NA,"Kuressaare","",NA,"",421.3,419.2,15443
+370,"int",NA,NA,"Whitcliffe","",NA,"",421.3,419.2,5954
+371,"int",NA,NA,"Leintwardine","",NA,"",421.3,419.2,5954
+385,"int",NA,NA,"Hamra","",NA,"",421.3,419.2,5954
+386,"int",NA,NA,"Burgsvik","",NA,"",421.3,419.2,5954
+387,"int",NA,NA,"Eke","",NA,"",421.3,419.2,5954
+1095,"int",NA,NA,"Kuimov","",NA,"",422.9,419.2,42596
+842,"int",NA,NA,"Paadla","",NA,"",422.9,419.2,15443
+1091,"int",NA,NA,"Salina","",NA,"",422.9,419.2,42596
+394,"int",NA,NA,"Cayugan","",NA,"",422.9,419.2,5954
+372,"int",NA,NA,"Bringewood","",NA,"",422.9,421.3,5954
+373,"int",NA,NA,"Elton","",NA,"",422.9,421.3,5954
+384,"int",NA,NA,"Sundre","",NA,"",423,419.2,5954
+367,"int",NA,NA,"Red Downtonian","",NA,"",423,419.2,5954
+381,"int",NA,NA,"Pridolischichten","",NA,"",423,419.2,5954
+839,"int",NA,NA,"Ohesaare","",NA,"",423,419.2,15443
+368,"int",NA,NA,"Temeside Shales","",NA,"",423,419.2,5954
+784,"int",NA,NA,"unnamed Pridoli stage","",NA,"",423,419.2,15443
+840,"int",NA,NA,"Kaugetuma","",NA,"",423,419.2,15443
+369,"int",NA,NA,"Downton Castle","",NA,"",423,419.2,5954
+59,"int",1,4,"Pridoli","",20,"#E6F5E1",423,419.2,47900
+3001,"int",1,5,"Pridoli","",59,"#E6F5E1",423,419.2,47900
+374,"int",NA,NA,"Wenlock (England)","",NA,"",425.4,422.9,5954
+186,"int",NA,NA,"Gleedonian","",NA,"",425.4,422.9,5954
+388,"int",NA,NA,"Hemse","",NA,"",425.4,419.2,5954
+375,"int",NA,NA,"Tickwood","",NA,"",425.4,422.9,5954
+382,"int",NA,NA,"Kopaninaschichten","",NA,"",425.4,419.2,5954
+184,"int",1,5,"Ludfordian","",60,"#D9F0DF",425.6,423,47900
+187,"int",NA,NA,"Whitwellian","",NA,"",426.2,425.4,5954
+1096,"int",NA,NA,"Chagyrka","",NA,"",426.2,422.9,42596
+843,"int",NA,NA,"Rootsikula","",NA,"",426.2,422.9,15443
+60,"int",1,4,"Ludlow","",20,"#BFE6CF",427.4,423,47900
+185,"int",1,5,"Gorstian","",60,"#CCECDD",427.4,425.6,47900
+845,"int",NA,NA,"Jaani","",NA,"",428.2,426.2,15443
+389,"int",NA,NA,"Mulde","",NA,"",428.2,422.9,5954
+376,"int",NA,NA,"Coalbrookdale","",NA,"",428.2,422.9,5954
+390,"int",NA,NA,"Slite","",NA,"",428.2,426.2,5954
+1092,"int",NA,NA,"Lockport","",NA,"",428.2,422.9,42596
+395,"int",NA,NA,"Lockportian","",NA,"",428.2,422.9,5954
+377,"int",NA,NA,"Buildwas","",NA,"",428.2,426.2,5954
+391,"int",NA,NA,"Hogklint","",NA,"",428.2,426.2,5954
+844,"int",NA,NA,"Jaagarahu","",NA,"",428.2,422.9,15443
+392,"int",NA,NA,"Upper Visby","",NA,"",428.2,426.2,5954
+785,"int",1,5,"Homerian","",61,"#CCEBD1",430.5,427.4,47900
+61,"int",1,4,"Wenlock","",20,"#B3E1C2",433.4,427.4,47900
+188,"int",1,5,"Sheinwoodian","",61,"#BFE6C3",433.4,430.5,47900
+393,"int",NA,NA,"Lower Visby","",NA,"",436,428.2,5954
+1097,"int",NA,NA,"Chesnokovka","",NA,"",436,426.2,42596
+396,"int",NA,NA,"Tonawandan","",NA,"",436,426.2,5954
+1098,"int",NA,NA,"Polaty","",NA,"",436,428.2,42596
+378,"int",NA,NA,"Woolhope","",NA,"",436,428.2,5954
+189,"int",1,5,"Telychian","",62,"#BFE6D1",438.5,433.4,47900
+397,"int",NA,NA,"Ontarian","",NA,"",439,428.2,5954
+1099,"int",NA,NA,"Syrovaty","",NA,"",439,428.2,42596
+379,"int",NA,NA,"Wych","",NA,"",439,428.2,5954
+846,"int",NA,NA,"Adavere","",NA,"",439,428.2,15443
+1093,"int",NA,NA,"Clinton","",NA,"",439,426.2,42596
+190,"int",1,5,"Aeronian","",62,"#B3E1C2",440.8,438.5,47900
+383,"int",NA,NA,"Litenschichten","",NA,"",443.4,422.9,5954
+1094,"int",NA,NA,"Medina","",NA,"",443.4,436,42596
+1090,"int",NA,NA,"Niagaran","",NA,"",443.4,422.9,42596
+398,"int",NA,NA,"Alexandrian","",NA,"",443.4,436,5954
+1100,"int",NA,NA,"Vtorye Utesy","",NA,"",443.4,436,42596
+380,"int",NA,NA,"Cowleigh Park","",NA,"",443.4,439,5954
+847,"int",NA,NA,"Raikkula","",NA,"",443.4,436,15443
+848,"int",NA,NA,"Juuru","",NA,"",443.4,439,15443
+20,"int",1,3,"Silurian","S",3,"#B3E1B6",443.4,419.2,47900
+62,"int",1,4,"Llandovery","",20,"#99D7B3",443.4,433.4,47900
+191,"int",1,5,"Rhuddanian","",62,"#A6DCB5",443.4,440.8,47900
+192,"int",1,5,"Hirnantian","",29,"#A6DBAB",445.2,443.4,47900
+1011,"int",NA,NA,"late Late Ordovician","",NA,"",445.6,443.7,19119
+592,"int",NA,NA,"Kosovian","",NA,"",445.6,443.7,8960
+353,"int",NA,NA,"Gamach","",NA,"",445.6,443.7,5954
+326,"int",NA,NA,"Kosov","",NA,"",445.6,443.7,5954
+336,"int",NA,NA,"Porkuni","",NA,"",445.6,443.7,5954
+610,"int",NA,NA,"Wufeng","",NA,"",449.5,443.7,8960
+606,"int",NA,NA,"Qiantianjiang","",NA,"",449.5,443.7,8960
+565,"int",NA,NA,"Richmondian","",NA,"",449.5,443.7,8960
+597,"int",NA,NA,"Bolindian","",NA,"",449.5,443.7,8960
+593,"int",NA,NA,"Kralodvorian","",NA,"",449.5,445.6,8960
+638,"int",NA,NA,"Ashgillian","",NA,"",449.5,443.7,8960
+621,"int",NA,NA,"Chientangkiangian","",NA,"",449.5,443.7,8960
+354,"int",NA,NA,"Richmond","",NA,"",449.5,445.6,5954
+63,"int",NA,NA,"Ashgill","",NA,"",449.5,443.7,5954
+194,"int",NA,NA,"Cautleyan","",NA,"",449.5,445.6,5954
+327,"int",NA,NA,"Kraluv Dvur","",NA,"",449.5,445.6,5954
+195,"int",NA,NA,"Pusgillian","",NA,"",449.5,445.6,5954
+337,"int",NA,NA,"Pirgu","",NA,"",449.5,445.6,5954
+564,"int",NA,NA,"Gamachian","",NA,"",449.5,443.7,8960
+196,"int",NA,NA,"Onnian","",NA,"",452,449.5,5954
+338,"int",NA,NA,"Vormsi","",NA,"",452,445.6,5954
+574,"int",NA,NA,"Harju","",NA,"",452,443.7,8960
+339,"int",NA,NA,"Nabala","",NA,"",452,449.5,5954
+566,"int",NA,NA,"Maysvillian","",NA,"",452,449.5,8960
+355,"int",NA,NA,"Maysville","",NA,"",452,445.6,5954
+560,"int",NA,NA,"Cincinnatian","",NA,"",452.5,443.7,8960
+1008,"int",1,5,"Katian","",29,"#99D69F",453,445.2,47900
+578,"int",NA,NA,"Cheneyan","",NA,"",455.8,452,8960
+786,"int",NA,NA,"middle Late Ordovician","",NA,"",455.8,445.6,15443
+588,"int",NA,NA,"Woolstonian","",NA,"",455.8,452,8960
+197,"int",NA,NA,"Actonian","",NA,"",455.8,452,5954
+193,"int",NA,NA,"Rawtheyan","",NA,"",455.8,445.6,5954
+198,"int",NA,NA,"Marshbrookian","",NA,"",455.8,452,5954
+340,"int",NA,NA,"Rakvere","",NA,"",455.8,452,5954
+577,"int",NA,NA,"Streffordian","",NA,"",455.8,449.5,8960
+598,"int",NA,NA,"Eastonian","",NA,"",456.1,449.5,8960
+200,"int",NA,NA,"Soudleyan","",NA,"",457.5,455.8,5954
+329,"int",NA,NA,"Zahorany","",NA,"",457.5,455.8,5954
+201,"int",NA,NA,"Harnagian","",NA,"",457.5,455.8,5954
+343,"int",NA,NA,"Johvi","",NA,"",457.5,449.5,5954
+579,"int",NA,NA,"Burrellian","",NA,"",457.5,455.8,8960
+561,"int",NA,NA,"Mohawkian","",NA,"",457.5,452.5,8960
+357,"int",NA,NA,"Sherman","",NA,"",457.5,454,5954
+330,"int",NA,NA,"Vinice","",NA,"",457.5,455.8,5954
+358,"int",NA,NA,"Kirkfield","",NA,"",457.5,455.8,5954
+359,"int",NA,NA,"Rockland","",NA,"",457.5,455.8,5954
+199,"int",NA,NA,"Longvillian","",NA,"",457.5,455.8,5954
+341,"int",NA,NA,"Oandu","",NA,"",457.5,452,5954
+328,"int",NA,NA,"Bohdalec","",NA,"",457.5,445.6,5954
+29,"int",1,4,"Late Ordovician","",21,"#7FCA93",458.4,443.4,47900
+1009,"int",1,5,"Sandbian","",29,"#8CD094",458.4,453,47900
+342,"int",NA,NA,"Keila","",NA,"",460.9,455.8,5954
+356,"int",NA,NA,"Edenian","",NA,"",460.9,449.5,5954
+647,"int",NA,NA,"Blackriveran","",NA,"",460.9,449.5,9006
+642,"int",NA,NA,"Franklinian","",NA,"",460.9,449.5,9006
+554,"int",NA,NA,"Trentonian","",NA,"",460.9,449.5,8960
+643,"int",NA,NA,"Kirkfieldian","",NA,"",460.9,449.5,9006
+611,"int",NA,NA,"Xiaoxita","",NA,"",460.9,443.7,8960
+203,"int",NA,NA,"Late Llandeilo","",NA,"",460.9,449.5,5954
+616,"int",NA,NA,"Shikou","",NA,"",460.9,443.7,8960
+787,"int",NA,NA,"early Late Ordovician","",NA,"",460.9,455.8,15443
+607,"int",NA,NA,"Aijiashan","",NA,"",460.9,443.7,8960
+589,"int",NA,NA,"Volfreyan","",NA,"",460.9,457.5,8960
+644,"int",NA,NA,"Rocklandian","",NA,"",460.9,449.5,9006
+202,"int",NA,NA,"Costonian","",NA,"",460.9,457.5,5954
+344,"int",NA,NA,"Idavere","",NA,"",460.9,455.8,5954
+580,"int",NA,NA,"Aurelucian","",NA,"",460.9,457.5,8960
+594,"int",NA,NA,"Berounian","",NA,"",460.9,449.5,8960
+617,"int",NA,NA,"Hanjiang","",NA,"",460.9,449.5,8960
+639,"int",NA,NA,"Caradocian","",NA,"",460.9,449.5,8960
+331,"int",NA,NA,"Letna","",NA,"",460.9,455.8,5954
+567,"int",NA,NA,"Chatfieldian","",NA,"",460.9,449.5,8960
+599,"int",NA,NA,"Gisbornian","",NA,"",460.9,456.1,8960
+622,"int",NA,NA,"Neichiashanian","",NA,"",460.9,449.5,8960
+557,"int",NA,NA,"Wildernessian","",NA,"",460.9,449.5,8960
+590,"int",NA,NA,"Dobrotivian","",NA,"",460.9,457.5,8960
+204,"int",NA,NA,"Middle Llandeilo","",NA,"",460.9,449.5,5954
+345,"int",NA,NA,"Kukruse","",NA,"",460.9,449.5,5954
+627,"int",NA,NA,"Haljala","",NA,"",460.9,449.5,8960
+332,"int",NA,NA,"Liben","",NA,"",460.9,457.5,5954
+568,"int",NA,NA,"Turinian","",NA,"",460.9,449.5,8960
+558,"int",NA,NA,"Ashbyan","",NA,"",460.9,449.5,8960
+646,"int",NA,NA,"Shermanian","",NA,"",460.9,449.5,9006
+64,"int",NA,NA,"Caradoc","",NA,"",460.9,449.5,5954
+360,"int",NA,NA,"Black River","",NA,"",460.9,457.5,5954
+347,"int",NA,NA,"Lasnamagi","",NA,"",463.5,460.9,5954
+348,"int",NA,NA,"Aseri","",NA,"",463.5,460.9,5954
+575,"int",NA,NA,"Viru","",NA,"",463.5,452,8960
+206,"int",NA,NA,"Late Llanvirn","",NA,"",463.5,460.9,5954
+205,"int",NA,NA,"Early Llandeilo","",NA,"",466,460.9,5954
+333,"int",NA,NA,"Dobrotiva","",NA,"",466,460.9,5954
+65,"int",NA,NA,"Llandeilo","",NA,"",466,449.5,5954
+361,"int",NA,NA,"Chazy","",NA,"",466,457.5,5954
+207,"int",NA,NA,"Early Llanvirn","",NA,"",466,463.5,5954
+334,"int",NA,NA,"Sarka","",NA,"",466,466,5954
+66,"int",NA,NA,"Llanvirn","",NA,"",466,460.9,5954
+630,"int",NA,NA,"Aluoja","",NA,"",466,460.9,8960
+581,"int",NA,NA,"Llandeilian","",NA,"",466,460.9,8960
+591,"int",NA,NA,"Oretanian","",NA,"",466,460.9,8960
+346,"int",NA,NA,"Uhaku","",NA,"",466,460.9,5954
+582,"int",NA,NA,"Abereiddian","",NA,"",466,460.9,8960
+556,"int",1,5,"Darriwilian","",30,"#74C69C",467.3,458.4,47900
+648,"int",NA,NA,"Chazyan","",NA,"",468.1,460.9,9006
+362,"int",NA,NA,"Whiterock","",NA,"",468.1,460.9,5954
+612,"int",NA,NA,"Guniu","",NA,"",468.1,460.9,8960
+649,"int",NA,NA,"Marmor","",NA,"",468.1,460.9,9006
+349,"int",NA,NA,"Kunda","",NA,"",468.1,463.5,5954
+595,"int",NA,NA,"Llanvirnian","",NA,"",468.1,460.9,8960
+618,"int",NA,NA,"Hulo","",NA,"",468.1,460.9,8960
+623,"int",NA,NA,"Zhejiangian","",NA,"",468.1,460.9,8960
+600,"int",NA,NA,"Yapeenian","",NA,"",468.9,466,8960
+30,"int",1,4,"Middle Ordovician","",21,"#4DB47E",470,458.4,47900
+1079,"int",1,5,"Dapingian","",30,"#66C092",470,467.3,47900
+633,"int",NA,NA,"Langevoja","",NA,"",471.8,468.1,8960
+569,"int",NA,NA,"Rangerian","",NA,"",471.8,468.1,8960
+583,"int",NA,NA,"Fennian","",NA,"",471.8,466,8960
+634,"int",NA,NA,"Vaana","",NA,"",471.8,468.1,8960
+635,"int",NA,NA,"Saka","",NA,"",471.8,468.1,8960
+562,"int",NA,NA,"Whiterockian","",NA,"",471.8,457.5,8960
+788,"int",NA,NA,"early Middle Ordovician","",NA,"",471.8,468.1,15443
+631,"int",NA,NA,"Valaste","",NA,"",471.8,466,8960
+350,"int",NA,NA,"Volkhov","",NA,"",471.8,468.1,5954
+640,"int",NA,NA,"Volkhovian","",NA,"",471.8,468.1,8960
+632,"int",NA,NA,"Hunderum","",NA,"",471.8,466,8960
+601,"int",NA,NA,"Castlemainian","",NA,"",472,468.9,8960
+602,"int",NA,NA,"Chewtonian","",NA,"",473.9,472,8960
+603,"int",NA,NA,"Bendigonian","",NA,"",476.8,473.9,8960
+1010,"int",1,5,"Floian","",31,"#41B087",477.7,470,47900
+619,"int",NA,NA,"Ningkuo","",NA,"",478.6,468.1,8960
+641,"int",NA,NA,"Latorpian","",NA,"",478.6,471.8,8960
+624,"int",NA,NA,"Yushanian","",NA,"",478.6,468.1,8960
+570,"int",NA,NA,"Blackhillsian","",NA,"",478.6,471.8,8960
+584,"int",NA,NA,"Whitlandian","",NA,"",478.6,471.8,8960
+335,"int",NA,NA,"Klabava","",NA,"",478.6,466,5954
+626,"int",NA,NA,"Valhallan","",NA,"",478.6,468.1,8960
+585,"int",NA,NA,"Moridunian","",NA,"",478.6,471.8,8960
+67,"int",NA,NA,"Arenig","",NA,"",478.6,466,5954
+608,"int",NA,NA,"Yangtzi","",NA,"",478.6,460.9,8960
+363,"int",NA,NA,"Cassinian","",NA,"",478.6,468.1,5954
+613,"int",NA,NA,"Dawan","",NA,"",478.6,468.1,8960
+636,"int",NA,NA,"Billingen","",NA,"",478.6,471.8,8960
+789,"int",NA,NA,"late Early Ordovician","",NA,"",478.6,471.8,15443
+614,"int",NA,NA,"Daobaowan","",NA,"",478.6,468.1,8960
+596,"int",NA,NA,"Arenigian","",NA,"",478.6,468.1,8960
+351,"int",NA,NA,"Latorp","",NA,"",484.5,471.8,5954
+637,"int",NA,NA,"Hunneberg","",NA,"",484.5,471.8,8960
+651,"int",NA,NA,"Demingian","",NA,"",485.4,478.6,9006
+790,"int",NA,NA,"Mansian","",NA,"",485.4,485,15443
+587,"int",NA,NA,"Cressagian","",NA,"",485.4,478.6,8960
+365,"int",NA,NA,"Deming","",NA,"",485.4,478.6,5954
+615,"int",NA,NA,"Lianghekou","",NA,"",485.4,478.6,8960
+629,"int",NA,NA,"Pakerort","",NA,"",485.4,484.5,8960
+800,"int",NA,NA,"Datsonian","",NA,"",485.4,485,15443
+620,"int",NA,NA,"Hunjiang","",NA,"",485.4,468.1,8960
+366,"int",NA,NA,"Gasconadian","",NA,"",485.4,477.7,5954
+625,"int",NA,NA,"Ichangian","",NA,"",485.4,478.6,8960
+828,"int",NA,NA,"Ungurian","",NA,"",485.4,478.6,15443
+571,"int",NA,NA,"Tulean","",NA,"",485.4,471.8,8960
+576,"int",NA,NA,"Oeland","",NA,"",485.4,463.5,8960
+645,"int",NA,NA,"Canadian","",NA,"",485.4,468.1,9006
+572,"int",NA,NA,"Stairsian","",NA,"",485.4,478.6,8960
+604,"int",NA,NA,"Lancefieldian","",NA,"",485.4,476.8,8960
+650,"int",NA,NA,"Jeffersonian","",NA,"",485.4,468.1,9006
+586,"int",NA,NA,"Migneintian","",NA,"",485.4,478.6,8960
+68,"int",NA,NA,"Tremadoc","",NA,"",485.4,477.7,5954
+609,"int",NA,NA,"Yichang","",NA,"",485.4,478.6,8960
+364,"int",NA,NA,"Jefferson","",NA,"",485.4,468.1,5954
+573,"int",NA,NA,"Skullrockian","",NA,"",485.4,478.6,8960
+605,"int",NA,NA,"Warendian","",NA,"",485.4,478.6,8960
+628,"int",NA,NA,"Varangu","",NA,"",485.4,484.5,8960
+21,"int",1,3,"Ordovician","O",3,"#009270",485.4,443.4,47900
+31,"int",1,4,"Early Ordovician","",21,"#1A9D6F",485.4,470,47900
+559,"int",1,5,"Tremadocian","",31,"#33A97E",485.4,477.7,47900
+563,"int",NA,NA,"Ibexian","",NA,"",488.3,471.8,8960
+1112,"int",1,5,"Stage 10","",780,"#E6F5C9",489.5,485.4,47900
+801,"int",NA,NA,"Payntonian","",NA,"",494,485.4,15443
+1113,"int",1,5,"Jiangshanian","",780,"#D9F0BB",494,489.5,47900
+780,"int",1,4,"Furongian","",22,"#B3E095",497,485.4,47900
+1114,"int",1,5,"Paibian","",780,"#CCEBAE",497,494,47900
+822,"int",NA,NA,"Sunwaptan","",NA,"",498.5,485.4,15443
+791,"int",NA,NA,"Ketyan","",NA,"",498.5,485.4,15443
+1085,"int",NA,NA,"Niuchehean","",NA,"",498.5,485.4,40570
+810,"int",NA,NA,"Taoyuanian","",NA,"",498.5,485.4,15443
+792,"int",NA,NA,"Yurakian","",NA,"",498.5,485.4,15443
+829,"int",NA,NA,"Batyrbaian","",NA,"",498.5,485.4,15443
+802,"int",NA,NA,"Iverian","",NA,"",498.5,494,15443
+830,"int",NA,NA,"Aksayan","",NA,"",498.5,485.4,15443
+1087,"int",1,5,"Guzhangian","",1109,"#CCDFAA",500.5,497,47900
+69,"int",NA,NA,"Merioneth","",NA,"",501,485.4,5954
+804,"int",NA,NA,"Mindyallan","",NA,"",501,498.5,15443
+795,"int",NA,NA,"Tavgian","",NA,"",501,485.4,15443
+209,"int",NA,NA,"Maentwrogian","",NA,"",501,485.4,5954
+823,"int",NA,NA,"Steptoean","",NA,"",501,485.4,15443
+352,"int",NA,NA,"Olentian","",NA,"",501,484.5,5954
+311,"int",NA,NA,"Dolgelly","",NA,"",501,485.4,5954
+796,"int",NA,NA,"Nganasanian","",NA,"",501,498.5,15443
+819,"int",NA,NA,"Millardan","",NA,"",501,485.4,15443
+321,"int",NA,NA,"Trempealeauan","",NA,"",501,485.4,5954
+312,"int",NA,NA,"Festiniogian","",NA,"",501,485.4,5954
+1086,"int",NA,NA,"Paibian","",NA,"",501,498.5,40570
+811,"int",NA,NA,"Waergangian","",NA,"",501,498.5,15443
+793,"int",NA,NA,"Ensyan","",NA,"",501,498.5,15443
+322,"int",NA,NA,"Franconian","",NA,"",501,485.4,5954
+313,"int",NA,NA,"Maentwrog","",NA,"",501,485.4,5954
+812,"int",NA,NA,"Youshuanian","",NA,"",501,498.5,15443
+803,"int",NA,NA,"Idamean","",NA,"",501,498.5,15443
+835,"int",NA,NA,"Merionethian","",NA,"",501,485.4,15443
+794,"int",NA,NA,"Maduan","",NA,"",501,498.5,15443
+323,"int",NA,NA,"Dresbachian","",NA,"",501,485.4,5954
+208,"int",NA,NA,"Dolgellian","",NA,"",501,485.4,5954
+831,"int",NA,NA,"Sakian","",NA,"",501,485.4,15443
+805,"int",NA,NA,"Boomerangian","",NA,"",504,501,15443
+1116,"int",1,5,"Drumian","",1109,"#BFD99D",504.5,500.5,47900
+813,"int",NA,NA,"Wangcunian","",NA,"",505,501,15443
+832,"int",NA,NA,"Ayusokkanian","",NA,"",505,498.5,15443
+833,"int",NA,NA,"Zhanarykian","",NA,"",505,501,15443
+806,"int",NA,NA,"Undillan","",NA,"",505,504,15443
+797,"int",NA,NA,"Mayan","",NA,"",505,501,15443
+807,"int",NA,NA,"Floran","",NA,"",507,505,15443
+1109,"int",1,4,"Series 3","",22,"#A6CF86",509,497,47900
+1117,"int",1,5,"Stage 5","",1109,"#B3D492",509,504.5,47900
+836,"int",NA,NA,"Arcadian","",NA,"",513,501,15443
+324,"int",NA,NA,"Albertian","",NA,"",513,501,5954
+315,"int",NA,NA,"Gamlan","",NA,"",513,501,5954
+70,"int",NA,NA,"St Davids","",NA,"",513,501,5954
+814,"int",NA,NA,"Taijangian","",NA,"",513,505,15443
+210,"int",NA,NA,"Menevian","",NA,"",513,501,5954
+316,"int",NA,NA,"Barmouth","",NA,"",513,501,5954
+824,"int",NA,NA,"Marjumian","",NA,"",513,498.5,15443
+781,"int",NA,NA,"Middle Cambrian","",NA,"",513,501,15443
+211,"int",NA,NA,"Solvan","",NA,"",513,501,5954
+820,"int",NA,NA,"Lincolnian","",NA,"",513,498.5,15443
+317,"int",NA,NA,"Hafotty","",NA,"",513,501,5954
+834,"int",NA,NA,"Tyesaian","",NA,"",513,505,15443
+1082,"int",NA,NA,"Wulingian","",NA,"",513,501,40570
+825,"int",NA,NA,"Delamaran","",NA,"",513,505,15443
+798,"int",NA,NA,"Amgan","",NA,"",513,505,15443
+314,"int",NA,NA,"Clogau","",NA,"",513,501,5954
+808,"int",NA,NA,"Templetonian","",NA,"",513,507,15443
+1118,"int",1,5,"Stage 4","",1110,"#B3CA8E",514,509,47900
+809,"int",NA,NA,"Ordian","",NA,"",516,513,15443
+815,"int",NA,NA,"Duyunian","",NA,"",516,513,15443
+749,"int",NA,NA,"Toyonian","",NA,"",516,513,5954
+816,"int",NA,NA,"Nangaoian","",NA,"",516,513,15443
+212,"int",NA,NA,"Lenian","",NA,"",516,513,5954
+318,"int",NA,NA,"Rhinog","",NA,"",516,513,5954
+750,"int",NA,NA,"Botomian","",NA,"",516,513,5954
+1083,"int",NA,NA,"Qiandongian","",NA,"",516,513,40570
+826,"int",NA,NA,"Dyeran","",NA,"",516,513,15443
+213,"int",NA,NA,"Atdabanian","",NA,"",520,516,5954
+319,"int",NA,NA,"Llanbedr","",NA,"",520,516,5954
+837,"int",NA,NA,"Branchian","",NA,"",520,513,15443
+1110,"int",1,4,"Series 2","",22,"#99C078",521,509,47900
+1119,"int",1,5,"Stage 3","",1110,"#A6C583",521,514,47900
+1120,"int",1,5,"Stage 2","",1111,"#A6BA80",529,521,47900
+827,"int",NA,NA,"Montezuman","",NA,"",530,516,15443
+214,"int",NA,NA,"Tommotian","",NA,"",530,520,5954
+320,"int",NA,NA,"Dolwen","",NA,"",530,516,5954
+325,"int",NA,NA,"Waucoban","",NA,"",530,513,5954
+71,"int",NA,NA,"Caerfai","",NA,"",530,513,5954
+782,"int",NA,NA,"Early Cambrian","",NA,"",541,513,15443
+1084,"int",NA,NA,"Diandongian","",NA,"",541,516,40570
+818,"int",NA,NA,"Jinnigian","",NA,"",541,516,15443
+748,"int",NA,NA,"Manykaian","",NA,"",541,530,10010
+838,"int",NA,NA,"Placentian","",NA,"",541,516,15443
+821,"int",NA,NA,"Begadean","",NA,"",541,520,15443
+817,"int",NA,NA,"Meishucunian","",NA,"",541,516,15443
+799,"int",NA,NA,"Nemakit-Daldynian","",NA,"",541,530,15443
+751,"int",1,1,"Phanerozoic","",0,"#9AD9DD",541,0,47900
+3,"int",1,2,"Paleozoic","Pz",751,"#99C08D",541,252.17,47900
+22,"int",1,3,"Cambrian","Cm",3,"#7FA056",541,485.4,47900
+1111,"int",1,4,"Terreneuvian","",22,"#8CB06C",541,521,47900
+1121,"int",1,5,"Fortunian","",1111,"#99B575",541,529,47900
+215,"int",NA,NA,"Poundian","",NA,"",580,541,5954
+216,"int",NA,NA,"Wonokan","",NA,"",580,580,5954
+72,"int",NA,NA,"Ediacara","",NA,"",580,541,5954
+217,"int",NA,NA,"Mortensnes","",NA,"",580,580,5954
+4,"int",NA,NA,"Sinian","",NA,"",635,541,5954
+1081,"int",NA,NA,"Nyborg","",NA,"",635,580,30675
+23,"int",NA,NA,"Vendian","",NA,"",635,541,5954
+73,"int",NA,NA,"Varanger","",NA,"",635,580,5954
+761,"int",1,3,"Ediacaran","",754,"#FED96A",635,541,47900
+24,"int",NA,NA,"Sturtian","",NA,"",723,663,5954
+218,"int",NA,NA,"Smalfjord","",NA,"",723,635,5954
+762,"int",1,3,"Cryogenian","",754,"#FECC5C",850,635,47900
+754,"int",1,2,"Neoproterozoic","",752,"#FEB342",1000,541,47900
+763,"int",1,3,"Tonian","",754,"#FEBF4E",1000,850,47900
+74,"int",NA,NA,"Karatau","",NA,"",1050,635,5954
+764,"int",1,3,"Stenian","",755,"#FED99A",1200,1000,47900
+75,"int",NA,NA,"Yurmatin","",NA,"",1350,1050,5954
+765,"int",1,3,"Ectasian","",755,"#F3CC8A",1400,1200,47900
+755,"int",1,2,"Mesoproterozoic","",752,"#FDB462",1600,1000,47900
+766,"int",1,3,"Calymmian","",755,"#FDC07A",1600,1400,47900
+9,"int",NA,NA,"Swazian","",NA,"",1650,1650,5954
+5,"int",NA,NA,"Riphean","",NA,"",1650,635,5954
+10,"int",NA,NA,"Isuan","",NA,"",1650,1650,5954
+6,"int",NA,NA,"Animikean","",NA,"",1650,1650,5954
+76,"int",NA,NA,"Burzyan","",NA,"",1650,1350,5954
+7,"int",NA,NA,"Huronian","",NA,"",1650,1650,5954
+8,"int",NA,NA,"Randian","",NA,"",1650,1650,5954
+767,"int",1,3,"Statherian","",756,"#F875A7",1800,1600,47900
+768,"int",1,3,"Orosirian","",756,"#F76898",2050,1800,47900
+769,"int",1,3,"Rhyacian","",756,"#F75B89",2300,2050,47900
+752,"int",1,1,"Proterozoic","",0,"#F73563",2500,541,47900
+756,"int",1,2,"Paleoproterozoic","",752,"#F74370",2500,1600,47900
+770,"int",1,3,"Siderian","",756,"#F74F7C",2500,2300,47900
+757,"int",1,2,"Neoarchean","",753,"#F99BC1",2800,2500,15443
+758,"int",1,2,"Mesoarchean","",753,"#F768A9",3200,2800,15443
+759,"int",1,2,"Paleoarchean","",753,"#F444A9",3600,3200,15443
+77,"int",NA,NA,"Early Imbrian","",NA,"",3850,1650,5954
+78,"int",NA,NA,"Nectarian","",NA,"",3950,3850,5954
+753,"int",1,1,"Archean","",0,"#F0047F",4000,2500,15443
+760,"int",1,2,"Eoarchean","",753,"#DA037F",4000,3600,15443
+79,"int",NA,NA,"Basin Groups 1-9","",NA,"",4150,3950,5954
+80,"int",NA,NA,"Cryptic","",NA,"",4560,4150,5954
+11,"int",1,1,"Hadean","",0,"#AE027E",4600,4000,5954
