@@ -1,0 +1,30 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+7-Phylogenetic inertia.R
+BorgesEtAl2019DeltaStatistic.R
+CamOrdEchino.Rproj
+CamOrdEchinos.Rproj
+Data files
+EchinoPhylogeny_cal3.pdf
+EchinoPhylogeny_equal.pdf
+EchinoPhylogeny_supertree.pdf
+Figures & results summary
+GSA2019_EchinoDisparityAnalyses.R
+Manuscript
+Refs
+X-Class analyses.R
+X-Trying to avoid ZLBs.R
+X5-Rate tests_OLD.R
+X_Diff pcoa trials.R
+cal3.tree
+closest.cal3
+closest.equal
+consensus.cal3.tree
+consensus.equal.tree
+echinodermtree.nex
+equal.tree
+equal.trees
+par.cal3trees
+timeList
