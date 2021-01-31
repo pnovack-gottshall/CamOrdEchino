@@ -2005,17 +2005,6 @@ par(op)
 # each space to the overall FRic of all echinoderms, as the length of
 # eigenvalues may be different in each space.
 
-# Function to re-scale PCoA coordinates according to the magnitude of the first
-# eigenvalue. (See Dineen, et al., 2019, and above for details.)
-stand.pcoa <- function(vectors = NULL, eigenvalues = NULL) {
-  nc <- ncol(vectors)
-  first.e <- eigenvalues[1]
-  for (c in 1:nc) {
-    vectors[, c] <- vectors[, c] * eigenvalues[c] / first.e
-  }
-  return(vectors)
-}
-
 # Select 'm' (number of PCoA axes to use when calculating convex hull volume)
 m <- 2
 
