@@ -16,7 +16,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA Reformatted")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
@@ -67,7 +67,7 @@ head(CharDepends)
 # CharDepends error (which in the morphological case is not really an error
 # because the dependencies are not always straightforward when coding
 # phylum-wide characters. Thanks, Graeme!
-source("~/Manuscripts/CamOrdEchino/MorphDistMatrix2.R")
+source("~/Manuscripts/CamOrdEchinos/MorphDistMatrix2.R")
 
 # MORD: Maximum observable rescaled distance
 (t.start0 <- Sys.time())

@@ -45,7 +45,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA Reformatted")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 
 
@@ -108,10 +108,10 @@ sort(table(eco$Class))
 
 # See 4-DisparityTrends.R for lineage-richness (taxon-through-time) diversity
 # curves.
-load("~/Manuscripts/CamOrdEchino/Data files/NA reformatted/mode.distances.GED.5")
-load("~/Manuscripts/CamOrdEchino/Data files/NA reformatted/constant.distances.GED.5")
-load("~/Manuscripts/CamOrdEchino/Data files/NA reformatted/raw.distances.GED.5")
-load("~/Manuscripts/CamOrdEchino/Data files/NA reformatted/morph.distances.GED.5")
+load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/mode.distances.GED.5")
+load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/constant.distances.GED.5")
+load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/raw.distances.GED.5")
+load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/morph.distances.GED.5")
 
 nrow(unique(mode.distances.GED.5$DistanceMatrix))
 # 203 unique life habits in mode treatment

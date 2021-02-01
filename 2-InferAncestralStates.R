@@ -16,7 +16,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/")
+setwd("~/Manuscripts/CamOrdEchinos/")
 
 ## Download newest version of 'Claddis' from GitHub
 # To implement the Hopkins and St. John (2016) analyses, make sure to update to
@@ -69,7 +69,7 @@ any(cal3.tree$edge.length == 0)      # TRUE
 ## Import morphological and ecological data sets in NEXUS format
 # Note that although in NEXUS format, these files do not contain phylogenetic
 # data. All phylogenetics are drawn from the time-trees above.
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA reformatted/")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/")
 input <- "EchinoTree_Mode.nex"
 # input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"

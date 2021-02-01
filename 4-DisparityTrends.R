@@ -24,7 +24,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA Reformatted")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
@@ -44,16 +44,16 @@ if(packageVersion("Claddis") < "0.4.1")
   stop("wrong version of 'Claddis' Get updated version from GitHub.\n")
 
 # Modification of geoscale::geoscalePlot to allow ICS 2020 timescale 
-source("~/Manuscripts/CamOrdEchino/geoscalePlot2.R")
+source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
 
 # Modification of FD::dbFD() to simplify calculation of FD metrics, to allow
 # standardization of PCoA vector coordinates by relative magnitude of
 # eigenvalues, and to directly use pre-calculated distance matrices and PCoA
 # output.
-source("~/Manuscripts/CamOrdEchino/simple.dbFD.R")
+source("~/Manuscripts/CamOrdEchinos/simple.dbFD.R")
 
 # Modification of ecospace::calc_metrics. See source file for modifications.
-source("~/Manuscripts/CamOrdEchino/calc_metrics2.R")
+source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 
 
 
@@ -61,7 +61,7 @@ source("~/Manuscripts/CamOrdEchino/calc_metrics2.R")
 ## 2- IMPORT FILES #############################################################
 
 # Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchino/equal.tree")
+load("~/Manuscripts/CamOrdEchinos/equal.tree")
 tree <- equal.tree
 
 # Import ancestral states from 2-InferancestralStates.R
@@ -81,7 +81,7 @@ load("morph.distances.GED.5")
 ## 3 - GET EPOCH TIME BINS #####################################################
 strat_names <-
   read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
-# strat_names <- read.csv("~/Manuscripts/CamOrdEchino/strat_names.csv")
+# strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
 # Eons are level 1, eras = level 2, periods = 3, epochs = 4, ages = 5
 ages <- strat_names[which(strat_names$scale_level == 5), ]
 # Limit to Cambrian and Ordovician
@@ -92,7 +92,7 @@ mids <- apply(ages[ ,9:10], 1, mean)
 summary(int.times$max_ma - int.times$min_ma)
 
 # Import ICS 2020 timescale to use in plotting
-ICS2020 <- read.csv("~/Manuscripts/CamOrdEchino/timescales2020.csv", 
+ICS2020 <- read.csv("~/Manuscripts/CamOrdEchinos/timescales2020.csv", 
                     stringsAsFactors =  TRUE)
 head(ICS2020)
 # Note that only using the 2020 ICS timescale for plotting and not analyses,
@@ -715,13 +715,13 @@ ChronoPhyloMorphospacePlot(pcoa_results)
 # Note that this uses raw strat ranges of tips and not the ancestral nodes
 
 # 1. Import strat ranges (previously downloaded fom PBDB)
-strat.ranges <- read.csv("~/Manuscripts/CamOrdEchino/Data files/GenusStratRanges.csv", 
+strat.ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", 
                  header = TRUE)
 strat.ranges <- strat.ranges[, -1]
 colnames(strat.ranges) <- c("FAD", "LAD")
 
 # Use series ages for bins
-strat_names <- read.csv("~/Manuscripts/CamOrdEchino/strat_names.csv")
+strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
 ages2 <- strat_names[which(strat_names$scale_level == 4), ]
 ages2 <- ages2[which(ages2$max_ma > 443), ]
 
@@ -1515,7 +1515,7 @@ par(op)
 ## (code modified from Brad Deline, bdeline@westga.edu)
 
 # Import time-scaled "equal" phylogeny
-load("~/Manuscripts/CamOrdEchino/equal.tree")
+load("~/Manuscripts/CamOrdEchinos/equal.tree")
 tree <- equal.tree
 
 # Load Wills GED-50 distance matrices

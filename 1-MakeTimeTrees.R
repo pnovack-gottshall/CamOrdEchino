@@ -30,7 +30,7 @@ if (class(tree) != "phylo") stop("Nexus file is not class 'phylo")
 ## Process stratigraphic ranges
 
 # Import strat ranges (previously downloaded fom PBDB)
-ranges <- read.csv("~/Manuscripts/CamOrdEchino/Data files/GenusStratRanges.csv", header = TRUE)
+ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", header = TRUE)
 rownames(ranges) <- ranges$Genus
 ranges <- ranges[, -1]
 if (!identical(tree$tip.label, rownames(ranges)))

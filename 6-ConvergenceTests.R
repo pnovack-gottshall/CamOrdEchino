@@ -36,7 +36,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA Reformatted")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
@@ -57,7 +57,7 @@ load("raw.distances.GED.5")
 load("morph.distances.GED.5")
 
 # Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchino/equal.tree")
+load("~/Manuscripts/CamOrdEchinos/equal.tree")
 tree <- equal.tree
 
 
@@ -637,7 +637,7 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # Confirm visually on phylomorphospace & phyloecospace:
 # pdf(file = "ConvPair2.pdf")
 par(mar = c(5, 4, 2, 2))
-load("~/Manuscripts/CamOrdEchino/equal.tree"); tree <- equal.tree
+load("~/Manuscripts/CamOrdEchinos/equal.tree"); tree <- equal.tree
 load("mode.pcoa"); load("mode.conv")
 load("morph.pcoa"); load("morph.conv")
 mode.conv[which(mode.conv$Taxon1 == tp[1] & mode.conv$Taxon2 == tp[2]), ]

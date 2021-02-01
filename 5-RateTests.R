@@ -16,7 +16,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchino/Data files/NA Reformatted")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
@@ -41,7 +41,7 @@ eco.anc <- mode.anc
 # eco.anc <- raw.anc
 
 # Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchino/equal.tree")
+load("~/Manuscripts/CamOrdEchinos/equal.tree")
 tree <- equal.tree
 
 # Get epoch boundaries
@@ -57,7 +57,7 @@ TimeBins <- TimeBins$max_ma[which(TimeBins$max_ma > 443)]
 # ReadMorphNexus()] with ancestral states previously reconstructed [from
 # AncStateEstMatrix()], and adding both blocks into the same input object. Also
 # includes other updated functions needed to run analyses below. Thanks, Graeme!
-source("~/Manuscripts/CamOrdEchino/new_Claddis_functions.R")
+source("~/Manuscripts/CamOrdEchinos/new_Claddis_functions.R")
 
 
 ## Process matrices into the arg names required by aug 2020 Claddis functions:
@@ -864,10 +864,10 @@ legend("topright", inset = c(0.1, 0), legend = "ecology", bty = "n", cex = 1.5)
 
 # Modification of geoscale::geoscalePlot to allow ICS 2020 timescale and
 # multipanel plots
-source("~/Manuscripts/CamOrdEchino/geoscalePlot2.R")
+source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
 
 # Import ICS 2020 timescale to use in plotting
-ICS2020 <- read.csv("~/Manuscripts/CamOrdEchino/timescales2020.csv", 
+ICS2020 <- read.csv("~/Manuscripts/CamOrdEchinos/timescales2020.csv", 
                     stringsAsFactors =  TRUE)
 
 time_bin_mids <- 
