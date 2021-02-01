@@ -582,7 +582,7 @@ summary(eco.rates$rate)
 wilcox.test(morph.rates$rate, eco.rates$rate)
 # W = 8448.5, p-value = 0.8075 # Not sig. diff on a per-character basis
 
-# Graeme Lloyd claims this is not an appropriate way to test this comparison
+# Graeme Lloyd claims this is NOT an appropriate way to test this comparison
 # because it ignores differences in character branch completeness and branch
 # duration. The Claddis::test_rates() partition test above is the preferable way
 # to model these additional factors, and strongly supports that the rate of
