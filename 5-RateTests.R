@@ -752,7 +752,7 @@ par(op)
 # Next concern: Do differences in the number of character states influence rates
 # of evolution?
 summary(morph.nstates)
-summary(eco.nstates)
+summary(eco.nstates
 
 # Morphological characters
 aov <- aov(morph.rates$rate ~ morph.nstates)
