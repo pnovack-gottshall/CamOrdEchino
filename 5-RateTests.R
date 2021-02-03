@@ -617,8 +617,8 @@ par(op)
 
 ## CONFIRM DIFFERENCES ARE NOT ARTIFACTS OF DIFFERENT DATA STRUCTURES ##########
 
-## Do primary vs dependent (secondary, etc.) characters evolve at different
-## rates?
+## Are rate heterogeneities an artifact of different hierarchical dependence or
+## differences in number of character states?
 
 # Let's hide creating this ugliness with brackets:
 {
@@ -665,6 +665,11 @@ par(op)
 }
 table(morph.level, morph.nstates)
 table(eco.level, eco.nstates)
+
+## Do primary vs dependent (secondary, etc.) characters evolve at different
+## rates?
+summary(morph.level)
+summary(eco.level)
 
 # Morphological rate variation by dependency levels
 boxplot(morph.rates$rate ~ morph.level, 
@@ -746,8 +751,8 @@ par(op)
 
 # Next concern: Do differences in the number of character states influence rates
 # of evolution?
-table(morph.level, morph.nstates)
-table(eco.level, eco.nstates)
+summary(morph.level)
+summary(eco.level)
 
 # Morphological characters
 aov <- aov(morph.rates$rate ~ morph.nstates)
