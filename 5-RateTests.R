@@ -176,6 +176,9 @@ eco.rates <- read.csv(file = "EcoRates.csv")     # Created below
 (invar.eco <- which(eco.rates$rate == 0))
 length(invar.eco) / nrow(eco.rates)              # 15% is invariant
 
+# A bit illogical: the files used here are created below. Code was re-organized
+# so flows in more logical analytical order.
+
 # Removing following invariant (rate = 0) characters from morphogical matrix: 
 morph.rates <- read.csv(file = "MorphRates.csv") # Created below
 (invar.morph <- which(morph.rates$rate == 0))
@@ -482,12 +485,16 @@ beep()
 #                     - = significantly slower)
 head(rates)
 
+# Note that this overrides an object name created above (although this is
+# technically the code that builds that object - the order was jiggered to
+# create more logical analytical order.)
 morph.rates <- rates[morph.char, ]
 eco.rates <- rates[eco.char, ]
 # Renumber eco.rates for consistency with raw data
 eco.rates$character <- 1:length(eco.char)
 rownames(eco.rates) <- as.character(1:length(eco.char))
 
+# Save
 # write.csv(morph.rates, file = "MorphRates.csv", row.names = FALSE)
 # write.csv(eco.rates, file = "EcoRates.csv", row.names = FALSE)
 # morph.rates <- read.csv(file = "MorphRates.csv")
@@ -608,6 +615,7 @@ par(op)
 
 
 
+## CONFIRM DIFFERENCES ARE NOT ARTIFACTS OF DIFFERENT DATA STRUCTURES ##########
 
 ## Do primary vs dependent (secondary, etc.) characters evolve at different
 ## rates?
@@ -658,6 +666,7 @@ par(op)
 table(morph.level, morph.nstates)
 table(eco.level, eco.nstates)
 
+# Morphological rate variation by dependency levels
 boxplot(morph.rates$rate ~ morph.level, 
         main = "Variation in morphological character rates by level")
 aov <- aov(morph.rates$rate ~ morph.level)
@@ -680,6 +689,7 @@ wilcox.test(morph.rates$rate[-which.5.morph], morph.rates$rate[which.5.morph])
 
 
 
+# Ecological rate variation by dependency levels
 boxplot(eco.rates$rate ~ eco.level, 
         main = "Variation in ecological character rates by level")
 aov <- aov(eco.rates$rate ~ eco.level)
@@ -695,16 +705,19 @@ summary(eco.rates$rate[-which.prim.eco])
 wilcox.test(eco.rates$rate[which.prim.eco], eco.rates$rate[-which.prim.eco])
 # W = 3, p = 0.165: But primary not significantly different than dependents.
 
-
-
-
+## Conclusion: Although higher dependent characters evolve at higher rates than
+## their contingent (~ independent) characters (and especially so for the
+## quinary characters), the differences are insufficient to explain why
+## morphological characters evolve at higher rates than ecological ones,
+## overall.
 
 # pdf(file = "PrimaryCharacterRates.pdf")
-par(mfrow = c(2,2), mar = c(4.5, 4, 2, 0.1))
+par(mfrow = c(2, 2), mar = c(4.5, 4, 2, 0.1))
 boxplot(morph.rates$rate ~ morph.level, horizontal = TRUE, main = "morphology", 
         xlab = "Rate (per-char. changes / Myr)", ylab = "Dependency level")
 boxplot(eco.rates$rate ~ eco.level, horizontal = TRUE, main = "ecology", 
         xlab = "Rate (per-char. changes / Myr)", ylab = "Dependency level")
+
 breaks <- pretty(morph.rates$rate, 20)
 hist(morph.rates$rate, main = "", 
      xlab = "Rate (per-char. changes / Myr)", 
@@ -714,6 +727,9 @@ hist(morph.rates$rate[which.prim.morph], add = TRUE, border = "white",
      col = "darkgray", breaks = breaks, prob = TRUE)
 hist(morph.rates$rate[-which.prim.morph], add = TRUE, border = "black", 
      col = "transparent", breaks = breaks, prob = TRUE)
+legend("topright", inset = .05, c("primary", "dependent"), pch = c(22, 22), 
+       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
+       cex = 1, pt.cex = 2)
 
 breaks <- pretty(eco.rates$rate, 20)
 hist(eco.rates$rate, main = "", 
@@ -723,11 +739,96 @@ hist(eco.rates$rate[which.prim.eco], add = TRUE, border = "white",
      col = "darkgray", breaks = breaks)
 hist(eco.rates$rate[-which.prim.eco], add = TRUE, border = "black", 
      col = "transparent", breaks = breaks)
-legend("topright", inset = .05, c("primary", "dependent"), pch = c(22, 22), 
-       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
-       cex = 1, pt.cex = 2)
 par(op)
 # dev.off()
+
+
+
+# Next concern: Do differences in the number of character states influence rates
+# of evolution?
+table(morph.level, morph.nstates)
+table(eco.level, eco.nstates)
+
+# Morphological characters
+aov <- aov(morph.rates$rate ~ morph.nstates)
+summary(aov)
+# F = 83.15, p < 2e-16
+boxplot(morph.rates$rate ~ morph.nstates)
+
+# Ecological characters
+aov <- aov(eco.rates$rate ~ eco.nstates)
+summary(aov)
+# F = 106.2, p < 1.48e-12
+boxplot(eco.rates$rate ~ eco.nstates)
+
+# What is the cause of this difference?
+wilcox.test(morph.nstates, eco.nstates)
+# W = 8778.5, p = 0.4304
+# There is no significant difference in number of states between the data sets
+
+# OK, but let's be sure still not creating a bias. Divide characters into
+# one/two-state versus multi-state
+which.multi.morph <- which(morph.nstates > 2)
+which.multi.eco <- which(eco.nstates > 2)
+summary(eco.rates$rate[which.multi.eco])
+summary(eco.rates$rate[-which.multi.eco])
+# Characters with > 2 states evolve ~ 8.1-times faster, on average
+
+summary(morph.rates$rate[which.multi.morph])
+summary(morph.rates$rate[-which.multi.morph])
+# Characters with > 2 states evolve ~ 4.9-times faster, on average
+
+# But are these significantly different?
+wilcox.test(eco.rates$rate[which.multi.eco], eco.rates$rate[-which.multi.eco])
+# W = 198, p < 0.0003
+wilcox.test(morph.rates$rate[which.multi.morph], morph.rates$rate[-which.multi.morph])
+# W = 27758, p < 2.2e-16
+
+# OK, but are they different across data sets? This is the important question.
+wilcox.test(morph.rates$rate[which.multi.morph], eco.rates$rate[which.multi.eco])
+# W = 386, p = 0.7696
+wilcox.test(morph.rates$rate[-which.multi.morph], eco.rates$rate[-which.multi.eco])
+# W = 4571, p = 0.4128
+
+## Conclusion: Although characters with greater numbers of states do evolve at
+## faster rates than those with fewer states, the two data sets do not differ in
+## this regard, overall.
+
+
+# pdf(file = "CharacterStateRates.pdf")
+par(mfrow = c(2, 2), mar = c(4.5, 4, 2, 0.1))
+boxplot(morph.rates$rate ~ morph.nstates, horizontal = TRUE, 
+        main = "morphology", xlab = "Rate (per-char. changes / Myr)", 
+        ylab = "# of states / char.")
+boxplot(eco.rates$rate ~ eco.nstates, horizontal = TRUE, 
+        main = "ecology", xlab = "Rate (per-char. changes / Myr)", 
+        ylab = "# of states / char.")
+
+breaks <- pretty(morph.rates$rate, 20)
+hist(morph.rates$rate, main = "", 
+     xlab = "Rate (per-char. changes / Myr)", ylab = "# of characters", 
+     breaks = breaks, col = "transparent", border = "transparent")
+hist(morph.rates$rate[which.multi.morph], add = TRUE, border = "white", 
+     col = "darkgray", breaks = breaks)
+hist(morph.rates$rate[-which.multi.morph], add = TRUE, border = "black", 
+     col = "transparent", breaks = breaks)
+legend("topright", inset = .05, c("> 2 states", "\u2264 2 states"), pch = c(22, 22), 
+       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
+       cex = 1, pt.cex = 2)
+
+breaks <- pretty(eco.rates$rate, 20)
+hist(eco.rates$rate, main = "", 
+     xlab = "Rate (per-char. changes / Myr)", ylab = "# of characters", 
+     breaks = breaks, col = "transparent", border = "transparent")
+hist(eco.rates$rate[which.multi.eco], add = TRUE, border = "white", 
+     col = "darkgray", breaks = breaks)
+hist(eco.rates$rate[-which.multi.eco], add = TRUE, border = "black", 
+     col = "transparent", breaks = breaks)
+par(op)
+# dev.off()
+
+
+
 
 
 
