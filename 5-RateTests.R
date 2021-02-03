@@ -754,6 +754,9 @@ par(op)
 summary(morph.nstates)
 summary(eco.nstates)
 
+length(which(morph.nstates > 5))
+which(eco.nstates > 5)
+
 # Morphological characters
 aov <- aov(morph.rates$rate ~ morph.nstates)
 summary(aov)
@@ -817,7 +820,7 @@ hist(morph.rates$rate[which.multi.morph], add = TRUE, border = "white",
      col = "darkgray", breaks = breaks)
 hist(morph.rates$rate[-which.multi.morph], add = TRUE, border = "black", 
      col = "transparent", breaks = breaks)
-legend("topright", inset = .05, c("> 2 states", "\u2264 2 states"), pch = c(22, 22), 
+legend("topright", inset = .05, c("3 + states", "1-2 states"), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 1, pt.cex = 2)
 
