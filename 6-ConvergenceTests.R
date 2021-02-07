@@ -42,6 +42,7 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 library(beepr)      # v. 1.3
 library(doParallel) # v. 1.0.15
 library(Claddis)    # v. 0.4.1
+library(ade4)       # v. 1.7-15
 if(packageVersion("Claddis") < "0.4.1")
   stop("wrong version of 'Claddis' Get updated version from GitHub\n")
 
@@ -456,6 +457,19 @@ round(100 * length(which(raw.conv$C1 == 1)) / nrow(raw.conv), 3)
 # morphology: 0.004% (3 pairs)
 #    ecology: 1.33% (mode), 5.96% (constant), 0.60% (raw)
 
+# Among highly convergent taxa, are they convergent both anatomically and
+# ecologically?
+cor(morph.conv$C1[which(morph.conv$C1 >= 0.9)],
+    mode.conv$C1[which(morph.conv$C1 >= 0.9)], use = "complete.obs") # r = 0.1309
+
+lm.C1 <-
+  lm(mode.conv$C1[which(morph.conv$C1 >= 0.9)] ~ morph.conv$C1[which(morph.conv$C1 >= 0.9)])
+plot(morph.conv$C1[which(morph.conv$C1 >= 0.9)], 
+    mode.conv$C1[which(morph.conv$C1 >= 0.9)])
+summary(lm.C1) # p = 0.00274, r2 = 0.017
+abline(lm.C1, col = "red")
+# Although statistically correlated, the low r and r2 mean essentially
+# independent.
 
 # Which taxa are 100% convergent?
 wh <- which(mode.conv$C1 == 1)
@@ -527,7 +541,7 @@ wh <- which(morph.conv$C1 >= 0.98)
 unique(unlist(c(morph.conv[wh , 1:2])))      #  45 genera in morphological data set
 morph.conv[wh[order(morph.conv$C1[wh], decreasing = TRUE)], ]
 # Class: Eopetalocrinus & Grammocrinus & Pentamerocrinus & Putilovocrinus *** = 1 ***
-#        *** NOTE THESE ARE FALSE POSITIVES< CAUSED BY PAIRINGS WITH
+#        *** NOTE THESE ARE FALSE POSITIVES, CAUSED BY PAIRINGS WITH
 #        EOPETALOCRINUS, WHICH HAS 27 MISSING STATES, WHICH THE WILLS GED
 #        DISTANCE METRIC FILLS IN WITH THE PAIRED KNOWN STATE! ***
 # Class: ... also cluster near Alphacrinus & Cataraquicrinus & Cefnocrinus & Cincinnaticrinus & Coralcrinus & Daedalocrinus & Delgadocrinus & Haptocrinus & Heviacrinus & Inyocrinus & Iocrinus & Maennilicrinus & Morenacrinus & Ohiocrinus & Peltacrinus & Penicillicrinus & Peniculocrinus & Pogonipocrinus & Ristnacrinus & Tunguskocrinus
@@ -558,6 +572,7 @@ tab.constant <- table(factor(constant.conv$PairRank[wh.constant], levels = rank.
 wh.raw <- which(raw.conv$C1 >= min.conv)
 tab.raw <- table(factor(raw.conv$PairRank[wh.raw], levels = rank.order))
 
+# Summary statistics
 tab.morph
 tab.mode
 round(100 * tab.morph / sum(tab.morph), 1)
@@ -605,22 +620,73 @@ legend("topright", inset = 0, c(leg.eco, leg.morph), pch = c(22, 22),
 # Are these distributions different?
 summary(morph.conv[wh.morph, "branch.dist"]) # Median = 7.3
 summary(mode.conv[wh.mode, "branch.dist"])   # Median = 3.0
+summary(constant.conv[wh.constant, "branch.dist"]) # Median = 3.5
+summary(raw.conv[wh.raw, "branch.dist"])   # Median = 2.0
 
 ks.test(morph.conv[wh.morph, "branch.dist"], mode.conv[wh.mode, "branch.dist"])
 # Very much so: D = 0.425, p-value < 2.2e-16 ***
 
+# Remove known problematic false-positive pairings with Eopetalocrinus
+wh.morph.no.Eop <- which((morph.conv$Taxon1 != "Eopetalocrinus" & 
+                            morph.conv$Taxon2 != "Eopetalocrinus")
+                         & morph.conv$C1 >= min.con)
+summary(morph.conv[wh.morph.no.Eop, "branch.dist"])
+# Median = 7.4 (this genus has negligible effect)
 
+# Use Mantel test to confirm there is not a bias caused by differences in the
+# two distance matrices
+set.seed(314)  # Set RNG seed to allow replication
+d1 <- morph.distances.GED.5$DistanceMatrix
+d2 <- mode.distances.GED.5$DistanceMatrix
+diag(d1) <- diag(d2) <- NA
+d1 <- as.dist(d1)
+d2 <- as.dist(d2)
+ade4::mantel.rtest(d1, d2, nrepet = 999)
+# r = 0.5595, p-value = 0.001, therefore significantly positively correlated
+summary(as.vector(d1))
+summary(as.vector(d2))
+# and they span similar ranges (0 - 7.9 for both)
+
+
+
+
+# First pass to remove those that are all NAs
+d1.na <- apply(d1, 1, function(x) all(is.na(x)))
+d2.na <- apply(d2, 1, function(x) all(is.na(x)))
+d1 <- d1[!d1.na, !d1.na]
+d2 <- d2[!d2.na, !d2.na]
+diag(d1) <- diag(d2) <- 0
+# Second pass to remove those (fewer) that still have a few NAs
+d1.na <- apply(d1, 1, function(x) any(is.na(x)))
+d2.na <- apply(d2, 1, function(x) any(is.na(x)))
+d1 <- d1[!d1.na,!d1.na]
+d2 <- d2[!d2.na,!d2.na]
+}
+d1 <- as.dist(d1)
+d2 <- as.dist(d2)
+if (remove.zeros) {
+  # Replace zeros with small values (half the smallest positive value)
+  d1 <- replace(d1, d1 == 0, min(d1[d1 > 0]) / 2)
+  d2 <- replace(d2, d2 == 0, min(d2[d2 > 0]) / 2)
+  if (length(d1) != length(d2))
+    stop("inconsisent lengths when NAs removed.\n")
+}
+dist.dists[r, c] <- ade4::mantel.rtest(d1, d2, nrepet = 99)$obs
 
 
 
 
 
 ## EXAMPLES ####################################################################
+# The order here needs to be in alphabetical order to work
 tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # tp <- matrix(c("Amecystis", "Belemnocystites"), nrow = 1)
 # tp <- matrix(c("Carneyella", "Isorophus"), nrow = 1)
 # tp <- matrix(c("Edrioaster", "Kinzercystis"), nrow = 1)
 # tp <- matrix(c("Cheirocystis", "Streptaster"), nrow = 1)
+# tp <- matrix(c("Caleidocrinus", "Glaucocrinus"), nrow = 1)
+# tp <- matrix(c("Cnemecrinus", "Picassocrinus"), nrow = 1)
+tp <- matrix(c("Isotomocrinus", "Picassocrinus"), nrow = 1)
 
 # Other interesting pairings:
 # Edrioasteroid Anedriophus & eocrinoid Gogia
@@ -633,6 +699,12 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 #     100% ecologically & 22% morphologically convergent
 # Edrioasteroid Streptaster & rhombiferan Cheirocystis
 #     100% ecologically & 0% morphologically convergent with long branch distances
+# Disparid crinoids in different suborders Caleidocrinus & Glaucocrinus
+#     55% ecologically and 98% morphologically convergent
+# Crinoids in different subclasses Cnemecrinus & Picassocrinus
+#     38% ecologically and 99% morphologically convergent
+# Crinoids in different subclasses Isotomocrinus & Picassocrinus
+#     46% ecologically and 98% morphologically convergent
 
 # Confirm visually on phylomorphospace & phyloecospace:
 # pdf(file = "ConvPair2.pdf")
