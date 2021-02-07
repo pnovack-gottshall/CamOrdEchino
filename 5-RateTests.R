@@ -358,18 +358,41 @@ eco.branch.changes <-
                        dist.matrix = mode.distances.GED.5$DistanceMatrix)
 plot(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
 cor(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
+# r = 0.934
 
 morph.branch.changes <- 
   tally.branch.changes(tree = tree, anc.matrix = morph.anc$Matrix_1$Matrix,
                        dist.matrix = morph.distances.GED.5$DistanceMatrix)
 plot(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
 cor(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
+# r = 0.597
+
+constant.branch.changes <- 
+  tally.branch.changes(tree = tree, anc.matrix = constant.anc$Matrix_1$Matrix,
+                       dist.matrix = constant.distances.GED.5$DistanceMatrix)
+plot(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
+cor(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
+# r = 0.932
+
+raw.branch.changes <- 
+  tally.branch.changes(tree = tree, anc.matrix = raw.anc$Matrix_1$Matrix,
+                       dist.matrix = raw.distances.GED.5$DistanceMatrix)
+plot(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes)
+cor(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes, 
+    use = "complete.obs")
+# r = 0.883
+
+
 
 # Save objects
 # save(eco.branch.changes, file = "eco.branch.changes")
 # save(morph.branch.changes, file = "morph.branch.changes")
+# save(constant.branch.changes, file = "constant.branch.changes")
+# save(raw.branch.changes, file = "raw.branch.changes")
 # load("eco.branch.changes")
 # load("morph.branch.changes")
+# load("constant.branch.changes")
+# load("raw.branch.changes")
 
 
 # pdf(file = "PerBranchChanges.pdf")
@@ -409,27 +432,48 @@ legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22),
 par(op)
 # dev.off()
 
-# Statistical tests
+# Statistical summaries and tests
 summary(morph.branch.changes$Branch.dist)
 summary(eco.branch.changes$Branch.dist)
+summary(constant.branch.changes$Branch.dist)
+summary(raw.branch.changes$Branch.dist)
 
 summary(morph.branch.changes$Char.changes)
 summary(eco.branch.changes$Char.changes)
+summary(constant.branch.changes$Char.changes)
+summary(raw.branch.changes$Char.changes)
 
 summary(100 * morph.branch.changes$Char.changes / 413)
 summary(100 * eco.branch.changes$Char.changes / 40)
+summary(100 * constant.branch.changes$Char.changes / 40)
+summary(100 * raw.branch.changes$Char.changes / 40)
 
 wilcox.test(morph.branch.changes$Branch.dist, eco.branch.changes$Branch.dist)
 # W = 346033, p < 2.2e-16
+wilcox.test(morph.branch.changes$Branch.dist, constant.branch.changes$Branch.dist)
+# W = 357795, p < 2.2e-16
+wilcox.test(morph.branch.changes$Branch.dist, raw.branch.changes$Branch.dist)
+# W = 237301, p < 2.2e-16
+
 
 wilcox.test(morph.branch.changes$Char.changes, eco.branch.changes$Char.changes)
 # W = 417274, p < 2.2e-16
+wilcox.test(morph.branch.changes$Char.changes, constant.branch.changes$Char.changes)
+# W = 427906, p < 2.2e-16
+wilcox.test(morph.branch.changes$Char.changes, raw.branch.changes$Char.changes)
+# W = 450283, p < 2.2e-16
+
 
 wilcox.test(morph.branch.changes$Char.changes / 413, eco.branch.changes$Char.changes / 40)
 # W = 299869, p = 1.794e-5
+wilcox.test(morph.branch.changes$Char.changes / 413, constant.branch.changes$Char.changes / 40)
+# W = 316093, p = 1.565e-10
+wilcox.test(morph.branch.changes$Char.changes / 413, raw.branch.changes$Char.changes / 40)
+# W = 385624, p < 2.2e-16
 
 # Morphological characters change more often than ecological characters (but
-# proportionally less), and when they do, the change is a more substantial one.
+# proportionally less, unless observe the median), and when they do, the change
+# is a more substantial one.
 
 
 
