@@ -650,34 +650,34 @@ summary(as.vector(d2))
 
 
 
-# First pass to remove those that are all NAs
-d1.na <- apply(d1, 1, function(x) all(is.na(x)))
-d2.na <- apply(d2, 1, function(x) all(is.na(x)))
-d1 <- d1[!d1.na, !d1.na]
-d2 <- d2[!d2.na, !d2.na]
-diag(d1) <- diag(d2) <- 0
-# Second pass to remove those (fewer) that still have a few NAs
-d1.na <- apply(d1, 1, function(x) any(is.na(x)))
-d2.na <- apply(d2, 1, function(x) any(is.na(x)))
-d1 <- d1[!d1.na,!d1.na]
-d2 <- d2[!d2.na,!d2.na]
-}
-d1 <- as.dist(d1)
-d2 <- as.dist(d2)
-if (remove.zeros) {
-  # Replace zeros with small values (half the smallest positive value)
-  d1 <- replace(d1, d1 == 0, min(d1[d1 > 0]) / 2)
-  d2 <- replace(d2, d2 == 0, min(d2[d2 > 0]) / 2)
-  if (length(d1) != length(d2))
-    stop("inconsisent lengths when NAs removed.\n")
-}
-dist.dists[r, c] <- ade4::mantel.rtest(d1, d2, nrepet = 99)$obs
-
-
-
-
-
 ## EXAMPLES ####################################################################
+
+## IMPROVED ALL.EQUAL THAT ONLY PRINTS COLUMNS WHEN ANY NUMBER OF PAIRS ARE
+## DISSIMILAR.
+## a    = minimum of two integers (corresponding to rows in a matrix)
+## data = data matrix (where rows = tip & ancestors and cols = characters)
+multi.all.equal <- function(a = NULL, data = NULL) {
+  nr <- length(a)
+  if (nr < 2)
+    stop("'a' should have more than 1 item to compare.\n")
+  nc <- seq.int(ncol(data))
+  row.names.data <- row.names(data[a, ])
+  # Convert gaps to NAs (but allow polymorphisms)
+  data1 <- matrix(data[a, ], nrow = 1)
+  data1[which(data1 == "")] <- NA
+  # Note drops unused rows in next line!
+  data3 <- matrix(data1, nrow = nr, 
+                  dimnames = list(row.names.data, nc))
+  wh.diff <- 
+    sapply(nc, function(nc) length(na.omit(unique(data3[, nc]))) > 1L)
+  return(data3[, which(wh.diff)])
+}
+
+# Load character matrix (with ancestral state infernces) to compare how changed
+# since MRCA
+load("morph.anc")
+load("mode.anc")
+
 # The order here needs to be in alphabetical order to work
 tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # tp <- matrix(c("Amecystis", "Belemnocystites"), nrow = 1)
@@ -686,7 +686,8 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # tp <- matrix(c("Cheirocystis", "Streptaster"), nrow = 1)
 # tp <- matrix(c("Caleidocrinus", "Glaucocrinus"), nrow = 1)
 # tp <- matrix(c("Cnemecrinus", "Picassocrinus"), nrow = 1)
-tp <- matrix(c("Isotomocrinus", "Picassocrinus"), nrow = 1)
+# tp <- matrix(c("Isotomocrinus", "Picassocrinus"), nrow = 1)
+# tp <- matrix(c("Alisocrinus", "Anisocrinus"), nrow = 1)
 
 # Other interesting pairings:
 # Edrioasteroid Anedriophus & eocrinoid Gogia
@@ -712,22 +713,27 @@ par(mar = c(5, 4, 2, 2))
 load("~/Manuscripts/CamOrdEchinos/equal.tree"); tree <- equal.tree
 load("mode.pcoa"); load("mode.conv")
 load("morph.pcoa"); load("morph.conv")
-mode.conv[which(mode.conv$Taxon1 == tp[1] & mode.conv$Taxon2 == tp[2]), ]
+# Stayton statistics
 morph.conv[which(morph.conv$Taxon1 == tp[1] & morph.conv$Taxon2 == tp[2]), ]
+mode.conv[which(mode.conv$Taxon1 == tp[1] & mode.conv$Taxon2 == tp[2]), ]
+
+# Plotting settings
 wh.tip <- which(tree$tip.label == tp[1] | tree$tip.label == tp[2])
 root <- Ntip(morph.pcoa$Tree) + 1
 tip.seq <- 1:Ntip(morph.pcoa$Tree)
 node.seq <- root:(Ntip(morph.pcoa$Tree) + Nnode(morph.pcoa$Tree))
 con <- list(col.edge = setNames(rep("lightgray", nrow(morph.pcoa$Tree$edge)), 
                                 as.character(morph.pcoa$Tree$edge[, 2])))
-# Find ancestral edges for pair of taxa until united in MRCA:
+# Find ancestral edges for pair of taxa until united in MRCA
 branching.history <- ancestral.lineages(tree, t1 = tp[1], t2 = tp[2])
-# To confirm works as intended:
+# Confirm works as intended
 branching.history
+# Identify edges since MRCA
 MRCA <- branching.history[1]
 break.point <- which(branching.history[, 1] == MRCA)
 hist.first <- matrix(branching.history[1:diff(break.point), ], ncol = 2)
 hist.second <- matrix(branching.history[break.point[2]:nrow(branching.history), ], ncol = 2)
+# Switch so that labels and branch histories are the same color
 if (hist.first[nrow(hist.first), 2] == wh.tip[1]) {
   hist1 <- hist.first
   hist2 <- hist.second
@@ -790,4 +796,12 @@ for(r in 1:nrow(hist2)) {
 par(op)
 # dev.off()
 
+# Show tip and MRCA states for comparison of how changed
+(morph.MRCA <- 
+    multi.all.equal(a = c(wh.tip, MRCA), data = morph.anc$Matrix_1$Matrix))
+(eco.MRCA <- 
+    multi.all.equal(a = c(wh.tip, MRCA), data = mode.anc$Matrix_1$Matrix))
 
+# Only show characters where converged
+morph.MRCA[, which(morph.MRCA[1, ] == morph.MRCA[2, ])]
+eco.MRCA[, which(eco.MRCA[1, ] == eco.MRCA[2, ])]
