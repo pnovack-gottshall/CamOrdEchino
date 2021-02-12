@@ -670,7 +670,8 @@ multi.all.equal <- function(a = NULL, data = NULL) {
                   dimnames = list(row.names.data, nc))
   wh.diff <- 
     sapply(nc, function(nc) length(na.omit(unique(data3[, nc]))) > 1L)
-  return(data3[, which(wh.diff)])
+  return(matrix(data3[, which(wh.diff)], nrow = nr,
+                dimnames = list(row.names.data, nc[which(wh.diff)])))
 }
 
 # Load character matrix (with ancestral state infernces) to compare how changed
@@ -684,6 +685,8 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # tp <- matrix(c("Carneyella", "Isorophus"), nrow = 1)
 # tp <- matrix(c("Edrioaster", "Kinzercystis"), nrow = 1)
 # tp <- matrix(c("Cheirocystis", "Streptaster"), nrow = 1)
+# tp <- matrix(c("Cnemidactis", "Stenaster"), nrow = 1)
+# tp <- matrix(c("Cheirocystis", "Cheirocrinus"), nrow = 1)
 # tp <- matrix(c("Caleidocrinus", "Glaucocrinus"), nrow = 1)
 # tp <- matrix(c("Cnemecrinus", "Picassocrinus"), nrow = 1)
 # tp <- matrix(c("Isotomocrinus", "Picassocrinus"), nrow = 1)
@@ -805,3 +808,4 @@ par(op)
 # Only show characters where converged
 morph.MRCA[, which(morph.MRCA[1, ] == morph.MRCA[2, ])]
 eco.MRCA[, which(eco.MRCA[1, ] == eco.MRCA[2, ])]
+
