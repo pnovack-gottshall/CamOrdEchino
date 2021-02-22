@@ -86,10 +86,14 @@ strat_names <-
 ages <- strat_names[which(strat_names$scale_level == 5), ]
 # Limit to Cambrian and Ordovician
 ages <- ages[which(ages$max_ma > 444), ]
-ages[, c(5, 9:10)]
 int.times <- ages[ ,9:10]  # Time bins used for disparity analyses below.
 mids <- apply(ages[ ,9:10], 1, mean)
 summary(int.times$max_ma - int.times$min_ma)
+# Replace outdated Series 3 with Miaolingian (if using epochs)
+ages$interval_name <-
+  replace(ages$interval_name, which(ages$interval_name == "Series 3"), 
+          "Miaolingian")
+ages[, c(5, 9:10)]
 
 # Import ICS 2020 timescale to use in plotting
 ICS2020 <- read.csv("~/Manuscripts/CamOrdEchinos/timescales2020.csv", 
