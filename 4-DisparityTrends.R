@@ -2295,7 +2295,7 @@ con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)),
 load("class.list")
 # Replace Class Homostelea with (here synonymous) Cincta instead
 class.list[which(class.list == "Homostelea")] <- "Cincta"
-sort(table(class.list), decreasing = FALSE)
+(class.tab <- sort(table(class.list), decreasing = TRUE))
 classes <- names(class.tab)
 classes <- classes[which(classes != "UNCERTAIN")]
 
