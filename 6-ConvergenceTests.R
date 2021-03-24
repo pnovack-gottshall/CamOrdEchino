@@ -683,6 +683,7 @@ load("mode.anc")
 tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # tp <- matrix(c("Amecystis", "Belemnocystites"), nrow = 1)
 # tp <- matrix(c("Carneyella", "Isorophus"), nrow = 1)
+# tp <- matrix(c("Cambroblastus", "Estonocystis"), nrow = 1)
 # tp <- matrix(c("Edrioaster", "Kinzercystis"), nrow = 1)
 # tp <- matrix(c("Cheirocystis", "Streptaster"), nrow = 1)
 # tp <- matrix(c("Cnemidactis", "Stenaster"), nrow = 1)
@@ -697,6 +698,8 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 #     100% ecologically & 4% morphologically convergent
 # Rhombiferan Amecystis & solute Belemnocystites
 #     100% ecologically & 45% morphologically convergent with long branch distances
+# Edrioasteroid Cambroblastus & 'diploporitan' Estonocystis
+#     0% ecologically & 28% morphologically convergent
 # Edrioasteroids Carneyella & Isorophus
 #     0% ecologically & 94% morphologically convergent
 # Edrioasteroid Edrioaster & eocrinoid Kinzercystis:
