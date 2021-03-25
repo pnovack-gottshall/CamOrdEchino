@@ -418,7 +418,7 @@ hist(eco.branch.changes$Branch.dist, add = TRUE, border = "white",
      col = "darkgray", breaks = breaks.dist)
 hist(morph.branch.changes$Branch.dist, add = TRUE, border = "black", 
      col = "transparent", breaks = breaks.dist)
-hist(eco.branch.changes$Branch.dist, xlab = "# character changes", 
+hist(eco.branch.changes$Char.changes, xlab = "# character changes", 
      main = "# character changes / branching event", 
      ylab = "# branching events", breaks = breaks.char, col = "transparent", 
      border = "transparent", cex.lab = 1, cex.main = 0.8)
@@ -448,6 +448,13 @@ summary(100 * eco.branch.changes$Char.changes / 40)
 summary(100 * constant.branch.changes$Char.changes / 40)
 summary(100 * raw.branch.changes$Char.changes / 40)
 
+# Same, but normalized instead by the maximum observed number of changes
+summary(100 * morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes))
+summary(100 * eco.branch.changes$Char.changes / max(eco.branch.changes$Char.changes))
+summary(100 * constant.branch.changes$Char.changes / max(constant.branch.changes$Char.changes))
+summary(100 * raw.branch.changes$Char.changes / max(raw.branch.changes$Char.changes))
+
+
 wilcox.test(morph.branch.changes$Branch.dist, eco.branch.changes$Branch.dist)
 # W = 346033, p < 2.2e-16
 wilcox.test(morph.branch.changes$Branch.dist, constant.branch.changes$Branch.dist)
@@ -471,9 +478,20 @@ wilcox.test(morph.branch.changes$Char.changes / 413, constant.branch.changes$Cha
 wilcox.test(morph.branch.changes$Char.changes / 413, raw.branch.changes$Char.changes / 40)
 # W = 385624, p < 2.2e-16
 
-# Morphological characters change more often than ecological characters (but
-# proportionally less, unless observe the median), and when they do, the change
-# is a more substantial one.
+wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
+            eco.branch.changes$Char.changes / max(eco.branch.changes$Char.changes))
+# W = 369797, p < 2.2e-16
+wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
+            constant.branch.changes$Char.changes / max(constant.branch.changes$Char.changes))
+# W = 381846, p < 2.2e-16
+wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
+            raw.branch.changes$Char.changes / max(raw.branch.changes$Char.changes))
+# W = 420041, p < 2.2e-16
+
+
+# Morphological characters change more often than ecological characters (even
+# when standardize against the number of characters that can actually change in
+# practice), and when they do, the change is a more substantial one.
 
 
 
