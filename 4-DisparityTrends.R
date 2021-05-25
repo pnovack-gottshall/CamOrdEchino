@@ -174,7 +174,7 @@ mode.anc$Matrix_1$Matrix[which(LHs == LHs[367]), ]
 morph.anc$Matrix_1$Matrix[367, ]
 which(morph.distances.GED.5$DistanceMatrix[367, ] < 1)
 # The closest morphological tip is the cinctan Asturicystis (although with so
-# many missing states, probably not a good comparator.
+# many missing states, probably not a good comparitor.
 
 
 
