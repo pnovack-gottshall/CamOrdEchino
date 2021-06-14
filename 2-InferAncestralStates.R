@@ -21,7 +21,7 @@ setwd("~/Manuscripts/CamOrdEchinos/")
 ## Download newest version of 'Claddis' from GitHub
 # To implement the Hopkins and St. John (2016) analyses, make sure to update to
 # newest verion (0.4.0) only available on GitHub.
-library(devtools)
+library(devtools)   # v. 2.3.0
 devtools::install_github("graemetlloyd/Claddis") # Downloaded 7/2/2020
 
 ## Download 'Rcpp' (dependent for phytools, but requiring binary version)

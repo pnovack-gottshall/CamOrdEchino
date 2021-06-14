@@ -307,7 +307,7 @@ phyloDiv(cal3tree)
 # 6-Phylogenetic inertia.R for better way to implement load-balancing where the
 # L-Ecuyer RNG seed can allow replication.)
 set.seed(312)
-library(doParallel)
+library(doParallel)    # v. 1.0.15
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
 (t.start <- Sys.time())
