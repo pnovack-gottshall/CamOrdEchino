@@ -139,7 +139,11 @@ for (r in 1:nrow(ranges)) {
   ranges[rels[1], 2] <- ranges[r, 1]
 }
 
+head(ranges)
+tail(ranges)
 
+# Export time-scaled ranges, converting to .csv
+write.csv(ranges, file = "TSRanges.csv", row.names = TRUE)
 
 
 # Which are the 30 oldest taxa?
