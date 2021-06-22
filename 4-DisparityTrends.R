@@ -143,7 +143,18 @@ head(ranges)
 tail(ranges)
 
 # Export time-scaled ranges, converting to .csv
-write.csv(ranges, file = "TSRanges.csv", row.names = TRUE)
+# write.csv(ranges, file = "TSRanges.csv", row.names = TRUE)
+
+# Alternate (more efficient) version, thanks to Dave Bapst, but that does assign
+# root FAD/LAD
+# ranges <- tree$edge
+# ntime <- tree$root.time - ape::node.depth.edgelength(tree)
+# ranges[, 1] <- ntime[ranges[, 1]]
+# ranges[, 2] <- ntime[ranges[, 2]]
+# Now assign names for each lineage as row names
+# terminalEdges <- which(tree$edge[, 2] <= Ntip(tree))
+# row.names(ranges) <- as.character(tree$edge[, 2])
+# row.names(ranges)[terminalEdges] <- tree$tip.label[tree$edge[terminalEdges, 2]]
 
 
 # Which are the 30 oldest taxa?
