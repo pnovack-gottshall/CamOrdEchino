@@ -3,14 +3,14 @@
 ## morphological case is not really an error because the dependencies are not
 ## always straightforward when coding phylum-wide characters.) Code by Graeme
 ## Lloyd and taken from
-## https://github.com/graemetlloyd/Claddis/blob/master/R/MorphDistMatrix.R.
-## Downloaded 7/2/2020. Thanks, Graeme!
+## https://github.com/graemetlloyd/Claddis/blob/master/R/calculate_morphological_distances.R
+## , committed 4/1/2021. Thanks, Graeme!
 
 # Note that substantial coding changes accompanied the update to Claddis v.
-# 0.6.0 in August 2020. The code here uses the functions as of 7/2/2020, v.
-# 0.4.1. Future users will need to either download the archived version of the
-# package from GitHub or alter the code accordingly to use the current argument
-# and function names.
+# 0.6.0 in August 2020. The code here uses the functions as of 7/29/2021, v.
+# 0.6.3. Users familiar with earlier versions will need to either download the
+# archived version of the package from GitHub or alter the code accordingly to
+# use appropriate argument and function names.
 
 MorphDistMatrix2 <- function(CladisticMatrix, Distance = "MORD", GEDType = "Wills", TransformDistances = "arcsine_sqrt", PolymorphismBehaviour = "min.difference", UncertaintyBehaviour = "min.difference", InapplicableBehaviour = "missing", CharacterDependencies = NULL, Alpha = 0.5) {
   

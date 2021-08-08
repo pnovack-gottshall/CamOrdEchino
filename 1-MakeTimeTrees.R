@@ -12,12 +12,14 @@ op <- par()
 
 # Set working directory (point to the folder containing the input files on your
 # own machine):
+setwd("C:/Users/pnovack-gottshall/OneDrive - Benedictine University/Documents/Manuscripts/CamOrdEchinos")
 # setwd("[filepath to folder containing data files on your personal machine]")
 
 library(paleotree)  # v. 3.3.25
-library(phytools)   # v. 0.7-47
-library(phangorn)   # v. 2.5.5
+library(phytools)   # v. 0.7-83
+library(phangorn)   # v. 2.7.0
 library(beepr)      # v. 1.3
+library(doParallel) # v. 1.0.16
 
 ## Import cladogram in Nexus format
 tree <- read.nexus("echinodermtree.nex")
@@ -29,7 +31,7 @@ if (class(tree) != "phylo") stop("Nexus file is not class 'phylo")
 
 ## Process stratigraphic ranges
 
-# Import strat ranges (previously downloaded fom PBDB)
+# Import strat ranges (previously downloaded fom PBDB June 23, 2020)
 ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", header = TRUE)
 rownames(ranges) <- ranges$Genus
 ranges <- ranges[, -1]
@@ -91,7 +93,7 @@ pres2$par
 qsProb2Comp(R = pres2$par[2], q = pres2$par[1])
 # Convert the R and extinction rate to fossil completeness: 100% of taxa are
 # sampled in this clade per sampled interval, which seems unrealistic. This is
-# likely caused by presence of zero-length branches.
+# likely caused by presence of zero-length branches (ZLBs).
 
 # These methods assume the duration of intervals is constant. Is that
 # approximately true? (Limiting to intervals with sampled genera)
@@ -100,18 +102,18 @@ Int.durations <-
 hist(Int.durations, n = 20)
 meanInt <- mean(Int.durations)
 meanInt
-# 6.22 Myr, approximately the same if restrict to Cambrian-Ordovician (5.74 Myr)
+# 6.22 Myr / epoch for Phanerozoic; approximately the same (5.74 Myr/epoch) if
+# restrict to Cambrian-Ordovician
 
 # Convert sampling probability to mean sampling rate:
 sRate <- sProb2sRate(pres2$par[2], int.length = meanInt)
 sRate
 # Infinite sampling rate per lineage-million years??? Bapst and Hopkins (2017)
-# note that this can occur as by-product of zero-length branches. Because this
-# is clearly unrealistic, setting sRate as the value of 0.10 calculated by Foote
-# and Raup (1996) for early Paleozoic crinoids (as converted to same units in
-# Bapst and Hopkins 2017: p. 54, table 2). Note that the cal3 time trees
-# produced below using sRate = Inf are not substantially different in their
-# output.
+# note that this can occur as by-product of ZLBs. Because this is clearly
+# unrealistic, setting sRate as the value of 0.10 calculated by Foote and Raup
+# (1996) for early Paleozoic crinoids (as converted to same units in Bapst and
+# Hopkins 2017: p. 54, table 2). Note that the cal3 time trees produced below
+# using sRate = Inf are not substantially different in their output.
 sRate <- 0.10
 
 # To get the extinction rate (also the branching rate), divide the extinction
@@ -121,204 +123,195 @@ divRate # 0.047 genus extinctions per million years
 
 
 
-## Introduction to paleoTS time trees ##########################################
-set.seed(312)
-timeTree <- timePaleoPhy(tree = tree, timeData = ranges)
-bin_timeTree <- bin_timePaleoPhy(tree = tree, timeList = timeList)
-bin_equaltimeTree <- bin_timePaleoPhy(tree = tree, timeList = timeList, 
-                                      type = "equal", vartime = 1)
 
-# Compare trees (with diversity curve)
-phyloDiv(tree)
-# plot(tree, cex=.1, main = "raw tree scaled to character changes"); axisPhylo()
-phyloDiv(timeTree)
-# plot(timeTree, cex=.1, main = "basic time tree"); axisPhylo()
-phyloDiv(bin_timeTree)
-# plot(bin_timeTree, cex=.1, main = "binned basic time tree"); axisPhylo()
-phyloDiv(bin_equaltimeTree)
-# plot(bin_timeTree, cex=.1, main = "binned equal time tree"); axisPhylo()
+## PREPARING THE CAL3 TIME-SCALED TREES ########################################
 
-# Note that the cladogram and time-trees differ primarily in having different
-# branch lengths (and the time-trees add a specified root time.)
-identical(tree$tip.label, timeTree$tip.label)             # TRUE
-identical(timeTree$tip.label, bin_timeTree$tip.label)     # TRUE
-identical(tree$edge, timeTree$edge)                       # TRUE
-identical(tree$edge.length, timeTree$edge.length)         # FALSE
+# The 'cal3' time-scaling algorithm was developed by David Bapst (Bapst, 2013,
+# 2014; Bapst, et al., 2012; Bapst and Hopkins, 2016). It takes into account not
+# just stratigraphic ranges of tip taxa but also rates of origination,
+# extinction, and sampling (preservation). Sensitivity analyses (e.g., Bapst,
+# 2014; Bapst and Hopkins, 2016) demonstrate that the 'cal3' consistently ranks
+# as good as or better than other available time-scaling methods.
 
-# Observe how the ranges were modified by the binning resampling from uniform
-# distribution:
-head(ranges)
-head(bin_timeTree$ranges.used)
-head(bin_equaltimeTree$ranges.used)
+# Other time-scaling methods (e.g., the 'equal' or 'basic' algorithms) are
+# inappropriate here because the presence of taxon-rich and phylogenetically
+# not-yet-studied higher taxa artifically inflates per-origination diversity by
+# pushing their subclade roots back in time by nonsensable, user-defined steps
+# (as opposed to using the actual stratigraphic ranges and
+# sampling/origination/extinction probabilities drawn from the data themselves).
+
+# Because the stratigraphic ranges we have available are based on discrete bins,
+# we use the paleotree::bin_cal3TimePaleoPhy() function to build cal3 trees.
+# Some subsequent analyses are intractable with zero-length branches (ZLBs) and
+# polytomies. The 'cal3' algorithm inherently resolves polytomies during the
+# time-scaling algorithm. ZLBs are only present in the 'cal3' tree within nodes;
+# no terminal branch tips have ZLBs. For analyses that can not handle ZLBs,
+# these are removed as a secondary step, by replacing them with a negligible
+# (0.001 Myr) length, and the root of the tree is adjusted accordingly.
+
+# We implement dataTreatment = 'firstLast' (the default treatment) because genus
+# ranges are resolved to epochs. (David Bapst, e-mail 8/3/2021, confirms this is
+# the best choice.) Sensitivity analyses comparing the 'firstLast' algorithm to
+# the 'randObs' show negligible differences in terms of resulting phylogenetic
+# diversity, ZLBs, and time-scaled ranges. FAD.only = FALSE (default) is set so
+# that FADs are used for rootward node ages and the tip ages are set as LADs. In
+# this way, the 'cal3' functions always add terminal ranges to taxa, allowing
+# the time-scaled ranges to be used to estimate phylogenetic diversity.
+
+# Because the 'cal3' algorithm involves stochastic processes, we use 60
+# stochastic trees to evaluate variability of subsequent results to the tree
+# structure. Because we have no a priori knowledge of whether any taxa represent
+# the ancestors for tips, we also evaluate time-scaled trees built using anc.wt
+# = 1 and anc.wt = 0, to allow to both possibilities, building 30 of each tree
+# type.
+
+# The 'cal3' algorithm requires probabilities of per-capita origination
+# (=branching), extinction, and preservation. We estimate per-interval taxonomic
+# origination and extinction rates using the built-in functions within
+# 'paleoTree' (as coded above, using the raw stratigraphic ranges and
+# non-time-scaled phylogeny). These functions estimate preservation probability
+# for these Cambrian-Ordovician echinoderms to equal 0.805 using the FreqRat
+# method (Foote and Raup, 1996), a high value among fossil invertebrates, and
+# implies a rather complete fossil record. The improved maximum-likelihood
+# method (Foote, 1997) yields unrealistically high sampling estimates because of
+# zero-length branches in the raw form, so a crinoid-wide sampling rate from
+# (Foote and Raup, 1964), converted to appropriate units (c.f., Bapst and
+# Hopkins, 2016), was used for the 'cal3' trees. Using either sampling rate
+# value yielded similar tree structures.
+
+# For visualizations of ordination spaces through time, convergence dynamics,
+# and other visual examples, we use on a single time-scaled tree that most
+# represents the typical cal3 tree, using phytools::ls.consensus to build a
+# consensus tree and then using various tests to identify the single tree among
+# the 60 that is most similar to this consensus. (See below for details.)
 
 
-
-## BUILD EQUAL TIME TREE #######################################################
-
-# Using this tree because of prior common usage (e.g., Lloyd 2018, Button, et
-# al., 2017; Puttick, et al., 2017; Allen, et al., 2019) and because has few
-# zero-length branches (compared to "basic" tree). The "equal" method, first
-# used in Brusette, et al. (2008), uses fossil occurrence FADs to date the
-# first node in a phylogeny, and with zero-length branches avoided by converting
-# the ZLB to a small length and reducing the branch leading to that node by a
-# similar amount.
-
-# Create 100 time trees and then generate a median diversity curve ('randres'
-# randomly resolves polytomies). Using vartime = 1 million years, which is a
-# small but not negligible value. (Trying different values did not alter
-# results.)
-set.seed(312)
-equal.trees <- bin_timePaleoPhy(tree = tree, timeList = timeList, ntrees = 100, 
-                               type = "equal", vartime = 1, randres = TRUE, 
-                               add.term = TRUE)
-beep(3)
-# save(equal.trees, file = "equal.trees")
-# load("equal.trees")
-
-# Compare first 9
-par(mfrow = c(3, 3), mar = c(1, 1, 1, 1))
-for (i in 1:9) {
-  plot(ladderize(equal.trees[[i]]), show.tip.label = FALSE, no.margin = TRUE)
+# Function to replace ZLBs with negligible branch length. Also accordingly fixes
+# the root time of the tree.
+replace.ZLBs <- function(tree, addtime = 0.001) {
+  tree.noZLBs <- tree
+  if (any(tree.noZLBs$edge.length == 0)) {
+    wh.ZLBs <- which(tree.noZLBs$edge.length == 0)
+    tree.noZLBs$edge.length[wh.ZLBs] <- addtime
+    tree.noZLBs <-
+      fixRootTime(tree, tree.noZLBs, fixingMethod = "rescaleUsingTipToRootDist")
+  }
+  return(tree.noZLBs)
 }
-par(op)
-bin_multiDiv <- multiDiv(equal.trees, plot = FALSE)
-plotMultiDiv(bin_multiDiv, timelims = c(550, 440))
-# abline(v = l5s$max_ma) # Interval boundaries
 
-# Create "consensus" tree. (Not sure this is a thing, but relatively easy to do
-# and seems reasonable to me). The preferable way would be to use
-# phytools::averageTree() but the available methods are not computationally
-# tractable with our ensemble of large time trees. ls.consensus() implements the
-# patristic distance method of Lapointe & Cucumel (1997). This tree is used as a
-# sensitivity test to confirm that the cal3 trees and resulting chosen trees
-# used in subsequent disparity analyses are relatively similar.
-(t.start <- Sys.time())
-consensus.equal.tree <- phytools::ls.consensus(trees = equal.trees)
-(Sys.time() - t.start) # 5.3 minutes
-beep(3)
-# save(consensus.equal.tree, file = "consensus.equal.tree")
-# load("consensus.equal.tree")
 
-# This consensus tree lacks time-calibrated branch lengths (and other output
-# from paleoTS). Use minTreeDist() to find the tree that is most similar to use
-# as the consensus. (See ?treedist for descriptions of each method.) All 4
-# available methods choose the same tree, so using the default quadratic
-# (=weighted) path difference method of Steel and Penny (1993) that uses branch
-# lengths (which are most important for distinguishing time trees, given the
-# underlying phylogenetic topology is more-or-less constant). All methods are
-# relatively slow, taking several hours. The resulting chosen tree is identical
-# for all four methods.
-(t.start <- Sys.time())
-closest.equal <- phytools::minTreeDist(tree = consensus.equal.tree, 
-                                       trees = equal.trees,
-                                       method = "quadratic.path.difference")
-(Sys.time() - t.start) # ~ 2 hours
-beep(3)
-# save(closest.equal, file = "closest.equal")
-# load("closest.equal")
-# Confirm that it is a close match (they're identical):
-round(phangorn::treedist(tree1 = consensus.equal.tree, tree2 = closest.equal), 6)
-
-# Which tree in the equal.trees sample is this most like? Here we identify
-# close matches, then pick the match with the closest lineage-richness trend
-# line for analyses.
-sq <- 1:length(equal.trees)
-treedists <- matrix(ncol = 4, nrow = max(sq))
-for (s in sq) {
-  treedists[s,] <- treedist(equal.trees[[s]], closest.equal)
+# Function to calculate time-scaled ranges for tips and nodes. Sets the root FAD
+# = LAD as the tree root age. Modified from code written by David Bapst. Thanks,
+# Dave!
+new.ranges <- function(tree) {
+  ts.ranges <- tree$edge
+  ntime <- tree$root.time - ape::node.depth.edgelength(tree)
+  ts.ranges[, 1] <- ntime[ts.ranges[, 1]]
+  ts.ranges[, 2] <- ntime[ts.ranges[, 2]]
+  terminalEdges <- which(tree$edge[, 2] <= Ntip(tree))
+  row.names(ts.ranges) <- as.character(tree$edge[, 2])
+  row.names(ts.ranges)[terminalEdges] <-
+    tree$tip.label[tree$edge[terminalEdges, 2]]
+  # Change order so matches input data rownames
+  br.order <-
+    as.character(c(row.names(tree$ranges.used), (1 + Ntip(tree)):(Ntip(tree) + Nnode(tree))))
+  ts.ranges <- ts.ranges[match(br.order, row.names(ts.ranges)),]
+  # Manually set root FAD = LAD
+  ts.ranges[(1 + Ntip(tree)),] <- rep(tree$root.time, 2)
+  row.names(ts.ranges)[1 + Ntip(tree)] <-
+    as.character((1 + Ntip(tree)))
+  return(ts.ranges)
 }
-bests <- apply(treedists, 2, which.min)
-bests
-# RF/sym = 1, BSD/KF = 71, path = 46, QPD = 90
-# Use the one with most similar diversity curve:
-p.1 <- phyloDiv(equal.trees[[1]], int.times = bin_multiDiv$int.times)
-p.71 <- phyloDiv(equal.trees[[71]], int.times = bin_multiDiv$int.times)
-p.46 <- phyloDiv(equal.trees[[46]], int.times = bin_multiDiv$int.times)
-p.90 <- phyloDiv(equal.trees[[90]], int.times = bin_multiDiv$int.times)
 
-# Plot all on same graph, limiting to Cambro-Ordovician
-plotMultiDiv(bin_multiDiv, timelims = c(550, 440))
-lines(p.1[, c(1, 3)], col = "yellow", lwd = 2)
-lines(p.71[, c(1, 3)], col = "red", lwd = 2)
-lines(p.46[, c(1, 3)], col = "blue", lwd = 2)
-lines(p.90[, c(1, 3)], col = "orange", lwd = 2)
-
-# Limit correlation analysis to Cambro-Ordovician
-wh.overlap <- which(bin_multiDiv$int.times[, 1] <= 541 & 
-                      bin_multiDiv$int.times[, 1] >= 443.4)
-# First difference correlation coefficient (simplified because equal bins)
-diff.equal <- diff(bin_multiDiv$median.curve[wh.overlap, 1])
-diff.p.1 <- diff(p.1[wh.overlap, 3])
-diff.p.71 <- diff(p.71[wh.overlap, 3])
-diff.p.46 <- diff(p.46[wh.overlap, 3])
-diff.p.90 <- diff(p.90[wh.overlap, 3])
-round(cor(diff.equal, diff.p.1), 3)   # 0.949 *** most correlated
-round(cor(diff.equal, diff.p.71), 3)  # 0.926
-round(cor(diff.equal, diff.p.46), 3)  # 0.942
-round(cor(diff.equal, diff.p.90), 3)  # 0.924
-
-
-# Confirm no zero-length branches present (because Claddis' morphological
-# disparity functions disallow it).
-sq <- 1:length(equal.trees)
-# How many have ZLBs?
-ZLBs <- sapply(sq, function(sq) any(equal.trees[[sq]]$edge.length == 0))
-table(ZLBs) # None do!
-
-# Confirm that the time tree producing the most correlated phylogenetic
-# diversity is a close match to the consensus tree
-round(phangorn::treedist(tree1 = consensus.equal.tree, tree2 = equal.trees[[1]]), 6)
-
-# While at it, what's the distribution of estimated root ages?
-roots <- sapply(sq, function(sq) equal.trees[[sq]]$root.time)
-summary(roots)                     # Mean age is early Cambrian
-length(roots < max(ranges$max_ma)) # with all 100 younger than oldest FAD, 
-# b/c paleotree "equal" method assumes this
-hist(roots)
-
-# Save equal tree for Claddis analyses
-equal.tree <- equal.trees[[1]]
-phyloDiv(equal.tree)
-# save(equal.tree, file = "equal.tree")
-# load("equal.tree")
-# pdf(file = "EchinoPhylogeny_equal.pdf", height = 20)
-# plot(equal.tree, cex = 0.4); axisPhylo()
-# dev.off()
-
-
-
-
-
-
-
-## BUILD CAL3 TIME TREE ########################################################
-set.seed(312)
+## BUILD A SINGLE CAL3 TREE ####################################################
+set.seed(17)
 (t.start <- Sys.time())
+cal3tree <- cal3tree.noZLBs <- NULL
 cal3tree <- bin_cal3TimePaleoPhy(tree, timeList, brRate = divRate, 
                                  extRate = divRate, sampRate = sRate, 
-                                 ntrees = 1, plot = TRUE)
-Sys.time() - t.start
+                                 dateTreatment = "firstLast", FAD.only = FALSE, 
+                                 anc.wt = 0, randres = FALSE, ntrees = 1, 
+                                 plot = FALSE)
+Sys.time() - t.start # 1.73 minutes
 beep(3)
+
+# Visualizations and tests
+
+# 1. Are polytomies present?
+!is.binary.phylo(cal3tree) # No polytomies
+
+# 2. How many ZLBs?
+length(which(cal3tree$edge.length == 0)) # 57 ZLBs
+
+# 3. Compare pre and post FAD/LAD ranges.
+tail(ranges)
+(nr <- new.ranges(cal3tree))[361:370,]
+par(mfrow = c(1, 2))
+hist(ranges[, 1] - nr[1:366, 1], main = "FADs")
+hist(ranges[, 2] - nr[1:366, 2], main = "LADs")
+
+# 4. Phylogenetic diversity
 phyloDiv(cal3tree)
 
-# Build 100 in parallel
+# 5. Effect of replacing ZLBs with negligible branch lengths (and adjusting root
+# accordingly)
 
-# (Was not done in summer 2020, but if need to run again, refer to
-# 6-Phylogenetic inertia.R for better way to implement load-balancing where the
-# L-Ecuyer RNG seed can allow replication.)
-set.seed(312)
-library(doParallel)    # v. 1.0.15
+# Shortest branch length
+min(cal3tree$edge.length[cal3tree$edge.length > 0]) # minimum is 0.1
+
+# Replace ZLBs with 0.001
+cal3tree.noZLBs <- replace.ZLBs(cal3tree)
+table(compareTermBranches(cal3tree, cal3tree.noZLBs))
+table(round(compareNodeAges(cal3tree, cal3tree.noZLBs), 2))
+# No changes to tips and negligible changes to nodes
+
+# 6. Effect on root age adjustment
+cal3tree$root.time - cal3tree.noZLBs$root.time # root moved backward negligible 0.003 Myr
+
+
+
+## BUILD 60 CAL3 TREES IN PARALLEL #############################################
+
+# First make 30 with anc.wt = 0
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
+# Use load-balancing because of different run times for the MCMC optimizations
+opts <- list(preschedule = FALSE)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
 (t.start <- Sys.time())
-nreps <- 100
-par.cal3trees <- foreach(i = 1:nreps, .packages = "paleotree") %dopar% {
-  bin_cal3TimePaleoPhy(tree, timeList, brRate = divRate, extRate = divRate, 
-                       sampRate = sRate, ntrees = 1, plot = FALSE)
-}
-Sys.time() - t.start
+nreps <- 30
+par.cal3trees.0anc <- foreach(i = 1:nreps, .options.snow = opts, 
+                              .packages = "paleotree") %dopar% {
+                                bin_cal3TimePaleoPhy(tree, timeList, brRate = divRate, extRate = divRate, 
+                                                     sampRate = sRate, dateTreatment = "firstLast", 
+                                                     FAD.only = FALSE, anc.wt = 0, randres = FALSE, 
+                                                     ntrees = 1, plot = FALSE)
+                              }
+Sys.time() - t.start # 13.04 minutes on 8-core laptop
 stopCluster(cl)
 beep(3)
+
+# Second make 30 with anc.wt = 1
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+# Use load-balancing because of different run times for the MCMC optimizations
+opts <- list(preschedule = FALSE)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+(t.start <- Sys.time())
+nreps <- 30
+par.cal3trees.1anc <- foreach(i = 1:nreps, .options.snow = opts, 
+                              .packages = "paleotree") %dopar% {
+                                bin_cal3TimePaleoPhy(tree, timeList, brRate = divRate, extRate = divRate, 
+                                                     sampRate = sRate, dateTreatment = "firstLast", 
+                                                     FAD.only = FALSE, anc.wt = 0, randres = FALSE, 
+                                                     ntrees = 1, plot = FALSE)
+                              }
+Sys.time() - t.start # 10.09 minutes on 8-core laptop
+stopCluster(cl)
+beep(3)
+
+# Combine into a single forest of frees
+par.cal3trees <- c(par.cal3trees.0anc, par.cal3trees.1anc)
 
 # Save trees
 # save(par.cal3trees, file = "par.cal3trees")
@@ -337,7 +330,7 @@ par(op)
 # Plot median diversity curve with 95%iles
 cal3_multiDiv <- multiDiv(par.cal3trees, plot = FALSE)
 plotMultiDiv(cal3_multiDiv, timelims = c(550, 440))
-abline(v = l5s$max_ma) # Interval boundaries
+abline(v = l5s$max_ma, col = "darkgray") # Interval boundaries
 
 # Create "consensus" cal3 tree. (See comments above.) 
 (t.start <- Sys.time())
@@ -444,7 +437,7 @@ lequal <- length(equal.trees)
 dist3 <- matrix(nrow = lcal3, ncol = lequal)
 for(r in 1:lcal3){
   for(c in 1:lequal){
-  dist3[r, c] <- path.dist(tree1 = par.cal3trees[[r]], tree2 = equal.trees[[c]])  
+    dist3[r, c] <- path.dist(tree1 = par.cal3trees[[r]], tree2 = equal.trees[[c]])  
   }
 }
 hist(dist3)
@@ -501,7 +494,7 @@ legend("topleft", inset = .1, c("cal3", "equal"), pch = c("-", "-"),
 # Confirm statistically that they're not different
 wh.overlap <-
   which(round(cal3_multiDiv$int.times[, 1]) <= round(max(bin_multiDiv$int.times[, 1])) &
-        round(cal3_multiDiv$int.times[, 1]) >= round(min(bin_multiDiv$int.times[, 1])))
+          round(cal3_multiDiv$int.times[, 1]) >= round(min(bin_multiDiv$int.times[, 1])))
 # First difference correlation coefficient (simplified because equal bins)
 diff.cal3 <- diff(cal3_multiDiv$median.curve[wh.overlap, 1])
 diff.equal <- diff(bin_multiDiv$median.curve[, 1])

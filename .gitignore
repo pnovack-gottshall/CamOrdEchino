@@ -17,6 +17,7 @@ X-Class analyses.R
 X-Trying to avoid ZLBs.R
 X5-Rate tests_OLD.R
 X_Diff pcoa trials.R
+X-comparing ca3 settings.R
 cal3.tree
 closest.cal3
 closest.equal
@@ -28,3 +29,4 @@ equal.trees
 par.cal3trees
 timeList
 X-Missing states through time.R
+X-comparing cal3 settings.R
