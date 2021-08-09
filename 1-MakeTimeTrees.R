@@ -320,8 +320,9 @@ cal3trees <- c(cal3trees.0anc, cal3trees.1anc)
 # save(cal3trees, file = "cal3trees")
 # load("cal3trees")
 
-## Visualize and understand the trees
 
+
+## EXPLORE POPULATION OF TIME TREES ############################################
 # Plot first tree
 phyloDiv(cal3trees[[1]])
 
@@ -340,9 +341,41 @@ abline(v = l5s$max_ma, col = "darkgray") # Interval boundaries
 # Note the relatively little variation in diversity curves for these 50 cal3
 # trees.
 
+# Are polytomies present?
+table(!is.binary.multiPhylo(cal3trees)) # No polytomies!
+
+# How many zero-length branches (ZLBs)?
+sq <- 1:length(cal3trees)
+summary(sapply(sq, function(sq) 
+  length(which(cal3trees[[sq]]$edge.length == 0)))) # 43 - 78 ZLBs, mean = 61
+
+# Compare pre and post FAD/LAD ranges.
+par(mfrow = c(1, 2))
+tail(ranges)
+(nr <- strat.ranges(cal3trees[[1]]))[361:370,]
+hist(ranges[, 1] - nr[1:366, 1], main = "FAD")
+hist(ranges[, 2] - nr[1:366, 2], main = "LAD")
+par(op)
+
+# Effect of removing ZLBs on terminal and node branch lengths
+cal3trees.noZLBs <- lapply(cal3trees, replace.ZLBs)
+summary(br <- as.vector(sapply(sq, function(sq) 
+  compareTermBranches(cal3trees[[sq]], cal3trees.noZLBs[[sq]]))))
+summary(nd <- as.vector(sapply(sq, function(sq) 
+  compareNodeAges(cal3trees[[sq]], cal3trees.noZLBs[[sq]]))))
+100 * round(table(round(nd, 3)) / length(nd), 3)
+hist(nd)
+# 0 branch adjustments; -0.010 - + 0.017 (median = 0.001) node adjustments
+
+# Effect on root age adjustment
+summary(root.adj <- sapply(sq, function(sq) 
+  cal3trees[[sq]]$root.time - cal3trees.noZLBs[[sq]]$root.time))
+hist(root.adj)
+# root adjusted -0.010 - 0 Myr, median = -0.003 Myr
 
 
-## EXPLORE POPULATION OF TIME TREES & CHOOSE MOST TYPICAL TREE FOR ANALYSES ####
+
+## CHOOSE MOST TYPICAL TREE FOR ANALYSES #######################################
 # See comments above for rationale.
 
 # Create "consensus" cal3 tree. (See comments above.) 
