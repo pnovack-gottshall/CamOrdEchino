@@ -506,7 +506,7 @@ beep(3)
 # 0.31 hrs for Ecology_Raw [using modified algorithm above to handle characters with all-missing states]
 # 4.49 hrs for Morph and no errors (UPDATED)
 warnings()
-str(par.out[[1]])
+str(par.out[[500]])
 
 # Check for any all-missing states in output above (check any that are
 # returned). Following adds a tree and all-missing states to relevant
