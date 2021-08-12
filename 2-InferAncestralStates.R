@@ -535,20 +535,24 @@ seq.end <- seq(from = nchar, to = num.trees * nchar, by = nchar)
 for(tr in 1:num.trees) {
   postpar_data_list[[tr]] <- par.out[seq.start[tr]:seq.end[tr]]
 }
+# Always good to save memory
+rm("par.out")
+gc()
+
 
 # Confirm worked as intended
 if (length(postpar_data_list) != num.trees)
-  stop("The list of lists did not rebuild correctly.")
+  stop("The list of lists did NOT rebuild correctly.")
 sq <- seq.int(num.trees)
 if (any(sapply(sq, function(sq) length(postpar_data_list[[sq]]) != nchar)))
-  stop("The list of lists did not rebuild correctly.")
+  stop("The list of lists did NOT rebuild correctly.")
 
 # Post-processing (lines 373-485 at
 # https://github.com/graemetlloyd/Claddis/blob/master/R/estimate_ancestral_states.R)
 ancestral_state_matrices <- postpar_data_list
 
 for(tr in 1:num.trees) {
-  cat("post-processing tree", tr, "\n")
+  cat("post-processing tree", tr, "of", num.trees, "\n")
   data_list <- postpar_data_list[[tr]]
   {
     # Get Newick strings of all sampled subtrees (to use to avoid redundancy in tree node mapping):
@@ -672,10 +676,10 @@ beep(3)
 
 # Confirm worked as intended
 if (length(ancestral_state_matrices) != num.trees)
-  stop("The list of lists did not rebuild and post-process correctly.")
+  stop("The list of lists did NOT rebuild and post-process correctly.")
 sq <- seq.int(num.trees)
 if (any(sapply(sq, function(sq) length(postpar_data_list[[sq]]) != nchar)))
-  stop("The list of lists did not rebuild and post-process correctly.")
+  stop("The list of lists did NOT rebuild and post-process correctly.")
 
 # Confirm everything looks OK (using tree 50)
 str(ancestral_state_matrices[[50]])
