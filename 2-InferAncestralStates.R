@@ -502,7 +502,7 @@ beep(3)
 (Sys.time() - t.start0)
 # Timing log:
 # 1.29 hrs for Ecology_Mode and no errors (UPDATED)
-# 1.04 hrs for Ecology_Constant and no errors
+# 1.60 days for Ecology_Constant and no errors (UPDATED)
 # 0.31 hrs for Ecology_Raw [using modified algorithm above to handle characters with all-missing states]
 # 4.49 hrs for Morph and no errors (UPDATED)
 warnings()
@@ -514,7 +514,9 @@ str(par.out[[500]])
 sq <- seq.int(par.out)
 wh.all.missing <-
   which(!unlist(lapply(sq, function(sq) ! is.null(par.out[[sq]]$tree))))
-if(length(wh.all.missing) > 0L) {
+if (length(wh.all.missing) == 0L)
+  cat("No characters were skipped when inferring ancestral states.\n")
+if (length(wh.all.missing) > 0L) {
   cat("Character(s)", wh.w, "were skipped when inferring ancestral states. 
       Trees and missing ancestral states were manually added to these characters.\n")
   for (ch in 1:length(wh.all.missing)) {
@@ -688,7 +690,7 @@ ancestral_state_matrices[[50]]$matrix_1$matrix[c(1:5, 726:731), 1:10]
 # raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
 # morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
 
-# Convert ancestral state matrix to csv for viewing outside R (using tree 50)
+# Convert ancestral state matrix to csv for viewing outside R (using ONLY tree 50)
 # write.csv(mode.anc[[50]]$matrix_1$matrix, file = "modeanc.csv")
 # write.csv(constant.anc[[50]]$matrix_1$matrix, file = "constantanc.csv")
 # write.csv(raw.anc[[50]]$matrix_1$matrix, file = "rawanc.csv")
