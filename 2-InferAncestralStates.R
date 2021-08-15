@@ -89,17 +89,15 @@ summary(sapply(sq, function(sq)
 # Note that although in NEXUS format, these files do not contain phylogenetic
 # data. All phylogenies are drawn from the time-trees above.
 setwd("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/")
-input <- "EchinoTree_Mode.nex"
+# input <- "EchinoTree_Mode.nex"
 # input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
-# input <- "EchinoTree_Morph.nex"
+input <- "EchinoTree_Morph.nex"
 DataMatrix <- read_nexus_matrix(file_name = input)
+
+# View to confirm imported correctly
 str(DataMatrix)
-
 DataMatrix$matrix_1$matrix[1:10, 1:10]
-
-
-
 
 
 ## ESTIMATE ANCESTORS ##########################################################
@@ -143,8 +141,6 @@ num.trees <- length(cal3trees)
 pre_all_data_lists <- vector("list", num.trees)
 
 for(tr in 1:num.trees) {
-  cat("pre-processing tree", tr, "\n")
-  
   # Set args:
   time_tree = cal3trees[[tr]]
   cladistic_matrix = DataMatrix
@@ -457,12 +453,7 @@ for(tr in 1:num.trees) {
 }
 beep(3)
 
-# If get following error: "In drop.tip(phy = x$time_tree, tip = Missing) ...",
-# it means a character is missing states for all taxa. Modified 'GetAncStates'
-# code will still process, and code below will post a warning noting which
-# characters were affected.
-
-# Each list in all_data_lists is a separate character matrix and tree. Here we
+# Each list in 'all_data_lists' is a separate character matrix and tree. Here we
 # combine them into a single 'data_list' for processing the next step 'in
 # parallel.'
 nchar <- length(pre_all_data_lists[[1]])
@@ -476,6 +467,37 @@ if(identical(data_list[[1]], pre_all_data_lists[[1]][[1]]) |
     length(data_list), "total characters to reconstruct." ) else
   stop("The 'data_list's were NOT concatenated correctly.")
 
+
+# For processing the (large character number) morphological data set, we are
+# breaking into five bite-sized pieces to ameliorate instances of processing
+# failure. (In other words, if something goes awry, like a power failure, we've
+# only lost a few days of run time instead of having to re-do everything.)
+if(length(data_list) == 20650L) {
+  all_data_lists <- data_list
+  # Save for safekeeping (note a large gigabyte object so will take time to
+  # save/load)
+  save(all_data_lists, file = "all_data_lists")
+  # load("all_data_lists") # Only if need to restart!
+  bite_size <- length(all_data_lists) / 5
+  cat("Breaking down into", bite_size, 
+      "characters per each of five runs. Make sure to redefine \n each 'data_list' accordingly when running in parallel.\n")
+  bites <- seq(from = 1, to = length(all_data_lists), by = bite_size)
+  bite_to <- bites + bite_size - 1
+  data_list1 <- all_data_lists[bites[1]:bite_to[1]]
+  data_list2 <- all_data_lists[bites[2]:bite_to[2]]
+  data_list3 <- all_data_lists[bites[3]:bite_to[3]]
+  data_list4 <- all_data_lists[bites[4]:bite_to[4]]
+  data_list5 <- all_data_lists[bites[5]:bite_to[5]]
+  beep()
+  # Clean up to save working memory
+  rm(list = c("pre_all_data_lists", "data_list"))
+  gc()
+}
+
+# Manually update accordingly (only for the morphological data set). If need to
+# restart, load the 'all_data_lists' object above and rebuild 'data_list1',
+# 'data_list2', etc.
+# data_list <- data_list1
 
 # Parallel implementation to get ancestral states for each character
 library(snowfall)
@@ -501,12 +523,12 @@ save(par.out, file = "par.out")
 beep(3)
 (Sys.time() - t.start0)
 # Timing log:
-# 1.29 hrs for Ecology_Mode and no errors (UPDATED)
-# 1.60 days for Ecology_Constant and no errors (UPDATED)
-# 0.31 hrs for Ecology_Raw [using modified algorithm above to handle characters with all-missing states]
-# 4.49 hrs for Morph and no errors (UPDATED)
+# 1.88 days for Ecology_Mode and no errors
+# 1.60 days for Ecology_Constant and no errors
+# 13.1 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually)
+# 4.49 hrs for Morph and no errors (ONE UPDATED)
 warnings()
-str(par.out[[500]])
+str(par.out[[500]])   
 
 # Check for any all-missing states in output above (check any that are
 # returned). Following adds a tree and all-missing states to relevant
@@ -517,7 +539,7 @@ wh.all.missing <-
 if (length(wh.all.missing) == 0L)
   cat("No characters were skipped when inferring ancestral states.\n")
 if (length(wh.all.missing) > 0L) {
-  cat("Character(s)", wh.w, "were skipped when inferring ancestral states. 
+  cat("Character(s)", wh.all.missing, "were skipped when inferring ancestral states. 
       Trees and missing ancestral states were manually added to these characters.\n")
   for (ch in 1:length(wh.all.missing)) {
     par.out[[wh.all.missing[ch]]]$tree <- time_tree
@@ -528,6 +550,11 @@ if (length(wh.all.missing) > 0L) {
   }
 }
 
+# If all NAs, check to see whether manual override is appropriate
+par.out[[6]]
+par.out[[7]]
+par.out[[8]]
+
 # Reassemble into (tree) list of (character) lists
 postpar_data_list <- vector("list", num.trees)
 seq.start <- seq(from = 1, to = num.trees * nchar, by = nchar)
@@ -535,10 +562,6 @@ seq.end <- seq(from = nchar, to = num.trees * nchar, by = nchar)
 for(tr in 1:num.trees) {
   postpar_data_list[[tr]] <- par.out[seq.start[tr]:seq.end[tr]]
 }
-# Always good to save memory
-rm("par.out")
-gc()
-
 
 # Confirm worked as intended
 if (length(postpar_data_list) != num.trees)
@@ -546,6 +569,10 @@ if (length(postpar_data_list) != num.trees)
 sq <- seq.int(num.trees)
 if (any(sapply(sq, function(sq) length(postpar_data_list[[sq]]) != nchar)))
   stop("The list of lists did NOT rebuild correctly.")
+
+# Always efficient to save memory
+rm("par.out")
+gc()
 
 # Post-processing (lines 373-485 at
 # https://github.com/graemetlloyd/Claddis/blob/master/R/estimate_ancestral_states.R)
@@ -672,6 +699,13 @@ for(tr in 1:num.trees) {
   }
   ancestral_state_matrices[[tr]] <- ancestral_state_matrix
 }
+
+# Save processed data
+# mode.anc <- ancestral_state_matrices; save(mode.anc, file = "mode.anc"); load("mode.anc")
+# constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
+# raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
+# morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
+
 beep(3)
 
 # Confirm worked as intended
@@ -683,16 +717,10 @@ if (any(sapply(sq, function(sq) length(postpar_data_list[[sq]]) != nchar)))
 
 # Confirm everything looks OK (using tree 50)
 str(ancestral_state_matrices[[50]])
-names(ancestral_state_matrices[[50]])
+names(ancestral_state_matrices[[50]]) # Should be 'topper' and 'matrix_1'
 
 # Check states for tips and nodes (using tree 50)
 ancestral_state_matrices[[50]]$matrix_1$matrix[c(1:5, 726:731), 1:10]
-
-# Save processed data
-# mode.anc <- ancestral_state_matrices; save(mode.anc, file = "mode.anc"); load("mode.anc")
-# constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
-# raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
-# morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
 
 # Convert ancestral state matrix to csv for viewing outside R (using ONLY tree 50)
 # write.csv(mode.anc[[50]]$matrix_1$matrix, file = "modeanc.csv")
