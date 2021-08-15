@@ -468,36 +468,67 @@ if(identical(data_list[[1]], pre_all_data_lists[[1]][[1]]) |
   stop("The 'data_list's were NOT concatenated correctly.")
 
 
-# For processing the (large character number) morphological data set, we are
-# breaking into five bite-sized pieces to ameliorate instances of processing
-# failure. (In other words, if something goes awry, like a power failure, we've
-# only lost a few days of run time instead of having to re-do everything.)
+# Here there be monsters! For processing the (large character number)
+# morphological data set, we are breaking into five bite-sized pieces to
+# ameliorate instances of processing failure. (In other words, if something goes
+# awry, like a power failure, we've only lost a few days of run time instead of
+# having to re-do everything.) In order to minimize memory limitations, also
+# need to remove all unnecessary prior objects from memory, which requires
+# re-scripting the required subfunctions and args from above code.
 if(length(data_list) == 20650L) {
   all_data_lists <- data_list
   # Save for safekeeping (note a large gigabyte object so will take time to
   # save/load)
   save(all_data_lists, file = "all_data_lists")
   # load("all_data_lists") # Only if need to restart!
+  beep()
   bite_size <- length(all_data_lists) / 5
   cat("Breaking down into", bite_size, 
-      "characters per each of five runs. Make sure to redefine \n each 'data_list' accordingly when running in parallel.\n")
+      "characters per each of five runs. Make sure to redefine \n below each 'data_list' accordingly when running in parallel.\n")
   bites <- seq(from = 1, to = length(all_data_lists), by = bite_size)
   bite_to <- bites + bite_size - 1
+  # To save further memory, it is advisable to manually only do one bite at a
+  # time (instead of pre-defining all 5 at once)
   data_list1 <- all_data_lists[bites[1]:bite_to[1]]
   data_list2 <- all_data_lists[bites[2]:bite_to[2]]
   data_list3 <- all_data_lists[bites[3]:bite_to[3]]
   data_list4 <- all_data_lists[bites[4]:bite_to[4]]
   data_list5 <- all_data_lists[bites[5]:bite_to[5]]
   beep()
-  # Clean up to save working memory
-  rm(list = c("pre_all_data_lists", "data_list"))
+  # Clean up any no-longer used large objects to save working memory
+  rm(list = c("pre_all_data_lists", "data_list", "all_data_lists", "cal3trees", 
+              "cal3trees.noZLBs", "DataMatrix", "br", "nd"))
   gc()
+  # Re-assign critical args and subfunction used in parallel portion:
+  estimate_tip_values = FALSE
+  threshold = 0.01
+  estimate_ancestral_state <- function(x, estimate_tip_values, threshold) {
+    if (!is.null(x$tree)) {
+      if (x$ordering == "continuous") {
+        x$ancestral_states <- ace(x = x$tip_states, phy = x$tree)$ace
+      } else {
+        if (ncol(x$tip_states) == 1) {
+          n_tips <- ape::Ntip(phy = x$tree)
+          x$ancestral_states <- matrix(rep(x = 1, times = (n_tips + x$tree$Nnode)), ncol = 1, dimnames = list(c(x$tree$tip.label, (n_tips + 1):(n_tips + x$tree$Nnode)), colnames(x = x$tip_states)))
+        }
+        if (ncol(x$tip_states) > 1) x$ancestral_states <- phytools::rerootingMethod(tree = x$tree, x = x$tip_states, model = x$model)$marginal.anc
+        x$ancestral_states <- unlist(x = lapply(X = lapply(X = apply(x$ancestral_states, 1, list), unlist), function(x) {
+          paste(names(x[x > (max(x) - threshold)]), collapse = "/")
+        }))
+        if (!estimate_tip_values) x$ancestral_states <- x$ancestral_states[-match(x$tree$tip.label, names(x$ancestral_states))]
+      }
+    } else {
+      x$ancestral_states <- vector(mode = "character")
+    }
+    x
+  }  
 }
+
 
 # Manually update accordingly (only for the morphological data set). If need to
 # restart, load the 'all_data_lists' object above and rebuild 'data_list1',
 # 'data_list2', etc.
-# data_list <- data_list1
+# data_list <- data_list1; rm("data_list1"); gc()
 
 # Parallel implementation to get ancestral states for each character
 library(snowfall)
