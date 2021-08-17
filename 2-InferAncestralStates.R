@@ -16,7 +16,7 @@ op <- par()
 # Set working directory (point to the folder containing the input files on your
 # own machine):
 # setwd("[filepath to folder containing data files on your personal machine]")
-setwd("~/Manuscripts/CamOrdEchinos/")
+setwd("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/")
 
 # Load packages
 library(beepr)      # v. 1.3
@@ -33,7 +33,7 @@ if(packageVersion("Claddis") < "0.6.0")
   stop("wrong version of 'Claddis' Get updated version from GitHub.\n")
 
 ## Import time trees saved from prior code
-load("cal3trees")
+load("~/Manuscripts/CamOrdEchinos/cal3trees")
 # Plot median diversity curve with 95%iles
 cal3_multiDiv <- paleotree::multiDiv(cal3trees, plot = FALSE)
 paleotree::plotMultiDiv(cal3_multiDiv, timelims = c(550, 440))
@@ -88,7 +88,6 @@ summary(sapply(sq, function(sq)
 ## Import morphological and ecological data sets in NEXUS format
 # Note that although in NEXUS format, these files do not contain phylogenetic
 # data. All phylogenies are drawn from the time-trees above.
-setwd("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/")
 # input <- "EchinoTree_Mode.nex"
 # input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
@@ -471,29 +470,29 @@ if(identical(data_list[[1]], pre_all_data_lists[[1]][[1]]) |
 # Here there be monsters! For processing the (large character number)
 # morphological data set, we are breaking into five bite-sized pieces to
 # ameliorate instances of processing failure. (In other words, if something goes
-# awry, like a power failure, we've only lost a few days of run time instead of
-# having to re-do everything.) In order to minimize memory limitations, also
-# need to remove all unnecessary prior objects from memory, which requires
-# re-scripting the required subfunctions and args from above code.
+# awry, like a power failure, we've only lost a day of run time instead of
+# having to re-do everything.) Because the objects are large, also removing all
+# unnecessary prior objects from memory, which requires re-scripting the
+# required sub-functions and args from above code.
 if(length(data_list) == 20650L) {
   all_data_lists <- data_list
   # Save for safekeeping (note a large gigabyte object so will take time to
   # save/load)
   save(all_data_lists, file = "all_data_lists")
-  # load("all_data_lists") # Only if need to restart!
+  # load("all_data_lists") # Only if need to restart on trials 2-5!
   beep()
   bite_size <- length(all_data_lists) / 5
   cat("Breaking down into", bite_size, 
       "characters per each of five runs. Make sure to redefine \n below each 'data_list' accordingly when running in parallel.\n")
   bites <- seq(from = 1, to = length(all_data_lists), by = bite_size)
   bite_to <- bites + bite_size - 1
-  # To save further memory, it is advisable to manually only do one bite at a
-  # time (instead of pre-defining all 5 at once)
-  data_list1 <- all_data_lists[bites[1]:bite_to[1]]
-  data_list2 <- all_data_lists[bites[2]:bite_to[2]]
+  # To save further memory, it is advisable to manually only define one bite at
+  # a time (instead of pre-defining all 5 at once)
+  # data_list1 <- all_data_lists[bites[1]:bite_to[1]]
+  # data_list2 <- all_data_lists[bites[2]:bite_to[2]]
   data_list3 <- all_data_lists[bites[3]:bite_to[3]]
-  data_list4 <- all_data_lists[bites[4]:bite_to[4]]
-  data_list5 <- all_data_lists[bites[5]:bite_to[5]]
+  # data_list4 <- all_data_lists[bites[4]:bite_to[4]]
+  # data_list5 <- all_data_lists[bites[5]:bite_to[5]]
   beep()
   # Clean up any no-longer used large objects to save working memory
   rm(list = c("pre_all_data_lists", "data_list", "all_data_lists", "cal3trees", 
@@ -529,6 +528,10 @@ if(length(data_list) == 20650L) {
 # restart, load the 'all_data_lists' object above and rebuild 'data_list1',
 # 'data_list2', etc.
 # data_list <- data_list1; rm("data_list1"); gc()
+# data_list <- data_list2; rm("data_list2"); gc()
+data_list <- data_list3; rm("data_list3"); gc()
+# data_list <- data_list4; rm("data_list4"); gc()
+# data_list <- data_list5; rm("data_list5"); gc()
 
 # Parallel implementation to get ancestral states for each character
 library(snowfall)
@@ -557,22 +560,44 @@ beep(3)
 # 1.88 days for Ecology_Mode and no errors
 # 1.60 days for Ecology_Constant and no errors
 # 13.1 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually)
-# 4.49 hrs for Morph and no errors (ONE UPDATED)
+# X 4.49 hrs X 
+# 23.12 hrs + 22.28 hrs  + 2?.?? hrs  + 2?.?? hrs + 2?.?? hrs =  ??.?? hrsfor Morph and no errors (ONE UPDATED)
 warnings()
 str(par.out[[500]])   
 
 # Check for any all-missing states in output above (check any that are
 # returned). Following adds a tree and all-missing states to relevant
-# characters.
+# characters. Make sure the tree is the one without ZLBs, and that it
+# sequentially updates based on the time tree used.
+
+# First check for all-missing states
 sq <- seq.int(par.out)
 wh.all.missing <-
   which(!unlist(lapply(sq, function(sq) ! is.null(par.out[[sq]]$tree))))
 if (length(wh.all.missing) == 0L)
   cat("No characters were skipped when inferring ancestral states.\n")
-if (length(wh.all.missing) > 0L) {
+if (length(wh.all.missing) > 0L)
   cat("Character(s)", wh.all.missing, "were skipped when inferring ancestral states. 
       Trees and missing ancestral states were manually added to these characters.\n")
+
+# And process, if so ...
+if (length(wh.all.missing) > 0L) {
+  # *** Start by assigning the tree that was first processed. (Will be 1 for the
+  # 'raw' treatment and start with seq(from = 1, to = 50, by = 10) for the
+  # 5-bite 'morphology' data set.) Also make sure the number of characters for
+  # the data set is correctly specified.
+  starting.tree <- 11 # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  nchar <- 413        # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  tree.index <- floor(wh.all.missing / nchar) + starting.tree
+  # Confirm the available list of time-trees lacks ZLBs
+  if (!exists("cal3trees"))
+    load("~/Manuscripts/CamOrdEchinos/cal3trees")
+  sq <- 1:length(cal3trees)
+  if (any(sapply(sq, function(sq) length(which(cal3trees[[sq]]$edge.length == 0)))) > 0)
+    cal3trees <- lapply(cal3trees, replace.ZLBs)
+  # Finally add the correct tree and NAs for all missing characters
   for (ch in 1:length(wh.all.missing)) {
+    time_tree <- cal3trees[[tree.index[ch]]]
     par.out[[wh.all.missing[ch]]]$tree <- time_tree
     par.out[[wh.all.missing[ch]]]$ancestral_states <-
       as.character(rep(x = NA, times = Nnode(time_tree)))
@@ -580,11 +605,28 @@ if (length(wh.all.missing) > 0L) {
       as.character((Ntip(time_tree) + 1):(Ntip(time_tree) + Nnode(time_tree)))
   }
 }
+# Characters 7 & 8 in all trees for 'raw'
+# Characters 34, 35, 39, 43, 51, 52, 54, & 410 in all trees for 'morphology'
 
 # If all NAs, check to see whether manual override is appropriate
 par.out[[6]]
 par.out[[7]]
 par.out[[8]]
+
+# ONLY USED FOR MORPHOLOGICAL DATA SETS:
+# Redefine and save par.out
+# par.out1 <- par.out; save(par.out1, file = "par.out1")
+# par.out2 <- par.out; save(par.out2, file = "par.out2")
+
+
+
+
+
+
+
+
+
+# ******* NENED TO PICK UP FROM HERE FOR THE MORPHOLOGICAL DATASET! **********
 
 # Reassemble into (tree) list of (character) lists
 postpar_data_list <- vector("list", num.trees)
