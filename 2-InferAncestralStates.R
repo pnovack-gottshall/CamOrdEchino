@@ -32,8 +32,12 @@ library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on cod
 if(packageVersion("Claddis") < "0.6.0")
   stop("wrong version of 'Claddis' Get updated version from GitHub.\n")
 
+
+## IMPORT AND PROCESS TIME TREES ###############################################
+
 ## Import time trees saved from prior code
 load("~/Manuscripts/CamOrdEchinos/cal3trees")
+
 # Plot median diversity curve with 95%iles
 cal3_multiDiv <- paleotree::multiDiv(cal3trees, plot = FALSE)
 paleotree::plotMultiDiv(cal3_multiDiv, timelims = c(550, 440))
@@ -84,6 +88,7 @@ summary(sapply(sq, function(sq)
   length(which(cal3trees[[sq]]$edge.length == 0)))) # Now 0 ZLBs
 
 
+## IMPORT DATA SETS ############################################################
 
 ## Import morphological and ecological data sets in NEXUS format
 # Note that although in NEXUS format, these files do not contain phylogenetic
@@ -134,6 +139,8 @@ DataMatrix$matrix_1$matrix[1:10, 1:10]
 # scenario where the parallel processing awaits only one or two slow (=difficult
 # to reconstruct) characters. In other words, this allows the process to move on
 # to the next tree while solving earlier ones.
+
+## 1. PRO-PROCESSING OF ANCESTRAL DATA #########################################
 
 # 1. Run pre-processing in a loop (to build the data list for each time tree)
 num.trees <- length(cal3trees)
@@ -452,6 +459,11 @@ for(tr in 1:num.trees) {
 }
 beep(3)
 
+# For the morphological data set (ONLY), which required processing as
+# individually saved and later re-loaded bites (see below for details), need to
+# save and reload several objects from above for post-processing
+# save(original_matrix, file = "original_matrix")
+
 # Each list in 'all_data_lists' is a separate character matrix and tree. Here we
 # combine them into a single 'data_list' for processing the next step 'in
 # parallel.'
@@ -467,7 +479,9 @@ if(identical(data_list[[1]], pre_all_data_lists[[1]][[1]]) |
   stop("The 'data_list's were NOT concatenated correctly.")
 
 
-# Here there be monsters! For processing the (large character number)
+## BREAK MORPHOLOGICAL DATA INTO BITE-SIZED PIECES FOR PARALLEL PROCESSING #####
+
+# Here there be monsters! For processing the (large character-number)
 # morphological data set, we are breaking into five bite-sized pieces to
 # ameliorate instances of processing failure. (In other words, if something goes
 # awry, like a power failure, we've only lost a day of run time instead of
@@ -478,8 +492,8 @@ if(length(data_list) == 20650L) {
   all_data_lists <- data_list
   # Save for safekeeping (note a large gigabyte object so will take time to
   # save/load)
-  save(all_data_lists, file = "all_data_lists")
-  # load("all_data_lists") # Only if need to restart on trials 2-5!
+  # save(all_data_lists, file = "all_data_lists")
+  # load("all_data_lists") # Used when restarting for trials 2-5
   beep()
   bite_size <- length(all_data_lists) / 5
   cat("Breaking down into", bite_size, 
@@ -490,10 +504,14 @@ if(length(data_list) == 20650L) {
   # a time (instead of pre-defining all 5 at once)
   # data_list1 <- all_data_lists[bites[1]:bite_to[1]]
   # data_list2 <- all_data_lists[bites[2]:bite_to[2]]
-  data_list3 <- all_data_lists[bites[3]:bite_to[3]]
-  # data_list4 <- all_data_lists[bites[4]:bite_to[4]]
+  # data_list3 <- all_data_lists[bites[3]:bite_to[3]]
+  # data_list4 <- all_data_lists[bites[4]:bite_to[4]] # * ERRORS! *
+  # data_list4a <- all_data_lists[12391:14455] # But this smaller half-bite works !
+  data_list4b <- all_data_lists[14456:16520]
+  # data_list4b <- all_data_lists[14456:15456]
+  # data_list4c <- all_data_lists[15457:16000]
+  # data_list4d <- all_data_lists[16001:16520]
   # data_list5 <- all_data_lists[bites[5]:bite_to[5]]
-  beep()
   # Clean up any no-longer used large objects to save working memory
   rm(list = c("pre_all_data_lists", "data_list", "all_data_lists", "cal3trees", 
               "cal3trees.noZLBs", "DataMatrix", "br", "nd"))
@@ -523,15 +541,20 @@ if(length(data_list) == 20650L) {
   }  
 }
 
-
 # Manually update accordingly (only for the morphological data set). If need to
 # restart, load the 'all_data_lists' object above and rebuild 'data_list1',
 # 'data_list2', etc.
 # data_list <- data_list1; rm("data_list1"); gc()
 # data_list <- data_list2; rm("data_list2"); gc()
-data_list <- data_list3; rm("data_list3"); gc()
+# data_list <- data_list3; rm("data_list3"); gc()
 # data_list <- data_list4; rm("data_list4"); gc()
+# data_list <- data_list4a; rm("data_list4a"); gc()
+# data_list <- data_list4b; rm("data_list4b"); gc()
+# data_list <- data_list4c; rm("data_list4c"); gc()
+# data_list <- data_list4d; rm("data_list4d"); gc()
 # data_list <- data_list5; rm("data_list5"); gc()
+
+## 2. PARALLEL PROCESSING OF ANCESTRAL STATE RECONSTRUCTION ####################
 
 # Parallel implementation to get ancestral states for each character
 library(snowfall)
@@ -554,14 +577,21 @@ sfStop()
 # Save for safekeeping
 save(par.out, file = "par.out")
 
-beep(3)
 (Sys.time() - t.start0)
+beep(3)
 # Timing log:
 # 1.88 days for Ecology_Mode and no errors
 # 1.60 days for Ecology_Constant and no errors
-# 13.1 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually)
-# X 4.49 hrs X 
-# 23.12 hrs + 22.28 hrs  + 2?.?? hrs  + 2?.?? hrs + 2?.?? hrs =  ??.?? hrsfor Morph and no errors (ONE UPDATED)
+# 12.8 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually below)
+# 23.12 hrs + 22.28 hrs  + 22.36 hrs  + (13.21 + 12.68 = 25.89) hrs + 22.69 hrs =  > 4.8 days for Morph (8 characters were all missing and added manually below)
+#  - processed in 5 bites; no error for bites 1-3 & 5, but error in bite 4 which
+#      was divided into two half-bites
+#  - bite 4 produced an error ("one node produced an error: incorrect number of
+#      dimensions" Init file shows 4 instances of "log(comp[1:M + N]) : NaNs
+#      produced")
+# No errors when run 12391:14455 or 14456:15456 or 15457:16000 or 16001:16520,
+#    so problem character must be caused by some combination of stochasticity
+#    and/or peculiarities with that bite of characters.
 warnings()
 str(par.out[[500]])   
 
@@ -580,14 +610,18 @@ if (length(wh.all.missing) > 0L)
   cat("Character(s)", wh.all.missing, "were skipped when inferring ancestral states. 
       Trees and missing ancestral states were manually added to these characters.\n")
 
+# Characters 7 & 8 in all trees for 'raw'
+# Characters 34, 35, 39, 43, 51, 52, 54, & 410 in all trees for 'morphology'
+# If all NAs, do NOT do the manual tree-add below
+
 # And process, if so ...
 if (length(wh.all.missing) > 0L) {
   # *** Start by assigning the tree that was first processed. (Will be 1 for the
   # 'raw' treatment and start with seq(from = 1, to = 50, by = 10) for the
   # 5-bite 'morphology' data set.) Also make sure the number of characters for
   # the data set is correctly specified.
-  starting.tree <- 11 # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
-  nchar <- 413        # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  starting.tree <- 36     # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  nchar <- 413            # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
   tree.index <- floor(wh.all.missing / nchar) + starting.tree
   # Confirm the available list of time-trees lacks ZLBs
   if (!exists("cal3trees"))
@@ -605,28 +639,33 @@ if (length(wh.all.missing) > 0L) {
       as.character((Ntip(time_tree) + 1):(Ntip(time_tree) + Nnode(time_tree)))
   }
 }
-# Characters 7 & 8 in all trees for 'raw'
-# Characters 34, 35, 39, 43, 51, 52, 54, & 410 in all trees for 'morphology'
 
-# If all NAs, check to see whether manual override is appropriate
-par.out[[6]]
-par.out[[7]]
-par.out[[8]]
+# Check some all-missing characters (compared to some not)
+par.out[[33]]
+par.out[[34]]
 
 # ONLY USED FOR MORPHOLOGICAL DATA SETS:
-# Redefine and save par.out
-# par.out1 <- par.out; save(par.out1, file = "par.out1")
-# par.out2 <- par.out; save(par.out2, file = "par.out2")
-
-
-
-
-
-
-
-
-
-# ******* NENED TO PICK UP FROM HERE FOR THE MORPHOLOGICAL DATASET! **********
+# 1. Redefine and save par.out
+# par.out1 <- par.out; save(par.out1, file = "par.out1"); beep()
+# par.out2 <- par.out; save(par.out2, file = "par.out2"); beep()
+# par.out3 <- par.out; save(par.out3, file = "par.out3"); beep()
+# par.out4 <- par.out; save(par.out4, file = "par.out4"); beep()
+# par.out4a <- par.out; save(par.out4a, file = "par.out4a"); beep()
+# par.out4b <- par.out; save(par.out4b, file = "par.out4b"); beep()
+# par.out5 <- par.out; save(par.out5, file = "par.out5"); beep()
+# 2. Now reload, combine, and verify worked as intended:
+load("par.out1"); load("par.out2"); load("par.out3"); load("par.out4a"); load("par.out4b"); load("par.out5")
+beep()
+par.out <- c(par.out1, par.out2, par.out3, par.out4a, par.out4b, par.out5)
+if(length(par.out) != 413 * 50) stop("'par.out' was not combined correctly!/n")
+object.size(par.out) # HUGE! 7.4 gigabytes!
+rm(list = c("par.out1", "par.out2", "par.out3", "par.out4a", "par.out4b", "par.out5")); gc() # Clean memory
+# 3. Reload and rebuild necessary objects from pre-processing
+load("original_matrix"); num.trees <- 50; nchar <- 413
+if (!exists("cal3trees")) load("~/Manuscripts/CamOrdEchinos/cal3trees")
+sq <- 1:length(cal3trees)
+if (any(sapply(sq, function(sq) length(which(cal3trees[[sq]]$edge.length == 0)))) > 0)
+  cal3trees <- lapply(cal3trees, replace.ZLBs)
 
 # Reassemble into (tree) list of (character) lists
 postpar_data_list <- vector("list", num.trees)
@@ -647,13 +686,26 @@ if (any(sapply(sq, function(sq) length(postpar_data_list[[sq]]) != nchar)))
 rm("par.out")
 gc()
 
+## 3. POST-PROCESSING OF ANCESTRAL STATE MATRICES ##############################
+
 # Post-processing (lines 373-485 at
 # https://github.com/graemetlloyd/Claddis/blob/master/R/estimate_ancestral_states.R)
 ancestral_state_matrices <- postpar_data_list
 
+# Reload (if did not run all code above as a continuous workflow)
+# input <- "EchinoTree_Mode.nex"
+# input <- "EchinoTree_Constant.nex"
+# input <- "EchinoTree_Raw.nex"
+input <- "EchinoTree_Morph.nex"
+raw_cladistic_matrix <- read_nexus_matrix(file_name = input)
+
 for(tr in 1:num.trees) {
   cat("post-processing tree", tr, "of", num.trees, "\n")
-  data_list <- postpar_data_list[[tr]]
+  # Redefine necessary objects based on current tree:
+  data_list = postpar_data_list[[tr]]
+  time_tree = cal3trees[[tr]]
+  n_tips <-  ape::Ntip(phy = time_tree)
+  n_nodes <- ape::Nnode(phy = time_tree)
   {
     # Get Newick strings of all sampled subtrees (to use to avoid redundancy in tree node mapping):
     newick_strings <- unlist(x = lapply(X = data_list, function(x) ifelse(is.null(x$tree), NA, ape::write.tree(x$tree))))
@@ -777,7 +829,7 @@ for(tr in 1:num.trees) {
 # mode.anc <- ancestral_state_matrices; save(mode.anc, file = "mode.anc"); load("mode.anc")
 # constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
 # raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
-# morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
+morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
 
 beep(3)
 
