@@ -94,9 +94,9 @@ summary(sapply(sq, function(sq)
 # Note that although in NEXUS format, these files do not contain phylogenetic
 # data. All phylogenies are drawn from the time-trees above.
 # input <- "EchinoTree_Mode.nex"
-# input <- "EchinoTree_Constant.nex"
+input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
-input <- "EchinoTree_Morph.nex"
+# input <- "EchinoTree_Morph.nex"
 DataMatrix <- read_nexus_matrix(file_name = input)
 
 # View to confirm imported correctly
@@ -459,10 +459,6 @@ for(tr in 1:num.trees) {
 }
 beep(3)
 
-# For the morphological data set (ONLY), which required processing as
-# individually saved and later re-loaded bites (see below for details), need to
-# save and reload several objects from above for post-processing
-# save(original_matrix, file = "original_matrix")
 
 # Each list in 'all_data_lists' is a separate character matrix and tree. Here we
 # combine them into a single 'data_list' for processing the next step 'in
@@ -481,13 +477,22 @@ if(identical(data_list[[1]], pre_all_data_lists[[1]][[1]]) |
 
 ## BREAK MORPHOLOGICAL DATA INTO BITE-SIZED PIECES FOR PARALLEL PROCESSING #####
 
-# Here there be monsters! For processing the (large character-number)
-# morphological data set, we are breaking into five bite-sized pieces to
-# ameliorate instances of processing failure. (In other words, if something goes
-# awry, like a power failure, we've only lost a day of run time instead of
-# having to re-do everything.) Because the objects are large, also removing all
-# unnecessary prior objects from memory, which requires re-scripting the
-# required sub-functions and args from above code.
+# Here there be monsters! If NOT running the morphological data set, go to 2.
+# PARALLEL PROCESSING OF ANCESTRAL STATE RECONSTRUCTION.
+
+# 1. For the morphological data set (ONLY), which required processing as
+# individually saved and later re-loaded bites (see below for details), first
+# need to save and reload several objects from above for post-processing.
+
+# save(original_matrix, file = "original_matrix")
+
+# 2. For processing the (large character-number) morphological data set, we are
+# breaking into five bite-sized pieces to ameliorate instances of processing
+# failure. (In other words, if something goes awry, like a power failure, we've
+# only lost a day of run time instead of having to re-do everything.) Because
+# the objects are large, also removing all unnecessary prior objects from
+# memory, which requires re-scripting the required sub-functions and args from
+# above code.
 if(length(data_list) == 20650L) {
   all_data_lists <- data_list
   # Save for safekeeping (note a large gigabyte object so will take time to
@@ -581,8 +586,8 @@ save(par.out, file = "par.out")
 beep(3)
 # Timing log:
 # 1.88 days for Ecology_Mode and no errors
-# 1.60 days for Ecology_Constant and no errors
-# 12.8 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually below)
+# 1.77 days for Ecology_Constant and no errors
+# 12.6 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually below)
 # 23.12 hrs + 22.28 hrs  + 22.36 hrs  + (13.21 + 12.68 = 25.89) hrs + 22.69 hrs =  > 4.8 days for Morph (8 characters were all missing and added manually below)
 #  - processed in 5 bites; no error for bites 1-3 & 5, but error in bite 4 which
 #      was divided into two half-bites
@@ -620,8 +625,8 @@ if (length(wh.all.missing) > 0L) {
   # 'raw' treatment and start with seq(from = 1, to = 50, by = 10) for the
   # 5-bite 'morphology' data set.) Also make sure the number of characters for
   # the data set is correctly specified.
-  starting.tree <- 36     # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
-  nchar <- 413            # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  starting.tree <- 1     # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
+  nchar <- 40            # *** ! CRITICAL - DO NOT GET THIS WRONG! ***
   tree.index <- floor(wh.all.missing / nchar) + starting.tree
   # Confirm the available list of time-trees lacks ZLBs
   if (!exists("cal3trees"))
@@ -644,7 +649,7 @@ if (length(wh.all.missing) > 0L) {
 par.out[[33]]
 par.out[[34]]
 
-# ONLY USED FOR MORPHOLOGICAL DATA SETS:
+# ONLY USE FOLLOWING FOR MORPHOLOGICAL DATA SET:
 # 1. Redefine and save par.out
 # par.out1 <- par.out; save(par.out1, file = "par.out1"); beep()
 # par.out2 <- par.out; save(par.out2, file = "par.out2"); beep()
@@ -654,18 +659,17 @@ par.out[[34]]
 # par.out4b <- par.out; save(par.out4b, file = "par.out4b"); beep()
 # par.out5 <- par.out; save(par.out5, file = "par.out5"); beep()
 # 2. Now reload, combine, and verify worked as intended:
-load("par.out1"); load("par.out2"); load("par.out3"); load("par.out4a"); load("par.out4b"); load("par.out5")
-beep()
-par.out <- c(par.out1, par.out2, par.out3, par.out4a, par.out4b, par.out5)
-if(length(par.out) != 413 * 50) stop("'par.out' was not combined correctly!/n")
-object.size(par.out) # HUGE! 7.4 gigabytes!
-rm(list = c("par.out1", "par.out2", "par.out3", "par.out4a", "par.out4b", "par.out5")); gc() # Clean memory
-# 3. Reload and rebuild necessary objects from pre-processing
-load("original_matrix"); num.trees <- 50; nchar <- 413
-if (!exists("cal3trees")) load("~/Manuscripts/CamOrdEchinos/cal3trees")
-sq <- 1:length(cal3trees)
-if (any(sapply(sq, function(sq) length(which(cal3trees[[sq]]$edge.length == 0)))) > 0)
-  cal3trees <- lapply(cal3trees, replace.ZLBs)
+# load("par.out1"); load("par.out2"); load("par.out3"); load("par.out4a"); load("par.out4b"); load("par.out5"); beep()
+# par.out <- c(par.out1, par.out2, par.out3, par.out4a, par.out4b, par.out5)
+# if(length(par.out) != 413 * 50) stop("'par.out' was not combined correctly!/n")
+# object.size(par.out) # HUGE! 7.4 gigabytes!
+# rm(list = c("par.out1", "par.out2", "par.out3", "par.out4a", "par.out4b", "par.out5")); gc() # Clean memory
+# 3. Reload and rebuild necessary objects from pre-processing for post-processing
+# load("original_matrix"); num.trees <- 50; nchar <- 413
+# if (!exists("cal3trees")) load("~/Manuscripts/CamOrdEchinos/cal3trees")
+# sq <- 1:length(cal3trees)
+# if (any(sapply(sq, function(sq) length(which(cal3trees[[sq]]$edge.length == 0)))) > 0)
+#   cal3trees <- lapply(cal3trees, replace.ZLBs)
 
 # Reassemble into (tree) list of (character) lists
 postpar_data_list <- vector("list", num.trees)
@@ -696,7 +700,7 @@ ancestral_state_matrices <- postpar_data_list
 # input <- "EchinoTree_Mode.nex"
 # input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
-input <- "EchinoTree_Morph.nex"
+# input <- "EchinoTree_Morph.nex"
 raw_cladistic_matrix <- read_nexus_matrix(file_name = input)
 
 for(tr in 1:num.trees) {
@@ -827,9 +831,9 @@ for(tr in 1:num.trees) {
 
 # Save processed data
 # mode.anc <- ancestral_state_matrices; save(mode.anc, file = "mode.anc"); load("mode.anc")
-# constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
+constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
 # raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
-morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
+# morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
 
 beep(3)
 
@@ -850,5 +854,5 @@ ancestral_state_matrices[[50]]$matrix_1$matrix[c(1:5, 726:731), 1:10]
 # Convert ancestral state matrix to csv for viewing outside R (using ONLY tree 50)
 # write.csv(mode.anc[[50]]$matrix_1$matrix, file = "modeanc.csv")
 # write.csv(constant.anc[[50]]$matrix_1$matrix, file = "constantanc.csv")
-# write.csv(raw.anc[[50]]$matrix_1$matrix, file = "rawanc.csv")
+write.csv(raw.anc[[50]]$matrix_1$matrix, file = "rawanc.csv")
 # write.csv(morph.anc[[50]]$matrix_1$matrix, file = "morphanc.csv")
