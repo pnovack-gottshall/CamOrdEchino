@@ -93,8 +93,8 @@ summary(sapply(sq, function(sq)
 ## Import morphological and ecological data sets in NEXUS format
 # Note that although in NEXUS format, these files do not contain phylogenetic
 # data. All phylogenies are drawn from the time-trees above.
-# input <- "EchinoTree_Mode.nex"
-input <- "EchinoTree_Constant.nex"
+input <- "EchinoTree_Mode.nex"
+# input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
 # input <- "EchinoTree_Morph.nex"
 DataMatrix <- read_nexus_matrix(file_name = input)
@@ -585,7 +585,7 @@ save(par.out, file = "par.out")
 (Sys.time() - t.start0)
 beep(3)
 # Timing log:
-# 1.88 days for Ecology_Mode and no errors
+# 1.93 days for Ecology_Mode and no errors
 # 1.77 days for Ecology_Constant and no errors
 # 12.6 hrs for Ecology_Raw and no errors (characters 7-8 were all missing and added manually below)
 # 23.12 hrs + 22.28 hrs  + 22.36 hrs  + (13.21 + 12.68 = 25.89) hrs + 22.69 hrs =  > 4.8 days for Morph (8 characters were all missing and added manually below)
@@ -594,9 +594,9 @@ beep(3)
 #  - bite 4 produced an error ("one node produced an error: incorrect number of
 #      dimensions" Init file shows 4 instances of "log(comp[1:M + N]) : NaNs
 #      produced")
-# No errors when run 12391:14455 or 14456:15456 or 15457:16000 or 16001:16520,
-#    so problem character must be caused by some combination of stochasticity
-#    and/or peculiarities with that bite of characters.
+#  - No errors when run 12391:14455 or 14456:15456 or 15457:16000 or 16001:16520,
+#      so problem character must be caused by some combination of stochasticity
+#      and/or peculiarities with that bite of characters.
 warnings()
 str(par.out[[500]])   
 
@@ -697,11 +697,11 @@ gc()
 ancestral_state_matrices <- postpar_data_list
 
 # Reload (if did not run all code above as a continuous workflow)
-# input <- "EchinoTree_Mode.nex"
+input <- "EchinoTree_Mode.nex"
 # input <- "EchinoTree_Constant.nex"
 # input <- "EchinoTree_Raw.nex"
 # input <- "EchinoTree_Morph.nex"
-raw_cladistic_matrix <- read_nexus_matrix(file_name = input)
+# raw_cladistic_matrix <- read_nexus_matrix(file_name = input)
 
 for(tr in 1:num.trees) {
   cat("post-processing tree", tr, "of", num.trees, "\n")
@@ -831,7 +831,7 @@ for(tr in 1:num.trees) {
 
 # Save processed data
 # mode.anc <- ancestral_state_matrices; save(mode.anc, file = "mode.anc"); load("mode.anc")
-constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
+# constant.anc <- ancestral_state_matrices; save(constant.anc, file = "constant.anc"); load("constant.anc")
 # raw.anc <- ancestral_state_matrices; save(raw.anc, file = "raw.anc"); load("raw.anc")
 # morph.anc <- ancestral_state_matrices; save(morph.anc, file = "morph.anc"); load("morph.anc")
 
@@ -854,5 +854,5 @@ ancestral_state_matrices[[50]]$matrix_1$matrix[c(1:5, 726:731), 1:10]
 # Convert ancestral state matrix to csv for viewing outside R (using ONLY tree 50)
 # write.csv(mode.anc[[50]]$matrix_1$matrix, file = "modeanc.csv")
 # write.csv(constant.anc[[50]]$matrix_1$matrix, file = "constantanc.csv")
-write.csv(raw.anc[[50]]$matrix_1$matrix, file = "rawanc.csv")
+# write.csv(raw.anc[[50]]$matrix_1$matrix, file = "rawanc.csv")
 # write.csv(morph.anc[[50]]$matrix_1$matrix, file = "morphanc.csv")
