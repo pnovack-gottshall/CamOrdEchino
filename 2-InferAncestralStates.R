@@ -561,7 +561,7 @@ if(length(data_list) == 20650L) {
 
 ## 2. PARALLEL PROCESSING OF ANCESTRAL STATE RECONSTRUCTION ####################
 
-# Note that running without load balancing [i.e., using sfLapplyLB() instead of
+# Note that running without load balancing [i.e., using sfClusterLapplyLB() instead of
 # sfLapply()] would likely be faster.
 
 # Parallel implementation to get ancestral states for each character
