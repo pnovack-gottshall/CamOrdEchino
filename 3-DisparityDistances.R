@@ -390,9 +390,10 @@ sort(((rowSums(mean.dists, na.rm = TRUE) + colSums(mean.dists, na.rm = TRUE)))/ 
 # Raw:      All strongly correlated (min R = 0.931), but had to remove many NAs 
 #                    and zeros. GEDs and RED most highly correlated with each 
 #                    other; GC and MORD slightly less correlated with others.
-# Morph:    All moderately strongly correlated (min R = 0.733), with RED lowest
+# Morph:    All moderately strongly correlated (min R = 0.645), with RED lowest
 #                    among all pairs, and GED most strongly correlated with the
-#                    others. GED, GED1, GED.5, and GC are most correlated.
+#                    others. GED, GED1, GC, and GED.5 are most correlated, with 
+#                    MORD, GED0, and RED lowest, on average.
 
 # CONCLUSIONS: Given the many hierarchically dependent characters and the fact
 # that Wills' GED is very highly correlated across distance measures, we will
