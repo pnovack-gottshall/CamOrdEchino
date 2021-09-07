@@ -351,16 +351,16 @@ for(l in seq(length(list.dists))) {
 (Sys.time() - t.start0) # Takes ~ 1 hour to run. Not worth re-writing code to run in parallel.
 beep(3)
 
-# Trees 31-35 is problematic for morphology (b/c these trees have many more
-# non-diagonal 0s and NAs than the other tree reconstructions in the distance
-# matrices). The issue applies to all distance metrics. Investigation of the
-# previously processed ancestral-state reconstructions and time-scaled trees
-# show they are not improper. Re-running samples (e.g., re-estimating ancestral
-# states) produces the same outcomes as before. The problem appears to be caused
-# by idiosyncratic ancestral reconstructions for these trees, with polymorphisms
-# and unknown states contributing to 0 'minimum' distances between ancestral
-# nodes (see Claddis:calculate_morphological_distances() for details of how
-# distances are calculated in the case of polymorphisms, uncertain, or
+# Distance matrices 31-35 are problematic for morphology (b/c they have many
+# more non-diagonal 0s and NAs than the other ancestral-tree-reconstruction
+# distance matrices). The issue applies to all distance metrics. Investigation
+# of the previously processed ancestral-state reconstructions and time-scaled
+# trees show they are not improper. Re-running samples (e.g., re-estimating
+# ancestral states) produces the same outcomes as before. The problem appears to
+# be caused by idiosyncratic ancestral reconstructions for these trees, with
+# polymorphisms and unknown states contributing to 0 'minimum' distances between
+# ancestral nodes (see Claddis:calculate_morphological_distances() for details
+# of how distances are calculated in the case of polymorphisms, uncertain, or
 # inapplicable character states). Given the diagnostic testing, it seems the
 # fact that the 5 idiosyncratic trees are consecutive is simply due to chance.
 # (Note that the same time trees were used in the 3 life habit treatments,
@@ -370,7 +370,8 @@ beep(3)
 # Convert list to means and summarize
 for (r in 1:6) {
   for (c in (r+1):7) {
-    mean.dists[r,c] <- mean(sapply(sq, function(sq) list.dists[[sq]][r,c]))
+    mean.dists[r,c] <- mean(sapply(sq, function(sq) list.dists[[sq]][r,c]), 
+                            na.rm = TRUE)
   }
 }
 round(mean.dists, 3)
