@@ -4,6 +4,11 @@
 ## https://github.com/graemetlloyd/Claddis/blob/master/R/AncStateEstMatrix.R ,
 ## committed 4/19/2021. Thanks, Graeme!
 
+## The subfunction used in calculating AIC is also modified to replace any 0
+## density values with smallest allowable R machine value. (In occasional
+## instances, a character will yield a nonsensical density value of 0 due to
+## rounding errors, which results in incalculable AIC values.)
+
 ## Also includes the code for is.timeBins() and check_timeBins, which are on
 ## GitHub (committed Oct. 11, 2020 and April 4, 2021, respectively), but not
 ## apparently included in Claddis 0.6.3 on CRAN.
@@ -240,11 +245,27 @@ test_rates2 <- function(time_tree,
     (2 * length(x = sampled_rates)) - (2 * log_mle)
   }
   
-  # Subfunction to calculate AIC from partition (with columns labelled partition, rate, completeness, duration):
+    # *** Modified to replace any 0 density values with smallest allowable R
+    # machine value. (In occasional instances, a character that changes at a
+    # very high rate will yield a nonsensical density value of 0 due to rounding
+    # errors, which results in incalculable AIC values.) ***
+  
+    # Subfunction to calculate AIC from partition (with columns labelled partition, rate, completeness, duration):
   calculate_partition_aic <- function(partition, aicc = FALSE) {
     
+    # *** NEXT SEVEN LINES MODIFIED FROM ORIGINAL ***
+    dpois.vals <- dpois(round(partition[, "changes"]), partition[, "rate"] * partition[, "completeness"] * partition[, "duration"])
+    if (any(dpois.vals == 0)) {
+      wh.zero <- which(dpois.vals == 0)
+      # replacement <- min(dpois.vals[-wh.zero]) / 10 # Alternate of 1/10 next smallest
+      replacement <- .Machine$double.xmin
+      dpois.vals <- replace(dpois.vals, wh.zero, replacement)
+    }
+    log_mle <- sum(log(dpois.vals))
+    # *** PRIOR SEVEN LINES MODIFIED FROM ORIGINAL ***
+    
     # Get log maximum likelihood estimate:
-    log_mle <- sum(log(dpois(round(partition[, "changes"]), partition[, "rate"] * partition[, "completeness"] * partition[, "duration"])))
+    # log_mle <- sum(log(dpois(round(partition[, "changes"]), partition[, "rate"] * partition[, "completeness"] * partition[, "duration"])))
     
     # Get k (number of parameters) term:
     k <- max(partition[, "partition"])
