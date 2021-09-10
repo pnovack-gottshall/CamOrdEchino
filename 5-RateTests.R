@@ -130,28 +130,31 @@ class(TimeBins) <- "timeBins"
 # test. We also use the AIC method. Test compares the morphological and
 # ecological data sets.
 
-# Likelihood ratio tests (run in parallel). Not using load balancing because
+# Likelihood ratio tests (run in parallel). Not using load balancing because run
+# time is approximately equal across trees.
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+ntrees <- length(data)
 (t.start <- Sys.time())
-if(length(trees) != length(data)) stop("Confirm the data matrix and tree objects are correct. They must be of the same size.")
-ntrees <- length(trees)
+LRT.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
+                      test_rates2(cladistic_matrix = data[[t]],
+                                  time_tree = data[[t]]$topper$tree,
+                                  time_bins = TimeBins,
+                                  character_partitions = character_partitions,
+                                  change_times = "random",
+                                  polymorphism_state = "missing",
+                                  uncertainty_state = "missing",
+                                  inapplicable_state = "missing",
+                                  time_binning_approach = "lloyd",
+                                  test_type = "lrt",
+                                  alpha = 0.01,
+                                  multiple_comparison_correction = "benjaminihochberg")
+}
+Sys.time() - t.start # 3.8 minutes on 8-core laptop
+stopCluster(cl)
+beep(3)
 
-
-LRT.rates <- foreach(i = 1:nreps, .inorder = FALSE, .packages = "Claddis") %dopar% {
-                         
-                         
-
-
-
-LRT.rates <- 
-  test_rates2(cladistic_matrix = data, time_tree = trees[[1]], time_bins = TimeBins,
-              character_partitions = character_partitions, 
-              polymorphism_state = "missing", uncertainty_state = "missing",
-              inapplicable_state = "missing", time_binning_approach = "lloyd",
-              test_type = "lrt", alpha = 0.01,
-              multiple_comparison_correction = "benjaminihochberg")
-beep()
 # View results
 round(LRT.rates$character_test_results[[1]]$rates, 4)
 LRT.rates$character_test_results[[1]]$p_value
