@@ -1,10 +1,10 @@
 ## CHARACTER RATE ANALYSES #####################################################
 
 # Note that substantial coding changes accompanied the update to Claddis v.
-# 0.6.0 in August 2020. The code here uses the functions as of 7/2/2020, v.
-# 0.4.1, but with test_rates() modified from v. 0.6.0. Future users will need to
-# either download the archived version of the package from GitHub or alter the
-# code accordingly (primarily changes to function and argument names).
+# 0.6.0 in August 2020. The code here uses the functions as of 7/29/2021, v.
+# 0.6.3. Users accustomed with earlier versions will need to either download the
+# archived version of the package from GitHub or alter the code accordingly to
+# use appropriate argument and function names.
 
 # Prior to running, run 2-InferAncestralStates.R to infer ancestral states using
 # 'Claddis' package.
@@ -20,18 +20,66 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
-library(ape)        # v. 5.4
+library(ape)        # v. 5.5
 library(geiger)     # v. 2.0.7
-library(doParallel) # v. 1.0.15
-library(Claddis)    # v. 0.4.1 - Check SI for Lloyd 2018 for walk-through on code functions (in R experiments folder)
+library(doParallel) # v. 1.0.16
+library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
 if(packageVersion("Claddis") < "0.4.1")
-  stop("wrong version of 'Claddis' Get updated version from GitHub.\n")
+  stop("wrong version of 'Claddis' Get updated version from GitHub or CRAN.\n")
+
+
+## FUNCTIONS ###################################################################
+
+# Using a modification of Claddis::test_rates() to allow direct input of the
+# data matrix [from read_nexus_matrix()] with ancestral states previously
+# reconstructed [from estimate_ancestral_states()], and adding both blocks into
+# the same input object. Also includes other updated functions needed to run
+# analyses below. Thanks, Graeme!
+source("~/Manuscripts/CamOrdEchinos/test_rates2.R")
+
+
+# Subfunctions used in Claddis:test_rates, downloaded from
+# https://github.com/graemetlloyd/Claddis/blob/master/R/test_rates.R , committed
+# 4/19/2021. Reproduced here to allow simpler handling of AIC when remove
+# invariant characters (with rates = 0), which prevent calculation of AIC/AICc.
+# Thanks, Graeme!
+
+# NOT YET SURE IF NEED TO USE THESE! CONSIDER AGAIN ONCE RUN ON MULTIPLE TREES!
+
+# Subfunction to calculate AIC:
+calculate_aic <- function(sampled_rates, sampled_changes, sampled_completeness, sampled_time) {
+  
+  # Get log maximum likelihood estimate:
+  log_mle <- sum(log(dpois(x = round(sampled_changes), lambda = sampled_rates * sampled_completeness * sampled_time)))
+  
+  # Calculate and return AIC:
+  (2 * length(x = sampled_rates)) - (2 * log_mle)
+}
+
+# Subfunction to calculate AIC from partition (with columns labelled partition, rate, completeness, duration):
+calculate_partition_aic <- function(partition, aicc = FALSE) {
+  
+  # Get log maximum likelihood estimate:
+  log_mle <- sum(log(dpois(round(partition[, "changes"]), partition[, "rate"] * partition[, "completeness"] * partition[, "duration"])))
+  
+  # Get k (number of parameters) term:
+  k <- max(partition[, "partition"])
+  
+  # Calculate AIC:
+  aic <- (2 * k) - (2 * log_mle)
+  
+  # If AICc is desired then calculate this and overwrite AIC with it:
+  if (aicc) aic <- aic + (((2 * (k^2)) + (2 * k)) / (nrow(partition) - k - 1))
+  
+  # Return AIC:
+  aic
+}
 
 
 
-## IMPORT FILES ################################################################
+## IMPORT AND PROCESS FILES ####################################################
 
-# Import ancestral states from 2-InferancestralStates.R
+# Import ancestral states from 2-InferAncestralStates.R
 load("mode.anc")
 load("constant.anc")
 load("raw.anc")
@@ -40,45 +88,40 @@ eco.anc <- mode.anc
 # eco.anc <- constant.anc
 # eco.anc <- raw.anc
 
-# Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchinos/equal.tree")
-tree <- equal.tree
-
-# Get epoch boundaries
-strat_names <-
-  read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
-# Eons are level 1, eras=level 2, periods=3, subperiods=4, epochs=5
-TimeBins <- strat_names[which(strat_names$scale_level == 5),]
-# Restrict to Cambrian and Ordovician:
-TimeBins <- TimeBins$max_ma[which(TimeBins$max_ma > 443)]
-
-# Using a modification of Claddis::DiscreteCharacterRate, renamed test_rates()
-# starting v. 0.6.0, to allow direct input of the data matrix [from
-# ReadMorphNexus()] with ancestral states previously reconstructed [from
-# AncStateEstMatrix()], and adding both blocks into the same input object. Also
-# includes other updated functions needed to run analyses below. Thanks, Graeme!
-source("~/Manuscripts/CamOrdEchinos/new_Claddis_functions.R")
-
-
-## Process matrices into the arg names required by aug 2020 Claddis functions:
-
-# Combine into single data matrix with two blocks
-data <- list(topper = morph.anc$Topper, matrix_1 = morph.anc$Matrix_1, 
-             matrix_2 = eco.anc$Matrix_1)
-# Change names to match expected names in new Claddis functions
-new.names <- c("block_names", "datatype", "matrix", "ordering", "character_weights", 
-               "minimum_values", "maximum_values", "characters")
-names(data$matrix_1) <- new.names
-names(data$matrix_2) <- new.names
+# Combine into list of single data matrices with two blocks in each (first for
+# morphology and second for ecology)
+data <- vector("list", length(morph.anc))
+for(i in 1:length(morph.anc)){
+  data[[i]]$topper <- morph.anc[[i]]$topper
+  data[[i]]$matrix_1 <- morph.anc[[i]]$matrix_1
+  data[[i]]$matrix_2 <- eco.anc[[i]]$matrix_1
+}
 
 # Specify which characters are from the morphological block. The remaining
 # (ecological) characters are automatically placed in the second block by the
-# function.
-morph.char <- 1:ncol(data$matrix_1$matrix)
-eco.char <- max(morph.char) + (1:ncol(data$matrix_2$matrix))
+# function. Using just the first, as will be identical across all matrices in
+# the list.
+morph.char <- 1:ncol(data[[1]]$matrix_1$matrix)
+eco.char <- max(morph.char) + (1:ncol(data[[1]]$matrix_2$matrix))
 character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
 
-
+# Get epoch boundaries and convert to matrix with columns named 'fad' and 'lad'
+# and rows named for each interval, with top row the oldest bin. Then set class
+# required for test_rates().
+strat_names <-
+  read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
+# Eons are level 1, eras=level 2, periods=3, subperiods=4, epochs=5
+TimeBins <- strat_names[which(strat_names$scale_level == 5), ]
+rownames(TimeBins) <- as.character(TimeBins$interval_name)
+# Restrict to Cambrian and Ordovician and max/min bin ages:
+TimeBins <- TimeBins[which(TimeBins$max_ma > 443), 9:10]
+# Add Ediacaran for any pre-Cambrian nodes
+TimeBins[nrow(TimeBins) + 1, ] <- c(635, 541)
+rownames(TimeBins)[nrow(TimeBins)] <- "Ediacaran"
+colnames(TimeBins) <- c("fad", "lad")
+TimeBins <- TimeBins[order(-TimeBins$fad), ]
+TimeBins <- as.matrix(TimeBins)
+class(TimeBins) <- "timeBins"
 
 
 
@@ -87,9 +130,22 @@ character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
 # test. We also use the AIC method. Test compares the morphological and
 # ecological data sets.
 
-# Likelihood ratio tests:
+# Likelihood ratio tests (run in parallel). Not using load balancing because
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+(t.start <- Sys.time())
+if(length(trees) != length(data)) stop("Confirm the data matrix and tree objects are correct. They must be of the same size.")
+ntrees <- length(trees)
+
+
+LRT.rates <- foreach(i = 1:nreps, .inorder = FALSE, .packages = "Claddis") %dopar% {
+                         
+                         
+
+
+
 LRT.rates <- 
-  test_rates2(cladistic_matrix = data, time_tree = tree, time_bins = TimeBins,
+  test_rates2(cladistic_matrix = data, time_tree = trees[[1]], time_bins = TimeBins,
               character_partitions = character_partitions, 
               polymorphism_state = "missing", uncertainty_state = "missing",
               inapplicable_state = "missing", time_binning_approach = "lloyd",
@@ -288,10 +344,10 @@ summary(resampled.aic$AW2) # mean weight = 0.955, median = 1.000
 
 ## TABULATE BRANCHING DISTANCE & NUMBER OF CHARACTER CHANGES PER NODE ##########
 # Import distance matrices from 3-DisparityDistances.R
-load("mode.distances.GED.5"); dist.matrix <- mode.distances.GED.5$DistanceMatrix; load("mode.anc"); anc.matrix <- mode.anc$Matrix_1$Matrix
-# load("constant.distances.GED.5"); dist.matrix <- constant.distances.GED.5$DistanceMatrix; load("constant.anc"); anc.matrix <- constant.anc$Matrix_1$Matrix
-# load("raw.distances.GED.5"); dist.matrix <- raw.distances.GED.5$DistanceMatrix; load("raw.anc"); anc.matrix <- raw.anc$Matrix_1$Matrix
-load("morph.distances.GED.5"); dist.matrix <- morph.distances.GED.5$DistanceMatrix; load("morph.anc"); anc.matrix <- morph.anc$Matrix_1$Matrix
+load("mode.distances.GED.5"); dist.matrix <- mode.distances.GED.5$DistanceMatrix; load("mode.anc"); anc.matrix <- mode.anc$matrix_1$matrix
+# load("constant.distances.GED.5"); dist.matrix <- constant.distances.GED.5$DistanceMatrix; load("constant.anc"); anc.matrix <- constant.anc$matrix_1$matrix
+# load("raw.distances.GED.5"); dist.matrix <- raw.distances.GED.5$DistanceMatrix; load("raw.anc"); anc.matrix <- raw.anc$matrix_1$matrix
+load("morph.distances.GED.5"); dist.matrix <- morph.distances.GED.5$DistanceMatrix; load("morph.anc"); anc.matrix <- morph.anc$matrix_1$matrix
 
 # Function to identify number of characters that are identical, including proper
 # handling of poymorphisms and missing states (where they match to the paired
@@ -354,28 +410,28 @@ tally.branch.changes <- function(dist.matrix = NULL, anc.matrix = NULL,
 
 
 eco.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = mode.anc$Matrix_1$Matrix,
+  tally.branch.changes(tree = tree, anc.matrix = mode.anc$matrix_1$matrix,
                        dist.matrix = mode.distances.GED.5$DistanceMatrix)
 plot(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
 cor(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
 # r = 0.934
 
 morph.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = morph.anc$Matrix_1$Matrix,
+  tally.branch.changes(tree = tree, anc.matrix = morph.anc$matrix_1$matrix,
                        dist.matrix = morph.distances.GED.5$DistanceMatrix)
 plot(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
 cor(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
 # r = 0.597
 
 constant.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = constant.anc$Matrix_1$Matrix,
+  tally.branch.changes(tree = tree, anc.matrix = constant.anc$matrix_1$matrix,
                        dist.matrix = constant.distances.GED.5$DistanceMatrix)
 plot(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
 cor(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
 # r = 0.932
 
 raw.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = raw.anc$Matrix_1$Matrix,
+  tally.branch.changes(tree = tree, anc.matrix = raw.anc$matrix_1$matrix,
                        dist.matrix = raw.distances.GED.5$DistanceMatrix)
 plot(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes)
 cor(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes, 
