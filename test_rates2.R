@@ -8,30 +8,32 @@
 ## GitHub (committed Oct. 11, 2020 and April 4, 2021, respectively), but not
 ## apparently included in Claddis 0.6.3 on CRAN.
 
+## All changes are tagged with *** in code
+
 ## MODIFIED test_rates() #######################################################
 test_rates2 <- function(time_tree,
-                       cladistic_matrix,
-                       time_bins,
-                       branch_partitions = NULL,
-                       character_partitions = NULL,
-                       clade_partitions = NULL,
-                       time_partitions = NULL,
-                       change_times = "random",
-                       test_type = "aic",
-                       alpha = 0.01,
-                       multiple_comparison_correction = "benjaminihochberg",
-                       polymorphism_state = "missing",
-                       uncertainty_state = "missing",
-                       inapplicable_state = "missing",
-                       time_binning_approach = "lloyd",
-                       all_weights_integers = FALSE,
-                       estimate_all_nodes = FALSE,
-                       estimate_tip_values = FALSE,
-                       inapplicables_as_missing = FALSE,
-                       polymorphism_behaviour = "equalp",
-                       uncertainty_behaviour = "equalp",
-                       threshold = 0.01,
-                       all_missing_allowed = FALSE) {
+                        cladistic_matrix,
+                        time_bins,
+                        branch_partitions = NULL,
+                        character_partitions = NULL,
+                        clade_partitions = NULL,
+                        time_partitions = NULL,
+                        change_times = "random",
+                        test_type = "aic",
+                        alpha = 0.01,
+                        multiple_comparison_correction = "benjaminihochberg",
+                        polymorphism_state = "missing",
+                        uncertainty_state = "missing",
+                        inapplicable_state = "missing",
+                        time_binning_approach = "lloyd",
+                        all_weights_integers = FALSE,
+                        estimate_all_nodes = FALSE,
+                        estimate_tip_values = FALSE,
+                        inapplicables_as_missing = FALSE,
+                        polymorphism_behaviour = "equalp",
+                        uncertainty_behaviour = "equalp",
+                        threshold = 0.01,
+                        all_missing_allowed = FALSE) {
   
   # MAKE RATES OUTPUT MAKE SENSE BY PROPERLY SEPARATING COMPLETENESS AND DURATION
   
@@ -66,6 +68,9 @@ test_rates2 <- function(time_tree,
   # HOW TO FORMAT OUTPUT? GET CIS FOR EACH PARTITION FOR VISUALISATION (E.G., BARPLOT OF PARTITION VALUES WITH DASHED LINE FOR MEAN AND ERROR BARS FOR CIS)? STICK WITH LIST OR COLLAPSE TO A MATRIX SOMEHOW?
   # TIME BINS WITH NOTHING IN WILL CAUSE ISSUES AS DIVIDE BY ZEROES WILL OCCUR - ADD CHECK FOR THIS.
   # WHAT IS SIGNIFICANTLY HIGH OR LOW IF THERE ARE THREE OR MORE PARTITIONS? THIS IS NOT EVEN IN OUTPUT YET. PROLLY CANNOT DO FULL STOP NOW PARTITIONS ARE MORE COMPLEX
+  
+  # *** MODIFIED TO FORCE SETTING CLASS OF cladistic_matrix ***
+  class(cladistic_matrix) <- "cladisticMatrix"
   
   # Check cladistic_matrix has class cladisticMatrix and stop and warn user if not:
   if (!inherits(x = cladistic_matrix, what = "cladisticMatrix")) stop("cladistic_matrix must be an object of class \"cladisticMatrix\".")
