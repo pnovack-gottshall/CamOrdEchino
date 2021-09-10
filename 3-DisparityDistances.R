@@ -21,7 +21,7 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 # Load packages
 library(beepr)      # v. 1.3
 library(ade4)       # v. 1.7-17
-library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions (in R experiments folder)
+library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
 if(packageVersion("Claddis") < "0.4.1")
   stop("wrong version of 'Claddis' Get updated version from GitHub or CRAN.\n")
 library(snowfall)   # v. 1.84-6.1 
@@ -112,6 +112,10 @@ head(CharDepends)
 # all binary or unordered]. All are fine, but best depends on proportion of
 # missing data, presence of ordered data, and size of data set. Trying all here,
 # a philosophy analogous to that used in non-phylogenetic disparity analyses.
+
+# Unless specified, behavior for polymorphisms (= "min_difference"), uncertain
+# (= "min_difference"), and inapplicable (= "missing") characters use the
+# default settings for the function.
 
 # Saving each output in case of crash or outage.
 
