@@ -38,44 +38,6 @@ if(packageVersion("Claddis") < "0.4.1")
 source("~/Manuscripts/CamOrdEchinos/test_rates2.R")
 
 
-# Subfunctions used in Claddis:test_rates, downloaded from
-# https://github.com/graemetlloyd/Claddis/blob/master/R/test_rates.R , committed
-# 4/19/2021. Reproduced here to allow simpler handling of AIC when remove
-# invariant characters (with rates = 0), which prevent calculation of AIC/AICc.
-# Thanks, Graeme!
-
-# NOT YET SURE IF NEED TO USE THESE! CONSIDER AGAIN ONCE RUN ON MULTIPLE TREES!
-
-# Subfunction to calculate AIC:
-calculate_aic <- function(sampled_rates, sampled_changes, sampled_completeness, sampled_time) {
-  
-  # Get log maximum likelihood estimate:
-  log_mle <- sum(log(dpois(x = round(sampled_changes), lambda = sampled_rates * sampled_completeness * sampled_time)))
-  
-  # Calculate and return AIC:
-  (2 * length(x = sampled_rates)) - (2 * log_mle)
-}
-
-# Subfunction to calculate AIC from partition (with columns labelled partition, rate, completeness, duration):
-calculate_partition_aic <- function(partition, aicc = FALSE) {
-  
-  # Get log maximum likelihood estimate:
-  log_mle <- sum(log(dpois(round(partition[, "changes"]), partition[, "rate"] * partition[, "completeness"] * partition[, "duration"])))
-  
-  # Get k (number of parameters) term:
-  k <- max(partition[, "partition"])
-  
-  # Calculate AIC:
-  aic <- (2 * k) - (2 * log_mle)
-  
-  # If AICc is desired then calculate this and overwrite AIC with it:
-  if (aicc) aic <- aic + (((2 * (k^2)) + (2 * k)) / (nrow(partition) - k - 1))
-  
-  # Return AIC:
-  aic
-}
-
-
 
 ## IMPORT AND PROCESS FILES ####################################################
 
@@ -130,8 +92,8 @@ class(TimeBins) <- "timeBins"
 # test. We also use the AIC method. Test compares the morphological and
 # ecological data sets.
 
-# Likelihood ratio tests (run in parallel). Not using load balancing because run
-# time is approximately equal across trees.
+## Likelihood ratio tests (run in parallel). Not using load balancing because run
+## time is approximately equal across trees.
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
 clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
@@ -142,7 +104,6 @@ LRT.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
                                   time_tree = data[[t]]$topper$tree,
                                   time_bins = TimeBins,
                                   character_partitions = character_partitions,
-                                  change_times = "random",
                                   polymorphism_state = "missing",
                                   uncertainty_state = "missing",
                                   inapplicable_state = "missing",
@@ -151,7 +112,7 @@ LRT.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
                                   alpha = 0.01,
                                   multiple_comparison_correction = "benjaminihochberg")
 }
-Sys.time() - t.start # 3.8 minutes on 8-core laptop
+Sys.time() - t.start # 3.3 - 3.8 minutes on 8-core laptop
 stopCluster(cl)
 beep(3)
 
@@ -164,6 +125,20 @@ mean(morph.rates)
 mean(eco.rates)
 max(p.vals) # Report max b/c every other one is at least more significantly diff.
 
+# Histograms of distributions
+breaks <- pretty(c(morph.rates, eco.rates), 40)
+hist(morph.rates, main = "Rates of character change", 
+     xlab = "Rate (character changes / lineage Myr)", ylab = "Density", 
+     breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
+hist(eco.rates, add = TRUE, border = "white", col = "darkgray", 
+     breaks = breaks, prob = TRUE)
+hist(morph.rates, add = TRUE, border = "black", col = "transparent", 
+     breaks = breaks, prob = TRUE)
+legend("top", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
+       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
+       cex = 1, pt.cex = 2)
+
+
 # Morphology rate = 6.153 average anatomical character changes / lineage Myr
 # Ecology    rate = 3.590 average life-habit character changes / lineage Myr   p-value < 1e-154 ****
 #                   2.932 using 'constant'                  p < 1e-241 ****
@@ -171,67 +146,110 @@ max(p.vals) # Report max b/c every other one is at least more significantly diff
 
 
 
-# AIC: 
+
+## AIC test (run in parallel). Not using load balancing because run time is
+## approximately equal across trees.
 
 # Use different partitions b/c comparing one-rate model to two-rate model
 character_partitions.aic <-
   list(list(c(morph.char, eco.char)), list(morph.char))
-AIC.rates <- 
-  test_rates2(cladistic_matrix = data, time_tree = tree, time_bins = TimeBins,
-              character_partitions = character_partitions.aic,
-              polymorphism_state = "missing", uncertainty_state = "missing",
-              inapplicable_state = "missing", time_binning_approach = "lloyd",
-              test_type = "aic")
-beep()
-# View lambdas
-round(AIC.rates$character_test_results[[1]]$rates, 4) # One-rate lambda
-round(AIC.rates$character_test_results[[2]]$rates, 4) # Two-rate lambdas
 
-# Convert AICc to akaike weights:
-geiger::aicw(c(AIC.rates$character_test_results[[1]]$aicc,
-               AIC.rates$character_test_results[[2]]$aicc))
-# Given large number of characters, fine to use AIC, but reporting AICc anyway
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+ntrees <- length(data)
+(t.start <- Sys.time())
+AIC.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
+                test_rates2(cladistic_matrix = data[[t]],
+                            time_tree = data[[t]]$topper$tree,
+                            time_bins = TimeBins,
+                            character_partitions = character_partitions.aic,
+                            polymorphism_state = "missing", 
+                            uncertainty_state = "missing",
+                            inapplicable_state = "missing", 
+                            time_binning_approach = "lloyd",
+                            test_type = "aic")
+}
+Sys.time() - t.start # 3.1 - 4.3 minutes on 8-core laptop
+stopCluster(cl)
+beep(3)
+
+# View results
+sq <- 1:ntrees
+one.rate <- sapply(sq, function(sq) AIC.rates[[sq]]$character_test_results[[1]]$rates)
+two.rate <- sapply(sq, function(sq) AIC.rates[[sq]]$character_test_results[[2]]$rates)
+
+# View lambdas (= rates)
+mean(one.rate) # One-rate lambda
+apply(two.rate, 1, mean) # Two-rate lambdas
+
+# Convert AICcs to Akaike weight. Given large number of characters, fine to use
+# AIC, but reporting AICc anyway
+Akaike.wts <- lapply(sq, function(sq)
+        geiger::aicw(c(AIC.rates[[sq]]$character_test_results[[1]]$aicc,
+                       AIC.rates[[sq]]$character_test_results[[2]]$aicc)))
+two.rate.support <- sapply(sq, function(sq) Akaike.wts[[sq]]$w[2])
+summary(two.rate.support)
+hist(two.rate.support, breaks = seq(0.5, 1, by = 0.01))
+abline(v = c(0.9, 0.99), col = "red", lty = 2)
+
+# Mean Akaike weight results
+mean.Akaike <- Akaike.wts[[1]]
+mean.Akaike[1, 1] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 1]))
+mean.Akaike[1, 2] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 2]))
+mean.Akaike[1, 3] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 3]))
+mean.Akaike[2, 1] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 1]))
+mean.Akaike[2, 2] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 2]))
+mean.Akaike[2, 3] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 3]))
+mean.Akaike
 
 # Mode:
-# Global (overall) rate = 1.1831 character changes / lineage Myr
-#      Morphology  rate = 1.3766 character changes / lineage Myr
-#         Ecology  rate = 0.7078 character changes / lineage Myr
+# Global (overall) rate = 5.249 character changes / lineage Myr
+#      Morphology  rate = 6.153 character changes / lineage Myr
+#         Ecology  rate = 3.590 character changes / lineage Myr
 #
 # AIC results (mode):       AICc      deltaAIC   Akaike weight      
-# Model 1 (Single-rate)   7196.211      298.613   0.000
-# Model 2 (Diff-rates)    6897.598        0.000   1.000 ***
+# Model 1 (Single-rate)   17884.71      461.69   0.000
+# Model 2 (Diff-rates)    17423.02        0.00   1.000 *** (all 50 @ 1.000)
 
 # Constant:
-# Global (overall) rate = 1.1710 character changes / lineage Myr
-#      Morphology  rate = 1.3766 character changes / lineage Myr
-#          Ecology rate = 0.6180 character changes / lineage Myr
+# Global (overall) rate = 5.1231 character changes / lineage Myr
+#      Morphology  rate = 6.1533 character changes / lineage Myr
+#          Ecology rate = 2.9323 character changes / lineage Myr
 #
 # AIC results:              AICc        deltaAIC   Akaike weight
-# Model 1 (Single-rate)   7205.563      374.802    0.000
-# Model 2 (Diff-rates)    6830.761        0.000    1.000 ***
+# Model 1 (Single-rate)   17240.18      833.15    0.000
+# Model 2 (Diff-rates)    16429.03        0.00    1.000 *** (all 50 @ 1.000)
 
 # Raw:
-# Global (overall) rate = 1.2860 character changes / lineage Myr
-#      Morphology  rate = 1.3766 character changes / lineage Myr
-#          Ecology rate = 0.7690 character changes / lineage Myr
+# Global (overall) rate = 5.765 character changes / lineage Myr
+#      Morphology  rate = 6.153 character changes / lineage Myr
+#         Ecology  rate = 3.075 character changes / lineage Myr
 #
 # AIC results:              AICc        deltaAIC   Akaike weight
-# Model 1 (Single-rate)   6396.430      119.376    0.000
-# Model 2 (Diff-rates)    6277.053        0.000    1.000 ***
+# Model 1 (Single-rate)   14030.50      271.78     0.000
+# Model 2 (Diff-rates)    13758.72        0.00     1.000 *** (all 50 @ 1.000)
 
-# Visualize character partitions
-plot_rates_character(test_rates_output = AIC.rates, model_number = 2)
-
+# Visualize sample character partitions (for trees 1 and 50)
+plot_rates_character(test_rates_output = AIC.rates[[1]], model_number = 2)
+plot_rates_character(test_rates_output = AIC.rates[[50]], model_number = 2)
 
 
 
 
 
 ## SUBSAMPLING ALGORITHM FOR CHARACTER PARTITIONS ##############################
+
 # The lambda rates returned above are sensitive to the number of characters.
 # (All things equal, more characters in a partition can produce an inflated
 # rate.) To avoid this potential bias, here we subsample each partition to a
 # common number of characters (and removing any characters with invariant rate).
+# Subsampling samples both across characters and across trees simultaneously to
+# account for variation in the tree structure.
+
+# A bit illogical: the files used here are created below. Code was re-organized
+# so flows in more logical analytical order. Go to "WHICH CHARACTERS EVOLVE
+# FASTEST AND SLOWEST?" for code used to generate the .csv files.
 
 # Removing following invariant (rate = 0) characters from ecological matrix: 7,
 # 11, 14, 33, 35, 37 dealing with non-sexual reproduction, autotrophy,
@@ -239,9 +257,6 @@ plot_rates_character(test_rates_output = AIC.rates, model_number = 2)
 eco.rates <- read.csv(file = "EcoRates.csv")     # Created below
 (invar.eco <- which(eco.rates$rate == 0))
 length(invar.eco) / nrow(eco.rates)              # 15% is invariant
-
-# A bit illogical: the files used here are created below. Code was re-organized
-# so flows in more logical analytical order.
 
 # Removing following invariant (rate = 0) characters from morphogical matrix: 
 morph.rates <- read.csv(file = "MorphRates.csv") # Created below
@@ -1007,7 +1022,7 @@ eco.data <- prune_cladistic_matrix(cladistic_matrix = data, blocks2prune = 1,
 
 # Choose partitions
 tbins <- seq(from = min(TimeBins), to = max(TimeBins), length.out = 50)
-mean(diff(tbins)) # 2.0 Myr bins
+mean(diff(tbins)) # 3.96 Myr bins
 time.partitions <- list(c(list(1), list(2:(length(tbins) - 1))))
 branch.part <- list(c(list(1)))
 branch.part <- lapply(X = as.list(seq(1, length(tree$edge.length))), as.list)
