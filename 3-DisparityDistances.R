@@ -366,10 +366,10 @@ beep(3)
 # ancestral nodes (see Claddis:calculate_morphological_distances() for details
 # of how distances are calculated in the case of polymorphisms, uncertain, or
 # inapplicable character states). Given the diagnostic testing, it seems the
-# fact that the 5 idiosyncratic trees are consecutive is simply due to chance.
-# (Note that the same time trees were used in the 3 life habit treatments,
-# without any problems.) Therefore, proceeding as normal, but ignoring these 5
-# distance matrices in the Mantel test.
+# fact that the 5 idiosyncratic trees are consecutive is simply due to
+# coincidence. (Note that the same time trees were used in the 3 life habit
+# treatments, without any problems.) Therefore, proceeding as normal, but
+# ignoring these 5 distance matrices in the Mantel test.
 
 # Convert list to means and summarize
 for (r in 1:6) {
