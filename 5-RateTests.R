@@ -156,13 +156,18 @@ stopCluster(cl)
 beep(3)
 
 # View results
-round(LRT.rates$character_test_results[[1]]$rates, 4)
-LRT.rates$character_test_results[[1]]$p_value
+sq <- 1:ntrees
+morph.rates <- sapply(sq, function(sq) LRT.rates[[sq]]$character_test_results[[1]]$rates[1])
+eco.rates <- sapply(sq, function(sq) LRT.rates[[sq]]$character_test_results[[1]]$rates[2])
+p.vals <- sapply(sq, function(sq) LRT.rates[[sq]]$character_test_results[[1]]$p_value)
+mean(morph.rates)
+mean(eco.rates)
+max(p.vals) # Report max b/c every other one is at least more significantly diff.
 
-# Morphology rate = 1.3766 character changes / lineage Myr
-# Ecology    rate = 0.7078 character changes / lineage Myr   p-value < 1e-66 ****
-#                   0.6180 using 'constant'                  p < 1e-83 ****
-#                   0.7690 using 'raw'                       p < 1e-27 ****
+# Morphology rate = 6.153 average anatomical character changes / lineage Myr
+# Ecology    rate = 3.590 average life-habit character changes / lineage Myr   p-value < 1e-154 ****
+#                   2.932 using 'constant'                  p < 1e-241 ****
+#                   3.075 using 'raw'                       p < 1e-071 ****
 
 
 
