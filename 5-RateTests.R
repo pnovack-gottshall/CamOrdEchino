@@ -60,14 +60,6 @@ for(i in 1:length(morph.anc)){
   data[[i]]$matrix_2 <- eco.anc[[i]]$matrix_1
 }
 
-# Specify which characters are from the morphological block. The remaining
-# (ecological) characters are automatically placed in the second block by the
-# function. Using just the first, as will be identical across all matrices in
-# the list.
-morph.char <- 1:ncol(data[[1]]$matrix_1$matrix)
-eco.char <- max(morph.char) + (1:ncol(data[[1]]$matrix_2$matrix))
-character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
-
 
 ## SET UP STRATIGRAPHIC BINS ###################################################
 
@@ -98,6 +90,15 @@ class(TimeBins) <- "timeBins"
 
 ## Likelihood ratio tests (run in parallel). Not using load balancing because run
 ## time is approximately equal across trees.
+
+# Specify which characters are from the morphological block. The remaining
+# (ecological) characters are automatically placed in the second block by the
+# function. Using just the first, as will be identical across all matrices in
+# the list.
+morph.char <- 1:ncol(data[[1]]$matrix_1$matrix)
+eco.char <- max(morph.char) + (1:ncol(data[[1]]$matrix_2$matrix))
+character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
+
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
 clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
@@ -329,7 +330,7 @@ for(t in 1:length(data)) {
   stopCluster(cl)
   sub.AIC.results[index.seq[[t]]] <- tree.subs
 }
-(Sys.time() - start)     # 31.4 minutes on 8-core laptop
+(Sys.time() - start)     # 76.5 minutes on 8-core laptop
 
 # Save output
 save(sub.AIC.results, file = "sub.AIC.results")
@@ -504,24 +505,36 @@ save(raw.branch.changes, file = "raw.branch.changes")
 
 # Combine all trees and plot relationship between branching distances and no.
 # character changes
-bd.index <- seq(from = 3, to = 200, by = 4)
-bc.index <- seq(from = 4, to = 200, by = 4)
-sizeplot(unlist(unlist(morph.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
-         unlist(unlist(morph.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
-         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
-         main = "morph")
-sizeplot(unlist(unlist(eco.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
-         unlist(unlist(eco.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
-         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
-         main = "mode")
-sizeplot(unlist(unlist(constant.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
-         unlist(unlist(constant.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
-         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
-         main = "constant")
-sizeplot(unlist(unlist(raw.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
-         unlist(unlist(raw.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
-         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
-         main = "raw")
+
+# Combine lists into continuous vector
+bd.index <- seq(from = 3, to = 200, by = 4) # branching distances
+bc.index <- seq(from = 4, to = 200, by = 4) # branching character changes
+morph.br.dist <- unlist(unlist(morph.branch.changes, recursive = FALSE,
+                               use.names = FALSE)[bd.index])
+morph.char.ch <- unlist(unlist(morph.branch.changes, recursive = FALSE,
+                               use.names = FALSE)[bc.index])
+mode.br.dist <- unlist(unlist(eco.branch.changes, recursive = FALSE,
+                              use.names = FALSE)[bd.index])
+mode.char.ch <- unlist(unlist(eco.branch.changes, recursive = FALSE,
+                              use.names = FALSE)[bc.index])
+constant.br.dist <- unlist(unlist(constant.branch.changes, recursive = FALSE,
+                                  use.names = FALSE)[bd.index])
+constant.char.ch <- unlist(unlist(constant.branch.changes, recursive = FALSE,
+                                  use.names = FALSE)[bc.index])
+raw.br.dist <- unlist(unlist(raw.branch.changes, recursive = FALSE,
+                             use.names = FALSE)[bd.index])
+raw.char.ch <- unlist(unlist(raw.branch.changes, recursive = FALSE,
+                             use.names = FALSE)[bc.index])
+
+# Plot correlations
+sizeplot(morph.br.dist, morph.char.ch, xlab = "branch changes", 
+         ylab = "branch distance", main = "morph", pow = 0.1)
+sizeplot(mode.br.dist, mode.char.ch, xlab = "branch changes", 
+         ylab = "branch distance", main = "mode", pow = 0.1)
+sizeplot(constant.br.dist, constant.char.ch, xlab = "branch changes", 
+         ylab = "branch distance", main = "constant", pow = 0.1)
+sizeplot(raw.br.dist, raw.char.ch, xlab = "branch changes", 
+         ylab = "branch distance", main = "raw", pow = 0.1)
 
 # Mean correlation coefficients (mean across 50 trees)
 sq <- 1:50
@@ -533,44 +546,47 @@ mean(sapply(sq, function(sq) cor(constant.branch.changes[[sq]]$Branch.dist,
                                  constant.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
 mean(sapply(sq, function(sq) cor(raw.branch.changes[[sq]]$Branch.dist, 
                                  raw.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
-# morph: mean r = 0.856
-# mode: mean r = 0.949
+# morph:    mean r = 0.856
+# mode:     mean r = 0.949
 # constant: mean r = 0.936
-# raw: mean r = 0.879
+# raw:      mean r = 0.879
 
 
-
+# Create histogram using all-combined (use prob = TRUE so same as mean across
+# trees)
 # pdf(file = "PerBranchChanges.pdf")
 par(mfrow = c(2, 2))
-hist(morph.branch.changes$Branch.dist, 20, main = "Morphology", xlab = "Branching distance")
-hist(eco.branch.changes$Branch.dist, 20, main = "Ecology", xlab = "Branching distance")
-hist(100 * morph.branch.changes$Char.changes / 413, 20, main = "Morphology", xlab = "% character changes")
-hist(100 * eco.branch.changes$Char.changes / 40, 20, main = "Ecology", xlab = "% character changes")
+hist(morph.br.dist, 20, prob = TRUE, main = "Morphology", xlab = "Branching distance")
+hist(mode.br.dist, 20, prob = TRUE, main = "Ecology", xlab = "Branching distance")
+hist(100 * morph.char.ch / 413, 20, prob = TRUE, main = "Morphology", xlab = "% character changes")
+hist(100 * mode.char.ch / 40, 20, prob = TRUE, main = "Ecology", xlab = "% character changes")
 # dev.off()
 par(op)
 
+# Plotting all, then dividing y-axis height by 50 to figure as mean across 50
+# trees
 # pdf(file = "Dist&CharPerBranch.pdf")
 par(mfrow = c(1, 2), mar = c(4, 4, 1, 0))
-breaks.dist <- 
-  pretty(c(morph.branch.changes$Branch.dist, eco.branch.changes$Branch.dist), 10)
-breaks.char <- pretty(c(morph.branch.changes$Char.changes, 
-                        eco.branch.changes$Char.changes), 10)
-hist(eco.branch.changes$Branch.dist, 
-     main = "Distance moved / branching event", xlab = "Distance moved", 
-     ylab = "# branching events", breaks = breaks.dist, col = "transparent", 
-     border = "transparent", cex.lab = 1, cex.main = 0.8)
-hist(eco.branch.changes$Branch.dist, add = TRUE, border = "white", 
-     col = "darkgray", breaks = breaks.dist)
-hist(morph.branch.changes$Branch.dist, add = TRUE, border = "black", 
-     col = "transparent", breaks = breaks.dist)
-hist(eco.branch.changes$Char.changes, xlab = "# character changes", 
+breaks.dist <- pretty(c(morph.br.dist, mode.br.dist), 10)
+h.bd.mode <- hist(mode.br.dist, breaks = breaks.dist, plot = FALSE)
+h.bd.morph <- hist(morph.br.dist, breaks = breaks.dist, plot = FALSE)
+h.bd.mode$counts <- h.bd.mode$counts / 50
+h.bd.morph$counts <- h.bd.morph$counts / 50
+breaks.char <- pretty(c(morph.char.ch, mode.char.ch), 10)
+h.bc.mode <- hist(mode.char.ch, breaks = breaks.char, plot = FALSE)
+h.bc.morph <- hist(morph.char.ch, breaks = breaks.char, plot = FALSE)
+h.bc.mode$counts <- h.bc.mode$counts / 50
+h.bc.morph$counts <- h.bc.morph$counts / 50
+# Plot histograms
+plot(h.bd.mode, main = "Distance moved / branching event", 
+     xlab = "Distance moved", ylab = "Mean # branching events", 
+     border = "white", col = "darkgray", cex.lab = 1, cex.main = 0.8)
+plot(h.bd.morph, add = TRUE, border = "black", col = "transparent")
+plot(h.bc.mode, xlab = "Mean # character changes", 
      main = "# character changes / branching event", 
-     ylab = "# branching events", breaks = breaks.char, col = "transparent", 
-     border = "transparent", cex.lab = 1, cex.main = 0.8)
-hist(eco.branch.changes$Char.changes, add = TRUE, border = "white", 
-     col = "darkgray", breaks = breaks.char)
-hist(morph.branch.changes$Char.changes, add = TRUE, border = "black", 
-     col = "transparent", breaks = breaks.char)
+     ylab = "# branching events", col = "darkgray", border = "white", 
+     cex.lab = 1, cex.main = 0.8)
+plot(h.bc.morph, add = TRUE, border = "black", col = "transparent")
 legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 1, pt.cex = 2)
@@ -578,67 +594,60 @@ par(op)
 # dev.off()
 
 # Statistical summaries and tests
-summary(morph.branch.changes$Branch.dist)
-summary(eco.branch.changes$Branch.dist)
-summary(constant.branch.changes$Branch.dist)
-summary(raw.branch.changes$Branch.dist)
+summary(morph.br.dist)    # mean = 2.14 mean distance / branching event
+summary(mode.br.dist)     # mean = 1.55
+summary(constant.br.dist) # mean = 1.24
+summary(raw.br.dist)      # mean = 0.88
 
-summary(morph.branch.changes$Char.changes)
-summary(eco.branch.changes$Char.changes)
-summary(constant.branch.changes$Char.changes)
-summary(raw.branch.changes$Char.changes)
+summary(morph.char.ch)    # mean = 9.49 mean character changes / branching event
+summary(mode.char.ch)     # mean = 3.69
+summary(constant.char.ch) # mean = 2.60
+summary(raw.char.ch)      # mean = 0.83
 
-summary(100 * morph.branch.changes$Char.changes / 413)
-summary(100 * eco.branch.changes$Char.changes / 40)
-summary(100 * constant.branch.changes$Char.changes / 40)
-summary(100 * raw.branch.changes$Char.changes / 40)
+summary(100 * morph.char.ch / 413)   # mean = 2.30%
+summary(100 * mode.char.ch / 40)     # mean = 9.22%
+summary(100 * constant.char.ch / 40) # mean = 6.50%
+summary(100 * raw.char.ch / 40)      # mean = 2.09%
 
 # Same, but normalized instead by the maximum observed number of changes
-summary(100 * morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes))
-summary(100 * eco.branch.changes$Char.changes / max(eco.branch.changes$Char.changes))
-summary(100 * constant.branch.changes$Char.changes / max(constant.branch.changes$Char.changes))
-summary(100 * raw.branch.changes$Char.changes / max(raw.branch.changes$Char.changes))
+summary(100 * morph.char.ch / max(morph.char.ch))       # mean = 23.15% of max possible
+summary(100 * mode.char.ch / max(mode.char.ch))         # mean = 16.77% of max possible
+summary(100 * constant.char.ch / max(constant.char.ch)) # mean = 12.37% of max possible
+summary(100 * raw.char.ch / max(raw.char.ch))           # mean =  5.57% of max possible
 
+# Wilcoxon test (across all trees, combined)
+wilcox.test(morph.br.dist, mode.br.dist)
+# W = 782538984, p < 2.2e-16
+wilcox.test(morph.br.dist, constant.br.dist)
+# W = 837922047, p < 2.2e-16
+wilcox.test(morph.br.dist, raw.br.dist)
+# W = 526641887, p < 2.2e-16
 
-wilcox.test(morph.branch.changes$Branch.dist, eco.branch.changes$Branch.dist)
-# W = 346033, p < 2.2e-16
-wilcox.test(morph.branch.changes$Branch.dist, constant.branch.changes$Branch.dist)
-# W = 357795, p < 2.2e-16
-wilcox.test(morph.branch.changes$Branch.dist, raw.branch.changes$Branch.dist)
-# W = 237301, p < 2.2e-16
+wilcox.test(morph.char.ch, mode.char.ch)
+# W = 901861528, p < 2.2e-16
+wilcox.test(morph.char.ch, constant.char.ch)
+# W = 955560619, p < 2.2e-16
+wilcox.test(morph.char.ch, raw.char.ch)
+# W = 1087324154, p < 2.2e-16
 
+wilcox.test(morph.char.ch / 413, mode.char.ch / 40)
+# W = 557408578, p = 1.794e-5
+wilcox.test(morph.char.ch / 413, constant.char.ch / 40)
+# W = 657075312, p = 0.001113
+wilcox.test(morph.char.ch / 413, raw.char.ch / 40)
+# W = 969161256, p < 2.2e-16
 
-wilcox.test(morph.branch.changes$Char.changes, eco.branch.changes$Char.changes)
-# W = 417274, p < 2.2e-16
-wilcox.test(morph.branch.changes$Char.changes, constant.branch.changes$Char.changes)
-# W = 427906, p < 2.2e-16
-wilcox.test(morph.branch.changes$Char.changes, raw.branch.changes$Char.changes)
-# W = 450283, p < 2.2e-16
-
-
-wilcox.test(morph.branch.changes$Char.changes / 413, eco.branch.changes$Char.changes / 40)
-# W = 299869, p = 1.794e-5
-wilcox.test(morph.branch.changes$Char.changes / 413, constant.branch.changes$Char.changes / 40)
-# W = 316093, p = 1.565e-10
-wilcox.test(morph.branch.changes$Char.changes / 413, raw.branch.changes$Char.changes / 40)
-# W = 385624, p < 2.2e-16
-
-wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
-            eco.branch.changes$Char.changes / max(eco.branch.changes$Char.changes))
-# W = 369797, p < 2.2e-16
-wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
-            constant.branch.changes$Char.changes / max(constant.branch.changes$Char.changes))
-# W = 381846, p < 2.2e-16
-wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.changes), 
-            raw.branch.changes$Char.changes / max(raw.branch.changes$Char.changes))
-# W = 420041, p < 2.2e-16
-
+wilcox.test(morph.char.ch / max(morph.char.ch), mode.char.ch / max(mode.char.ch))
+# W = 800456376, p < 2.2e-16
+wilcox.test(morph.char.ch / max(morph.char.ch), constant.char.ch / max(constant.char.ch))
+# W = 876116390, p < 2.2e-16
+wilcox.test(morph.char.ch / max(morph.char.ch), raw.char.ch / max(raw.char.ch))
+# W = 1035490718, p < 2.2e-16
 
 # Morphological characters change more often than ecological characters (even
-# when standardize against the number of characters that can actually change in
-# practice), and when they do, the change is a more substantial one.
-
-
+# when standardized against the number of characters that can actually change in
+# practice), and when they do change, the morphological change is a more
+# substantial one.
 
 
 
@@ -646,19 +655,40 @@ wilcox.test(morph.branch.changes$Char.changes / max(morph.branch.changes$Char.ch
 
 ## WHICH CHARACTERS EVOLVE FASTEST AND SLOWEST? ################################
 
+# Only comparing the morphological data set to the ecological 'mode' treatment
+# here.
+
 # Tally ecological characters
-morph.char <- 1:ncol(data$matrix_1$matrix)
-eco.char <- max(morph.char) + (1:ncol(data$matrix_2$matrix))
+morph.char <- 1:ncol(data[[1]]$matrix_1$matrix)
+eco.char <- max(morph.char) + (1:ncol(data[[1]]$matrix_2$matrix))
 nchar <- max(eco.char)
 character_partitions <- lapply(as.list(1:nchar), as.list)
 
-all.char.partitions <- 
-  test_rates2(cladistic_matrix = data, time_tree = tree, time_bins = TimeBins,
-              character_partitions = character_partitions, 
-              polymorphism_state = "missing", uncertainty_state = "missing",
-              inapplicable_state = "missing", time_binning_approach = "lloyd",
-              test_type = "lrt", alpha = 0.01,
-              multiple_comparison_correction = "benjaminihochberg")
+# Calculate character partitions in parallel. Not using load balancing because
+# run time is approximately equal across trees.
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+ntrees <- length(data)
+(t.start <- Sys.time())
+all.char.partitions <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
+    test_rates2(cladistic_matrix = data[[t]], time_tree = data[[t]]$topper$tree, 
+                time_bins = TimeBins, character_partitions = character_partitions, 
+                polymorphism_state = "missing", uncertainty_state = "missing",
+                inapplicable_state = "missing", time_binning_approach = "lloyd",
+                test_type = "lrt", alpha = 0.01,
+                multiple_comparison_correction = "benjaminihochberg")
+}
+Sys.time() - t.start # 3.3 - 3.8 minutes on 8-core laptop
+stopCluster(cl)
+# Save
+# morphRaw.LRT.rates <- LRT.rates; save(morphRaw.LRT.rates, file = "morphRaw.LRT.rates")
+# morphConstant.LRT.rates <- LRT.rates; save(morphConstant.LRT.rates, file = "morphConstant.LRT.rates")
+# morphMode.LRT.rates <- LRT.rates; save(morphMode.LRT.rates, file = "morphMode.LRT.rates")
+beep(3)
+
+
+
 beep()
 
 # Convert to cleaner output
