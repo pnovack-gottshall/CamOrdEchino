@@ -72,6 +72,7 @@ character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
 # required for test_rates().
 strat_names <-
   read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
+# strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
 # Eons are level 1, eras=level 2, periods=3, subperiods=4, epochs=5
 TimeBins <- strat_names[which(strat_names$scale_level == 5), ]
 rownames(TimeBins) <- as.character(TimeBins$interval_name)
@@ -114,7 +115,13 @@ LRT.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
 }
 Sys.time() - t.start # 3.3 - 3.8 minutes on 8-core laptop
 stopCluster(cl)
+# Save
+# morphRaw.LRT.rates <- LRT.rates; save(morphRaw.LRT.rates, file = "morphRaw.LRT.rates")
+# morphConstant.LRT.rates <- LRT.rates; save(morphConstant.LRT.rates, file = "morphConstant.LRT.rates")
+# morphMode.LRT.rates <- LRT.rates; save(morphMode.LRT.rates, file = "morphMode.LRT.rates")
 beep(3)
+
+
 
 # View results
 sq <- 1:ntrees
@@ -172,6 +179,13 @@ AIC.rates <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
 }
 Sys.time() - t.start # 3.1 - 4.3 minutes on 8-core laptop
 stopCluster(cl)
+# Save and reload:
+# morphRaw.AIC.rates <- AIC.rates; save(morphRaw.AIC.rates, file = "morphRaw.AIC.rates")
+# morphConstant.AIC.rates <- AIC.rates; save(morphConstant.AIC.rates, file = "morphConstant.AIC.rates")
+# morphMode.AIC.rates <- AIC.rates; save(morphMode.AIC.rates, file = "morphMode.AIC.rates")
+# load("morphMode.AIC.rates"); AIC.rates <- morphMode.AIC.rates
+# load("morphConstant.AIC.rates"); AIC.rates <- morphConstant.AIC.rates
+# load("morphRaw.AIC.rates"); AIC.rates <- morphRaw.AIC.rates
 beep(3)
 
 # View results
@@ -179,28 +193,22 @@ sq <- 1:ntrees
 one.rate <- sapply(sq, function(sq) AIC.rates[[sq]]$character_test_results[[1]]$rates)
 two.rate <- sapply(sq, function(sq) AIC.rates[[sq]]$character_test_results[[2]]$rates)
 
-# View lambdas (= rates)
+# View lambdas (= rates). Should be identical to that calculated using LRT.
 mean(one.rate) # One-rate lambda
 apply(two.rate, 1, mean) # Two-rate lambdas
 
 # Convert AICcs to Akaike weight. Given large number of characters, fine to use
 # AIC, but reporting AICc anyway
 Akaike.wts <- lapply(sq, function(sq)
-        geiger::aicw(c(AIC.rates[[sq]]$character_test_results[[1]]$aicc,
-                       AIC.rates[[sq]]$character_test_results[[2]]$aicc)))
-two.rate.support <- sapply(sq, function(sq) Akaike.wts[[sq]]$w[2])
+        as.matrix(geiger::aicw(c(AIC.rates[[sq]]$character_test_results[[1]]$aicc,
+                       AIC.rates[[sq]]$character_test_results[[2]]$aicc))))
+two.rate.support <- sapply(sq, function(sq) Akaike.wts[[sq]][2, 3])
 summary(two.rate.support)
 hist(two.rate.support, breaks = seq(0.5, 1, by = 0.01))
 abline(v = c(0.9, 0.99), col = "red", lty = 2)
 
 # Mean Akaike weight results
-mean.Akaike <- Akaike.wts[[1]]
-mean.Akaike[1, 1] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 1]))
-mean.Akaike[1, 2] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 2]))
-mean.Akaike[1, 3] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][1, 3]))
-mean.Akaike[2, 1] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 1]))
-mean.Akaike[2, 2] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 2]))
-mean.Akaike[2, 3] <- mean(sapply(sq, function(sq) Akaike.wts[[sq]][2, 3]))
+mean.Akaike <- apply(simplify2array(Akaike.wts), 1:2, mean)
 mean.Akaike
 
 # Mode:
@@ -209,8 +217,8 @@ mean.Akaike
 #         Ecology  rate = 3.590 character changes / lineage Myr
 #
 # AIC results (mode):       AICc      deltaAIC   Akaike weight      
-# Model 1 (Single-rate)   17884.71      461.69   0.000
-# Model 2 (Diff-rates)    17423.02        0.00   1.000 *** (all 50 @ 1.000)
+# Model 1 (Single-rate)   19883.91      746.67   0.000
+# Model 2 (Diff-rates)    19137.24        0.00   1.000 *** (all 50 @ 1.000)
 
 # Constant:
 # Global (overall) rate = 5.1231 character changes / lineage Myr
@@ -218,8 +226,8 @@ mean.Akaike
 #          Ecology rate = 2.9323 character changes / lineage Myr
 #
 # AIC results:              AICc        deltaAIC   Akaike weight
-# Model 1 (Single-rate)   17240.18      833.15    0.000
-# Model 2 (Diff-rates)    16429.03        0.00    1.000 *** (all 50 @ 1.000)
+# Model 1 (Single-rate)   19283.09      1139.844    0.000
+# Model 2 (Diff-rates)    18143.25         0.00     1.000 *** (all 50 @ 1.000)
 
 # Raw:
 # Global (overall) rate = 5.765 character changes / lineage Myr
@@ -227,8 +235,8 @@ mean.Akaike
 #         Ecology  rate = 3.075 character changes / lineage Myr
 #
 # AIC results:              AICc        deltaAIC   Akaike weight
-# Model 1 (Single-rate)   14030.50      271.78     0.000
-# Model 2 (Diff-rates)    13758.72        0.00     1.000 *** (all 50 @ 1.000)
+# Model 1 (Single-rate)   15861.13      388.19     0.000
+# Model 2 (Diff-rates)    15472.94        0.00     1.000 *** (all 50 @ 1.000)
 
 # Visualize sample character partitions (for trees 1 and 50)
 plot_rates_character(test_rates_output = AIC.rates[[1]], model_number = 2)
@@ -245,41 +253,37 @@ plot_rates_character(test_rates_output = AIC.rates[[50]], model_number = 2)
 # rate.) To avoid this potential bias, here we subsample each partition to a
 # common number of characters (and removing any characters with invariant rate).
 # Subsampling samples both across characters and across trees simultaneously to
-# account for variation in the tree structure.
+# account for variation in the tree structure, using 2000 total replicates (with
+# 40 replicates for each of 50 trees, drawing 30 characters per replicate).
 
-# A bit illogical: the files used here are created below. Code was re-organized
-# so flows in more logical analytical order. Go to "WHICH CHARACTERS EVOLVE
-# FASTEST AND SLOWEST?" for code used to generate the .csv files.
+# Import ancestral states from 2-InferAncestralStates.R
+load("mode.anc")
+load("morph.anc")
+eco.anc <- mode.anc
 
-# Removing following invariant (rate = 0) characters from ecological matrix: 7,
-# 11, 14, 33, 35, 37 dealing with non-sexual reproduction, autotrophy,
-# herbivory, and swimming.
-eco.rates <- read.csv(file = "EcoRates.csv")     # Created below
-(invar.eco <- which(eco.rates$rate == 0))
-length(invar.eco) / nrow(eco.rates)              # 15% is invariant
+# Combine into list of single data matrices with two blocks in each (first for
+# morphology and second for ecology)
+data <- vector("list", length(morph.anc))
+for(i in 1:length(morph.anc)){
+  data[[i]]$topper <- morph.anc[[i]]$topper
+  data[[i]]$matrix_1 <- morph.anc[[i]]$matrix_1
+  data[[i]]$matrix_2 <- eco.anc[[i]]$matrix_1
+}
 
-# Removing following invariant (rate = 0) characters from morphogical matrix: 
-morph.rates <- read.csv(file = "MorphRates.csv") # Created below
-(invar.morph <- which(morph.rates$rate == 0))
-length(invar.morph) / nrow(morph.rates)          # 38% is invariant
+prune_cladistic_matrix(cladistic_matrix = data, remove_invariant = TRUE)
 
-# Need to make sequential (with morphological characters first)
-invars <- c(invar.morph, invar.eco + 413)
-
-# Remove the invariants
-no.invars <- prune_cladistic_matrix(cladistic_matrix = data, characters2prune = invars)
-n.morph.char <- ncol(no.invars$matrix_1$matrix)  # 255 variable characters
-n.eco.char <- ncol(no.invars$matrix_2$matrix)    #  34 variable characters
-total.chars <- n.morph.char + n.eco.char
-
-n.char <- 30                                     # Subsample to 30 characters
+# Subsample to 30 characters
+n.char <- 30
 # Specify the subsampled partitions
 character_partitions.aic <- list(list(1:(n.char * 2)), list(1:n.char))
 
 ## Resample in parallel
 
+# 1. Loop through each tree (removing invariant characters)
+
+
 # Initialize cluster
-nreps <- 1000
+nreps <- 40
 cl <- makeCluster(detectCores())
 registerDoParallel(cl)
 clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
@@ -983,6 +987,12 @@ par(op)
 
 
 ## Side issue: Is the delta statistic correlated with character rate? ##########
+
+# Note this code was NOT updated when rewrote the code to handle a list of
+# multiple time-trees. If wish to run, would need to update code and re-build
+# the output from 7-Phylogenetic inertia.R.
+
+# Import output from 7-Phylogenetic inertia.R
 load("deltas.morph")
 load("deltas.eco")
 
