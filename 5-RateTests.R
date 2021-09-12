@@ -679,30 +679,41 @@ all.char.partitions <- foreach(t = 1:ntrees, .packages = "Claddis") %dopar% {
                 test_type = "lrt", alpha = 0.01,
                 multiple_comparison_correction = "benjaminihochberg")
 }
-Sys.time() - t.start # 3.3 - 3.8 minutes on 8-core laptop
+Sys.time() - t.start # 3.3 minutes on 8-core laptop
 stopCluster(cl)
 # Save
-# morphRaw.LRT.rates <- LRT.rates; save(morphRaw.LRT.rates, file = "morphRaw.LRT.rates")
-# morphConstant.LRT.rates <- LRT.rates; save(morphConstant.LRT.rates, file = "morphConstant.LRT.rates")
-# morphMode.LRT.rates <- LRT.rates; save(morphMode.LRT.rates, file = "morphMode.LRT.rates")
+# save(all.char.partitions, file = "all.char.partitions")
 beep(3)
 
-
-
-beep()
-
-# Convert to cleaner output
+# Convert to cleaner output (and reporting mean rates across 50 time-trees for
+# most metrics, median for signs, and re-calculating manually whether sig fast
+# or slow)
 rates <- data.frame(character = 1:nchar, rate = NA, LRT.pval = NA, 
                         sig.fast.or.slow = NA)
-rates$rate <- 
-  round(sapply(1:nchar, function(x) all.char.partitions$character_test_results[[x]]$rates[1]), 5)
-# prior line same as  > all.char.partitions$character_rates[, 2]
-rates$LRT.pval <- 
-  sapply(1:nchar, function(x) all.char.partitions$character_test_results[[x]]$p_value)
-signs <- 
-  sign(sapply(1:nchar, function(x) all.char.partitions$character_test_results[[x]]$rates[1] - all.char.partitions$character_test_results[[x]]$rates[2]))
-adj.alphas <- 
-  sapply(1:nchar, function(x) all.char.partitions$character_test_results[[x]]$CorrectedAlpha)
+rate.list <- pvals.list <- signs.list <- adj.alphas.list <- changes.list <-
+  completeness.list <- duration.list <- vector("list", length(all.char.partitions))
+for(t in 1:length(all.char.partitions)) {
+  rate.list[[t]] <- 
+    sapply(1:nchar, function(x) all.char.partitions[[t]]$character_test_results[[x]]$rates[1])
+  pvals.list[[t]] <- 
+    sapply(1:nchar, function(x) all.char.partitions[[t]]$character_test_results[[x]]$p_value)
+  signs.list[[t]] <- 
+    sign(sapply(1:nchar, function(x) all.char.partitions[[t]]$character_test_results[[x]]$rates[1] - 
+                  all.char.partitions[[t]]$character_test_results[[x]]$rates[2]))
+  adj.alphas.list[[t]] <- 
+    sapply(1:nchar, function(x) all.char.partitions[[t]]$character_test_results[[x]]$CorrectedAlpha)
+  changes.list[[t]] <-
+    all.char.partitions[[t]]$character_rates[, "changes"]
+  completeness.list[[t]] <-
+    all.char.partitions[[t]]$character_rates[, "completeness"]
+  duration.list[[t]] <-
+    all.char.partitions[[t]]$character_rates[, "duration"]
+}
+rates$rate <- apply(simplify2array(rate.list), 1, mean)
+rates$LRT.pval <- apply(simplify2array(pvals.list), 1, mean)
+signs <- apply(simplify2array(signs.list), 1, median)
+adj.alphas <- apply(simplify2array(adj.alphas.list), 1, mean)
+# Recalculate manually whether significantly faster or slower
 for(ch in 1:nchar) {
   if (rates$LRT.pval[ch] < adj.alphas[ch]) {
     if (signs[ch] > 0)
@@ -713,18 +724,18 @@ for(ch in 1:nchar) {
   else
     rates$sig.fast.or.slow[ch] <- ""
 }
-
-# Append number of character changes, completeness & duration
-rates <- cbind(rates, as.data.frame(all.char.partitions$character_rates[, 3:5]))
+# Append mean number of character changes, completeness & duration (mean across
+# time-trees)
+rates$changes <- apply(simplify2array(changes.list), 1, mean)
+rates$completeness <- apply(simplify2array(completeness.list), 1, mean)
+rates$duration <- apply(simplify2array(duration.list), 1, mean)
 beep()
 
 # Visualize and save (+ = significantly faster than other characters, 
 #                     - = significantly slower)
 head(rates)
 
-# Note that this overrides an object name created above (although this is
-# technically the code that builds that object - the order was jiggered to
-# create more logical analytical order.)
+# Break into partitions
 morph.rates <- rates[morph.char, ]
 eco.rates <- rates[eco.char, ]
 # Renumber eco.rates for consistency with raw data
@@ -737,45 +748,42 @@ rownames(eco.rates) <- as.character(1:length(eco.char))
 # morph.rates <- read.csv(file = "MorphRates.csv")
 # eco.rates <- read.csv(file = "EcoRates.csv")
 
-# 10 fastest evolving characters (* = significantly so):
-eco.rates[order(eco.rates$rate, decreasing = TRUE)[1:10], ]
-# In order, *Body size, *RelFoodStratification, *AbsFoodStratification,
-# *FilterDensity, *AbsStratification, *RelStratification, HardSubstratum,
-# SoftSubstratum, and BioticSubstrate.
+# 12 fastest evolving characters (all significantly so):
+eco.rates[order(eco.rates$rate, decreasing = TRUE)[1:12], 1:5]
+# In order, AbsFoodStratification, RelStratification, AbsStratification,
+# Mobility, Body size, FilterDensity, RelFoodStratification, SoftSubstratum,
+# HardSubstratum, Attached, and Free-living.
 
-# 10 slowest evolving characters (* = significantly so):
-eco.rates[order(eco.rates$rate, decreasing = FALSE)[1:12], ]
-# In order, 6 characters with no variation (*sexual reproduction,
-# *FluidicSubstrate & *InsubstantialSubstrate (both = swimming), *autotrophy,
-# *herbivory, and *incorporeal (= autotrophy). Those that vary include (in
-# order): *living above substrate, *ambient feeding (= osmotrophy and feeding on
-# dissolved organic matter), *attachment feeding, *asexual reproduction, and
-# *solution feeding. Moderately slow characters (also significantly slower)
-# include *AboveImmediate, *WithinImmediate, *FilterFeeding, *SelfSupported,
-# *Supported, *MassFeeding, and *Microbivory, followed by (still slightly
-# faster) *FeedingWithinPrimary (= deposit feeding), *FeedingWithinImmediate,
-# *RaptorialFeeding, *ParticleFeeding, *FeedingAboveImm, *Carnivory,
-# *BulkFeeding, *Attached, *Free-living, *FeedingAbovePrimary, *LithicSubstrate,
-# and *WithnnPrimary (= infaunal). Except for supported/self-suppported (having
-# to do with whether relies on another organism to inhabit microhabitat) and
-# whether live epifaunally vs. infaunally, remaining 7 significantly slow
-# characters all deal with feeding (diet, foraging, and food location).
+# 10 slowest evolving characters (all significantly so):
+eco.rates[order(eco.rates$rate, decreasing = FALSE)[1:10], 1:5]
+# In order, 6 characters with no variation (sexual reproduction,
+# FluidicSubstrate & InsubstantialSubstrate (both = swimming), autotrophy,
+# herbivory, and incorporeal (= autotrophy). Those that vary include (in order):
+# ambient feeding (= osmotrophy and feeding on dissolved organic matter),
+# attachment feeding, asexual reproduction, solution feeding, living above the
+# primary habitat, living above and within the immediate microhabitat,
+# self-supported and Supported, microbivory, and particle feeding. Moderately
+# slow characters (but also significantly slow) include RaptorFeeding,
+# BulkFeeding, FeedingWithinPrimary, FeedingAbovePrimary,
+# FeedingWithinImmediate, FeedingAboveImmediate, Carnivore, WithinPrimary,
+# MassFeeding, Lithic, and FilterFeeding.
 
-# In other words, among the 24 significantly slowest (varying) characters, 14
-# have to do with diet/foraging/food location. Remainder have to do with
-# reproduction, infaunal/epifaunal, and whether the animal lives atop another
-# organism to inhabit its microhabitat. Among the fastest evolving, they involve
-# body size, tiering, and filter density. (These 6 characters also have more
-# states and are ordered factors or numerics.)
+# Among the 22 significantly slowest (varying) characters, 15 have to do with
+# diet/foraging/food location. Remainder have to do with reproduction,
+# microhabitat (e.g., infaunal/epifaunal), lithic substrate, and whether the
+# animal lives atop another organism to inhabit its microhabitat. Among the 11
+# fastest evolving, 7 involve body size (tiering, filter density, and mobility).
+# (These characters also have more states and are ordered factors or numerics.)
+# The remaining fast characters involve preferences for attachment and hard vs.
+# soft substrate.
 
 
 # How many significantly slower, faster, and not sig. diff?
 table(eco.rates$sig.fast.or.slow)
-# 6 significantly fast and 30 significantly slow
+# 11 significantly fast and 28 significantly slow
 
 hist(eco.rates$rate, 20, main = "Ecological character rate", 
-     xlab = "Rate (character changes / Myr)")
-
+     xlab = "Mean rate (character changes / Myr)")
 
 
 
@@ -812,9 +820,9 @@ table(morph.rates$sig.fast.or.slow)
 # 65 significantly fast and 54 significantly slow
 
 hist(eco.rates$rate, 20, main = "Ecological character rate", 
-     xlab = "Rate (character changes / Myr)")
+     xlab = "Mean rate (character changes / Myr)")
 hist(morph.rates$rate, 20, main = "Morphological character rate", 
-     xlab = "Rate (character changes / Myr)")
+     xlab = "Mean rate (character changes / Myr)")
 
 summary(morph.rates$rate)
 summary(eco.rates$rate)
