@@ -67,6 +67,9 @@ morph.char <- 1:ncol(data[[1]]$matrix_1$matrix)
 eco.char <- max(morph.char) + (1:ncol(data[[1]]$matrix_2$matrix))
 character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
 
+
+## SET UP STRATIGRAPHIC BINS ###################################################
+
 # Get epoch boundaries and convert to matrix with columns named 'fad' and 'lad'
 # and rows named for each interval, with top row the oldest bin. Then set class
 # required for test_rates().
@@ -257,8 +260,8 @@ plot_rates_character(test_rates_output = AIC.rates[[50]], model_number = 2)
 # 40 replicates for each of 50 trees, drawing 30 characters per replicate).
 
 # Import ancestral states from 2-InferAncestralStates.R
-load("mode.anc")
 load("morph.anc")
+load("mode.anc")
 eco.anc <- mode.anc
 
 # Combine into list of single data matrices with two blocks in each (first for
@@ -270,67 +273,84 @@ for(i in 1:length(morph.anc)){
   data[[i]]$matrix_2 <- eco.anc[[i]]$matrix_1
 }
 
-prune_cladistic_matrix(cladistic_matrix = data, remove_invariant = TRUE)
-
 # Subsample to 30 characters
 n.char <- 30
 # Specify the subsampled partitions
 character_partitions.aic <- list(list(1:(n.char * 2)), list(1:n.char))
 
-## Resample in parallel
-
-# 1. Loop through each tree (removing invariant characters)
-
-
-# Initialize cluster
+# How many reps per tree?
 nreps <- 40
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
-(start <- Sys.time())
+cat("There will be", nreps * length(data), "total replicates across", 
+    length(data), "trees\n")
 
-# Run in parallel
-aic.results <- foreach(i = 1:nreps, .inorder = FALSE, 
-                       .packages = "Claddis") %dopar% {
-
-  # Choose subsampled characters and prune cladistic matrix accordingly
-  wh.morph.chars <- sample(1:n.morph.char, n.char, replace = FALSE)
-  wh.eco.chars <- sample(1:n.eco.char, n.char, replace = FALSE)
-  characters2prune <-
-    setdiff(1:total.chars, c(wh.morph.chars, wh.eco.chars + n.morph.char))
-  subsample <- prune_cladistic_matrix(cladistic_matrix = no.invars, 
-                                      characters2prune = characters2prune)
-  AIC.rates <- 
-    test_rates2(cladistic_matrix = subsample, time_tree = tree, time_bins = TimeBins,
-                character_partitions = character_partitions.aic,
-                polymorphism_state = "missing", uncertainty_state = "missing",
-                inapplicable_state = "missing", time_binning_approach = "lloyd",
-                test_type = "aic")
+# Store output (with index for pre-allocating position)
+sub.aic.results <- vector("list", nreps * length(data))
+index.seq <- vector("list", length(data))
+for (i in 1:length(index.seq)) {
+  index.seq[[i]] <- seq.int(nreps) + (nreps * (i - 1))
 }
 
-stopCluster(cl)
+# Loop through each tree
+(start <- Sys.time())
+for(t in 1:length(data)) {
+
+  # Remove invariant characters and reassign character lengths.
+  class(data[[t]]) <- "cladisticMatrix"
+  no.invars <-
+    prune_cladistic_matrix(cladistic_matrix = data[[t]], remove_invariant = TRUE)
+  n.morph.char <- ncol(no.invars$matrix_1$matrix)
+  n.eco.char <- ncol(no.invars$matrix_2$matrix)
+  total.chars <- n.morph.char + n.eco.char
+  cat("Subsampling tree", t, "- Removed", 40 - n.eco.char, "eco and", 
+      413 - n.morph.char, "morph characters\n")
+  
+  # Initialize and run in parallel
+  cl <- makeCluster(detectCores())
+  registerDoParallel(cl)
+  clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+  tree.subs <- foreach(i = 1:nreps, .inorder = FALSE, 
+                         .packages = "Claddis") %dopar% {
+                           
+    # Choose subsampled characters and prune cladistic matrix accordingly
+    wh.morph.chars <- sample(1:n.morph.char, n.char, replace = FALSE)
+    wh.eco.chars <- sample(1:n.eco.char, n.char, replace = FALSE)
+    characters2prune <-
+      setdiff(1:total.chars, c(wh.morph.chars, wh.eco.chars + n.morph.char))
+    subsample <- prune_cladistic_matrix(cladistic_matrix = no.invars, 
+                                        characters2prune = characters2prune)
+    # Calculate subsampled AIC on subsample
+    sub.rates <- 
+      test_rates2(cladistic_matrix = subsample, time_tree = subsample$topper$tree,
+                  time_bins = TimeBins, character_partitions = character_partitions.aic,
+                  polymorphism_state = "missing", uncertainty_state = "missing",
+                  inapplicable_state = "missing", time_binning_approach = "lloyd",
+                  test_type = "aic")
+    }
+  stopCluster(cl)
+  sub.aic.results[index.seq[[t]]] <- tree.subs
+}
 (Sys.time() - start)     # 31.4 minutes on 8-core laptop
 beep(3)
 
 # Save output
-# save(aic.results, file = "aic.results")
-# load("aic.results")
+# save(sub.aic.results, file = "sub.aic.results")
+# load("sub.aic.results")
 
 # Convert into clean data table
-l.aic <- length(aic.results)
+l.aic <- length(sub.aic.results)
 resampled.aic <- 
   data.frame(rate1 = NA, AIC1 = NA, AICc1 = NA, rate.morph = NA, rate.eco = NA, 
              AIC2 = NA, AICc2 = NA, AW1 = NA, AW2 = NA)
 for(r in 1:l.aic) {
   resampled.aic[r, 1:7] <-
-    as.numeric(unlist(aic.results[[r]]$character_test_results)[c(1:3, 5:8)])
+    as.numeric(unlist(sub.aic.results[[r]]$character_test_results)[c(1:3, 5:8)])
   resampled.aic[r, 8:9] <-
     geiger::aicw(c(resampled.aic$AICc1[r], resampled.aic$AICc2[r]))$w
 }
 head(resampled.aic)
 round(apply(resampled.aic, 2, mean), 3)
-round(apply(resampled.aic, 2, sd), 3)
 round(apply(resampled.aic, 2, median), 3)
+round(apply(resampled.aic, 2, sd), 3)
 
 # pdf(file = "SubsampledRates.pdf")
 breaks <- pretty(c(resampled.aic$rate.morph, resampled.aic$rate.eco), 40)
@@ -371,10 +391,10 @@ summary(resampled.aic$AW2) # mean weight = 0.955, median = 1.000
 
 ## TABULATE BRANCHING DISTANCE & NUMBER OF CHARACTER CHANGES PER NODE ##########
 # Import distance matrices from 3-DisparityDistances.R
-load("mode.distances.GED.5"); dist.matrix <- mode.distances.GED.5$DistanceMatrix; load("mode.anc"); anc.matrix <- mode.anc$matrix_1$matrix
-# load("constant.distances.GED.5"); dist.matrix <- constant.distances.GED.5$DistanceMatrix; load("constant.anc"); anc.matrix <- constant.anc$matrix_1$matrix
-# load("raw.distances.GED.5"); dist.matrix <- raw.distances.GED.5$DistanceMatrix; load("raw.anc"); anc.matrix <- raw.anc$matrix_1$matrix
-load("morph.distances.GED.5"); dist.matrix <- morph.distances.GED.5$DistanceMatrix; load("morph.anc"); anc.matrix <- morph.anc$matrix_1$matrix
+load("mode.distances.GED.5"); dist.matrix <- mode.distances.GED.5$distance_matrix; load("mode.anc"); anc.matrix <- mode.anc$matrix_1$matrix
+load("constant.distances.GED.5"); dist.matrix <- constant.distances.GED.5$distance_matrix; load("constant.anc"); anc.matrix <- constant.anc$matrix_1$matrix
+load("raw.distances.GED.5"); dist.matrix <- raw.distances.GED.5$distance_matrix; load("raw.anc"); anc.matrix <- raw.anc$matrix_1$matrix
+load("morph.distances.GED.5"); dist.matrix <- morph.distances.GED.5$distance_matrix; load("morph.anc"); anc.matrix <- morph.anc$matrix_1$matrix
 
 # Function to identify number of characters that are identical, including proper
 # handling of poymorphisms and missing states (where they match to the paired
@@ -435,31 +455,36 @@ tally.branch.changes <- function(dist.matrix = NULL, anc.matrix = NULL,
   return(out)
 }
 
+# Calculate branch dynamics
+for(t in 1:length(morph.anc)) {
+    
+  eco.branch.changes[[t]] <- 
+    tally.branch.changes(tree = mode.anc$topper$tree, anc.matrix = mode.anc$matrix_1$matrix,
+                         dist.matrix = mode.distances.GED.5$distance_matrix)
+  morph.branch.changes[[t]] <- 
+    tally.branch.changes(tree = morph.anc$topper$tree, anc.matrix = morph.anc$matrix_1$matrix,
+                         dist.matrix = morph.distances.GED.5$distance_matrix)
+  constant.branch.changes[[t]] <- 
+    tally.branch.changes(tree = constant.anc$topper$tree, anc.matrix = constant.anc$matrix_1$matrix,
+                         dist.matrix = constant.distances.GED.5$distance_matrix)
+  raw.branch.changes[[t]] <- 
+    tally.branch.changes(tree = raw.anc$topper$tree, anc.matrix = raw.anc$matrix_1$matrix,
+                         dist.matrix = raw.distances.GED.5$distance_matrix)
 
-eco.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = mode.anc$matrix_1$matrix,
-                       dist.matrix = mode.distances.GED.5$DistanceMatrix)
+
+
 plot(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
 cor(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
 # r = 0.934
 
-morph.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = morph.anc$matrix_1$matrix,
-                       dist.matrix = morph.distances.GED.5$DistanceMatrix)
 plot(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
 cor(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
 # r = 0.597
 
-constant.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = constant.anc$matrix_1$matrix,
-                       dist.matrix = constant.distances.GED.5$DistanceMatrix)
 plot(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
 cor(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
 # r = 0.932
 
-raw.branch.changes <- 
-  tally.branch.changes(tree = tree, anc.matrix = raw.anc$matrix_1$matrix,
-                       dist.matrix = raw.distances.GED.5$DistanceMatrix)
 plot(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes)
 cor(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes, 
     use = "complete.obs")
