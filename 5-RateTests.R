@@ -20,6 +20,7 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
+library(plotrix)    # v. 3.8-1
 library(ape)        # v. 5.5
 library(geiger)     # v. 2.0.7
 library(doParallel) # v. 1.0.16
@@ -73,9 +74,8 @@ character_partitions <- list(list(morphology = morph.char, ecology = eco.char))
 # Get epoch boundaries and convert to matrix with columns named 'fad' and 'lad'
 # and rows named for each interval, with top row the oldest bin. Then set class
 # required for test_rates().
-strat_names <-
-  read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
-# strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
+# strat_names <- read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
+strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
 # Eons are level 1, eras=level 2, periods=3, subperiods=4, epochs=5
 TimeBins <- strat_names[which(strat_names$scale_level == 5), ]
 rownames(TimeBins) <- as.character(TimeBins$interval_name)
@@ -284,7 +284,7 @@ cat("There will be", nreps * length(data), "total replicates across",
     length(data), "trees\n")
 
 # Store output (with index for pre-allocating position)
-sub.aic.results <- vector("list", nreps * length(data))
+sub.AIC.results <- vector("list", nreps * length(data))
 index.seq <- vector("list", length(data))
 for (i in 1:length(index.seq)) {
   index.seq[[i]] <- seq.int(nreps) + (nreps * (i - 1))
@@ -327,33 +327,46 @@ for(t in 1:length(data)) {
                   test_type = "aic")
     }
   stopCluster(cl)
-  sub.aic.results[index.seq[[t]]] <- tree.subs
+  sub.AIC.results[index.seq[[t]]] <- tree.subs
 }
 (Sys.time() - start)     # 31.4 minutes on 8-core laptop
-beep(3)
 
 # Save output
-# save(sub.aic.results, file = "sub.aic.results")
-# load("sub.aic.results")
+save(sub.AIC.results, file = "sub.AIC.results")
+# load("sub.AIC.results")
+beep(3)
 
 # Convert into clean data table
-l.aic <- length(sub.aic.results)
+l.aic <- length(sub.AIC.results)
 resampled.aic <- 
   data.frame(rate1 = NA, AIC1 = NA, AICc1 = NA, rate.morph = NA, rate.eco = NA, 
              AIC2 = NA, AICc2 = NA, AW1 = NA, AW2 = NA)
 for(r in 1:l.aic) {
   resampled.aic[r, 1:7] <-
-    as.numeric(unlist(sub.aic.results[[r]]$character_test_results)[c(1:3, 5:8)])
+    as.numeric(unlist(sub.AIC.results[[r]]$character_test_results)[c(1:3, 5:8)])
   resampled.aic[r, 8:9] <-
     geiger::aicw(c(resampled.aic$AICc1[r], resampled.aic$AICc2[r]))$w
 }
 head(resampled.aic)
 round(apply(resampled.aic, 2, mean), 3)
 round(apply(resampled.aic, 2, median), 3)
-round(apply(resampled.aic, 2, sd), 3)
+round(apply(resampled.aic, 2, quartile), 3)
+round(apply(resampled.aic, 2, quantile, probs = 0.1), 3)
+summary(resampled.aic$AW2) # mean weight = 0.955, median = 1.000
+
+# Mean global (overall) rate = 0.520 character changes / lineage Myr (SD = 0.072)
+#       Mean morphology rate = 0.837 character changes / lineage Myr (SD = 0.433)
+#          Mean ecology rate = 0.463 character changes / lineage Myr (SD = 0.042)
+#
+# Mean AIC results:        AICc        Akaike weight
+# Model 1 (Single-rate)    4621.05     0.050
+# Model 2 (Diff-rates)     4524.04     0.950 ***
+#                                            median = 1.000,
+#                                            25% quantile = 0.9995
+#                                            10% quantile = 0.918
 
 # pdf(file = "SubsampledRates.pdf")
-breaks <- pretty(c(resampled.aic$rate.morph, resampled.aic$rate.eco), 40)
+breaks <- pretty(c(resampled.aic$rate.morph, resampled.aic$rate.eco), 20)
 hist(resampled.aic$rate.eco, main = "Subsampled rates", 
      xlab = "Rate (character changes / lineage Myr)", ylab = "Density", 
      breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
@@ -370,21 +383,20 @@ par(op)
 
 # pdf(file = "TwoModelAkaikeWeight.pdf")
 breaks <- seq(0.25, 1, by = 0.01)
-hist(resampled.aic$AW2, main = "Akaike weight for two-rate model", 
+hist(resampled.aic$AW2, main = "Akaike support for two-rate model", 
      xlab = "Akaike weight", ylab = "Density", breaks = breaks, prob = TRUE, 
      col = "black")
 abline(v = 0.99, lty = 2, lwd = 2, col = "red")
 par(op)
 # dev.off()
 
-summary(resampled.aic$AW2) # mean weight = 0.955, median = 1.000
 
 # What proportion >= 0.9?
 100 * length(resampled.aic$AW2[resampled.aic$AW2 >= 0.9]) / nrow(resampled.aic)
-# 91.2% greater than 0.90
+# 90.6% greater than or equal to 0.90
 
 100 * length(resampled.aic$AW2[resampled.aic$AW2 >= 0.999]) / nrow(resampled.aic)
-# 85.2% ~ = 1
+# 76.8% ~ = 1
 
 
 
@@ -456,51 +468,76 @@ tally.branch.changes <- function(dist.matrix = NULL, anc.matrix = NULL,
 }
 
 # Calculate branch dynamics
+eco.branch.changes <- morph.branch.changes <- constant.branch.changes <- 
+  raw.branch.changes <- vector("list", 50)
+# Not running in parallel b/c only takes a few minutes to run
 for(t in 1:length(morph.anc)) {
-    
   eco.branch.changes[[t]] <- 
-    tally.branch.changes(tree = mode.anc$topper$tree, anc.matrix = mode.anc$matrix_1$matrix,
-                         dist.matrix = mode.distances.GED.5$distance_matrix)
+    tally.branch.changes(tree = mode.anc[[t]]$topper$tree, 
+                         anc.matrix = mode.anc[[t]]$matrix_1$matrix,
+                         dist.matrix = mode.distances.GED.5[[t]]$distance_matrix)
   morph.branch.changes[[t]] <- 
-    tally.branch.changes(tree = morph.anc$topper$tree, anc.matrix = morph.anc$matrix_1$matrix,
-                         dist.matrix = morph.distances.GED.5$distance_matrix)
+    tally.branch.changes(tree = morph.anc[[t]]$topper$tree, 
+                         anc.matrix = morph.anc[[t]]$matrix_1$matrix,
+                         dist.matrix = morph.distances.GED.5[[t]]$distance_matrix)
   constant.branch.changes[[t]] <- 
-    tally.branch.changes(tree = constant.anc$topper$tree, anc.matrix = constant.anc$matrix_1$matrix,
-                         dist.matrix = constant.distances.GED.5$distance_matrix)
+    tally.branch.changes(tree = constant.anc[[t]]$topper$tree, 
+                         anc.matrix = constant.anc[[t]]$matrix_1$matrix,
+                         dist.matrix = constant.distances.GED.5[[t]]$distance_matrix)
   raw.branch.changes[[t]] <- 
-    tally.branch.changes(tree = raw.anc$topper$tree, anc.matrix = raw.anc$matrix_1$matrix,
-                         dist.matrix = raw.distances.GED.5$distance_matrix)
-
-
-
-plot(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
-cor(eco.branch.changes$Branch.dist, eco.branch.changes$Char.changes)
-# r = 0.934
-
-plot(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
-cor(morph.branch.changes$Branch.dist, morph.branch.changes$Char.changes)
-# r = 0.597
-
-plot(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
-cor(constant.branch.changes$Branch.dist, constant.branch.changes$Char.changes)
-# r = 0.932
-
-plot(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes)
-cor(raw.branch.changes$Branch.dist, raw.branch.changes$Char.changes, 
-    use = "complete.obs")
-# r = 0.883
-
-
+    tally.branch.changes(tree = raw.anc[[t]]$topper$tree, 
+                         anc.matrix = raw.anc[[t]]$matrix_1$matrix,
+                         dist.matrix = raw.distances.GED.5[[t]]$distance_matrix)
+}
+beep(3)
 
 # Save objects
-# save(eco.branch.changes, file = "eco.branch.changes")
-# save(morph.branch.changes, file = "morph.branch.changes")
-# save(constant.branch.changes, file = "constant.branch.changes")
-# save(raw.branch.changes, file = "raw.branch.changes")
+save(eco.branch.changes, file = "eco.branch.changes")
+save(morph.branch.changes, file = "morph.branch.changes")
+save(constant.branch.changes, file = "constant.branch.changes")
+save(raw.branch.changes, file = "raw.branch.changes")
 # load("eco.branch.changes")
 # load("morph.branch.changes")
 # load("constant.branch.changes")
 # load("raw.branch.changes")
+
+
+# Combine all trees and plot relationship between branching distances and no.
+# character changes
+bd.index <- seq(from = 3, to = 200, by = 4)
+bc.index <- seq(from = 4, to = 200, by = 4)
+sizeplot(unlist(unlist(morph.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
+         unlist(unlist(morph.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
+         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
+         main = "morph")
+sizeplot(unlist(unlist(eco.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
+         unlist(unlist(eco.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
+         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
+         main = "mode")
+sizeplot(unlist(unlist(constant.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
+         unlist(unlist(constant.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
+         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
+         main = "constant")
+sizeplot(unlist(unlist(raw.branch.changes, recursive = FALSE, use.names = FALSE)[bd.index]),
+         unlist(unlist(raw.branch.changes, recursive = FALSE, use.names = FALSE)[bc.index]),
+         xlab = "branch changes", ylab = "branch distance", pow = 0.1,
+         main = "raw")
+
+# Mean correlation coefficients (mean across 50 trees)
+sq <- 1:50
+mean(sapply(sq, function(sq) cor(morph.branch.changes[[sq]]$Branch.dist, 
+                                 morph.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
+mean(sapply(sq, function(sq) cor(eco.branch.changes[[sq]]$Branch.dist, 
+                                 eco.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
+mean(sapply(sq, function(sq) cor(constant.branch.changes[[sq]]$Branch.dist, 
+                                 constant.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
+mean(sapply(sq, function(sq) cor(raw.branch.changes[[sq]]$Branch.dist, 
+                                 raw.branch.changes[[sq]]$Char.changes, use = "complete.obs")))
+# morph: mean r = 0.856
+# mode: mean r = 0.949
+# constant: mean r = 0.936
+# raw: mean r = 0.879
+
 
 
 # pdf(file = "PerBranchChanges.pdf")
