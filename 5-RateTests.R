@@ -742,7 +742,7 @@ eco.rates <- rates[eco.char, ]
 eco.rates$character <- 1:length(eco.char)
 rownames(eco.rates) <- as.character(1:length(eco.char))
 
-# Save
+# Save / reload
 # write.csv(morph.rates, file = "MorphRates.csv", row.names = FALSE)
 # write.csv(eco.rates, file = "EcoRates.csv", row.names = FALSE)
 # morph.rates <- read.csv(file = "MorphRates.csv")
@@ -789,57 +789,58 @@ hist(eco.rates$rate, 20, main = "Ecological character rate",
 
 # 10 fastest evolving characters (* = significantly so):
 morph.rates[order(morph.rates$rate, decreasing = TRUE)[1:10], ]
-# The fastest evolving characters include (in order) *261 (rigid oral surface
-# [tegmen] height [height/width]), 61 (oral 1 plate shape), *299 (plate size in
-# circlet at top of the theca), 237 (periproct size), 92 (width of recumbant
-# ambulacra), *341 (number of series of plate in stele), *338 (number of
-# marginal appendages), *263 (tegmen plate scupturing), *298 (shape of plates in
-# the circlet at the top of the theca, regularity of plate shape), *304 (circlet
-# of plates below top circlet of plates, if not bottom circlet), *315 (interrays
-# depressed), 270 (), *266 (periproct position, including position of tube), and
-# *55 (number of oral plates).
+# The fastest evolving characters include (in order) 70 (oral plates sutured),
+# 66 (oral 6 shape), *283 (thecal plate sculpturing), 92 (recumbant ambulacra
+# width), 8 (oral surface shape), 107 (ambulacral floor plate position), 61
+# (oral plate shape), 297 (circlet plate shape), *290 (no. of circlets), and
+# *289 (theca shape). The next 10 significantly fast-evolving characters include
+# *309 (Lowermost circlet plates in line with arm interuption), *192 (no. of
+# arms), *4 (symmetry), *362 (holdfast), *276 (thecal plate addition), *221
+# (type of respiratory openings), *278 (no. of thecal plates), *329 (relative
+# size of marginal plates), *194 (arm branching pattern), and *14 (proportion of
+# oral surface).
 
 # 10 slowest evolving characters (only listing those that are significantly so):
 morph.rates[order(morph.rates$rate, decreasing = FALSE)[1:10], ]
-# The slowest evolving characters include (in order) 110 (lancet plates), 159
-# (proximal ambulacral cover plates), 231 (genital plates with single
-# perforation surrounding periproct), 233 (periproct distinctive opening), 360
-# (branching on column proxistele), all characters with very little variation
-# among taxa (often only 1 genus with a state). The next 10 significantly slow
-# characters include (in order) 7 (direction of growth), 17 (oral region
-# surrounded by ctenoid plates), 50 (calcareous ring surrounding pharynx), 19
-# (extra row of plates along oral area on ventral surface = lateral plates in
-# ctenocystoids), 386 (Aboral covering mimics ambulacral pattern, as in
-# asterozoans), 20 (food groove on basal side of cover plates, as in
-# Ctenocystis), 75 (ambulacra), 373 (distinctive thecal appendage not bearing
-# food groove = stele in Homoiostelea), 201 (appendage bearing peristome), and
-# 229 (Calcified hydropore = madreporite).
+# The slowest evolving characters include (in order) *360 (branching on column
+# proxistele), *331 (marginal plate edge, in 6 spp.), *231 (genital plates with
+# single perforation surrounding periproct), *159 (proximal ambulacral cover
+# plates, only in Mespilocystites), *110 (lancet plates, only in
+# Macurdablastus), *100 (brachioles, only in Bromidocystis), *98 (D-recumbent
+# ambulacra reduced length, in 2 spp.), *74 (Deltoid body on orals, only in
+# Macurdablastus), *20 (Food groove on basal side of cover plates, only in
+# Ctenocystis and Conollia), and *50 (Calcareous ring surrounding pharynx, only
+# in 2 holothurians). The next 11 significantly slow characters include (in
+# order) 7 (in 2 gen.), 48 (4 gen.), 75 (lacking in 3 gen.), 16 (6 gen.), 27 (3
+# gen.), 233 (absent in 4 gen.), 232 (5 gen.), 152 (6 gen.), 10 (5 gen.), and 45
+# (4 gen.). Most of these characters occur only in a single or limited genera,
+# or are invariant (through known absences and unknown [=?] states).
 
 # How many significantly slower, faster, and not sig. diff?
 table(morph.rates$sig.fast.or.slow)
-# 65 significantly fast and 54 significantly slow
+# 42 significantly fast and 58 significantly slow
 
 hist(eco.rates$rate, 20, main = "Ecological character rate", 
      xlab = "Mean rate (character changes / Myr)")
 hist(morph.rates$rate, 20, main = "Morphological character rate", 
      xlab = "Mean rate (character changes / Myr)")
 
-summary(morph.rates$rate)
-summary(eco.rates$rate)
+summary(morph.rates$rate) # mean rate = 5.61 character changes / lineage-Myr
+summary(eco.rates$rate)   # mean rate = 3.90 character changes / lineage-Myr
 
 ## *** NOTE IT IS INAPPROPRIATE TO DO SIMPLE TWO-SAMPLE TESTS COMPARING RATES OF
 ## ECOLOGY VS. MORPHOLOGY. See Lloyd, et al. (2012) and Claddis::test_rates()
 ## for proper tests. ***
 
 wilcox.test(morph.rates$rate, eco.rates$rate)
-# W = 8448.5, p-value = 0.8075 # Not sig. diff on a per-character basis
+# W = 7672, p-value = 0.4466 # Not sig. diff on a per-character basis
 
 # Graeme Lloyd claims this is NOT an appropriate way to test this comparison
 # because it ignores differences in character branch completeness and branch
 # duration. The Claddis::test_rates() partition test above is the preferable way
-# to model these additional factors, and strongly supports that the rate of
-# morphology is greater than of ecology. Further two-sample tests are not
-# conducted here given inappropriateness.
+# to model these additional factors, and overwhelmingly supports that the rate
+# of morphological evolution is greater than of ecology. Further two-sample
+# tests are not conducted here given inappropriateness.
 
 # pdf(file = "CharacterRates.pdf")
 breaks <- pretty(c(morph.rates$rate, eco.rates$rate), 20)
