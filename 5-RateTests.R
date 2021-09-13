@@ -914,53 +914,66 @@ table(eco.level, eco.nstates)
 
 ## Do primary vs dependent (secondary, etc.) characters evolve at different
 ## rates?
-summary(morph.level)
-summary(eco.level)
+for(level in 1:max(morph.level)){
+  cat("level", level, "mean rate = ", 
+      round(mean(morph.rates$rate[which(morph.level == level)]), 3), "\n")
+}
+for(level in 1:max(eco.level)){
+  cat("level", level, "mean rate = ", 
+      round(mean(eco.rates$rate[which(eco.level == level)]), 3), "\n")
+}
+# Morphological mean rates, by level:
+# 1: 5.91
+# 2: 6.82
+# 3: 4.34
+# 4: 5.51
+# 5: 5.75
+
+# Ecological mean rates, by level:
+# 1:  3.68
+# 2: 12.36
+
 
 # Morphological rate variation by dependency levels
 boxplot(morph.rates$rate ~ morph.level, 
         main = "Variation in morphological character rates by level")
 aov <- aov(morph.rates$rate ~ morph.level)
-summary(aov) # F = 11.74, p = 0.00067
+summary(aov) # F = 1.089, p = 0.297
+# No, there are no statistical differences caused by dependency levels in the
+# morphological data set
 
 # M-W test by primary vs. any dependent
 which.prim.morph <- which(morph.level == 1L)
-summary(morph.rates$rate[which.prim.morph])
-summary(morph.rates$rate[-which.prim.morph])
-# Primary characters DO have slightly slower rate of evolution
+summary(morph.rates$rate[which.prim.morph])  # mean = 5.909
+summary(morph.rates$rate[-which.prim.morph]) # mean = 5.573
+# Primary characters have slightly FASTER rate of evolution than dependents
 
 wilcox.test(morph.rates$rate[which.prim.morph], morph.rates$rate[-which.prim.morph])
-# W = 8333, p = 0.769: But primary not significantly different than dependents.
-
-# Confirm it is only the quinary characters that are different:
-which.5.morph <- which(morph.level == 5L)
-wilcox.test(morph.rates$rate[-which.5.morph], morph.rates$rate[which.5.morph])
-# W = 1255, p = 0.0011: Only the quinary characters evolve at faster rate than
-# others.
-
+# W = 9870, p = 0.016: Primary is significantly different than dependents.
 
 
 # Ecological rate variation by dependency levels
 boxplot(eco.rates$rate ~ eco.level, 
         main = "Variation in ecological character rates by level")
 aov <- aov(eco.rates$rate ~ eco.level)
-summary(aov) # F = 0.172, p = 0.172
+summary(aov) # F = 3.094, p = 0.0866 - Marginally significant (given 1 character)
 
 # M-W test by primary vs. any dependent
 which.prim.eco <- which(eco.level == 1L)
-summary(eco.rates$rate[which.prim.eco])
-summary(eco.rates$rate[-which.prim.eco])
+summary(eco.rates$rate[which.prim.eco]) # mean rate =  3.68 changes / lineage-Myr
+summary(eco.rates$rate[-which.prim.eco])# mean rate = 12.36
 # Primary characters DO have slightly slower rate of evolution (but only 1
 # dependent = filter density)
 
 wilcox.test(eco.rates$rate[which.prim.eco], eco.rates$rate[-which.prim.eco])
-# W = 3, p = 0.165: But primary not significantly different than dependents.
+# W = 5, p = 0.224: But primary not significantly different than dependents
+# (probably given statistically low power).
 
-## Conclusion: Although higher dependent characters evolve at higher rates than
-## their contingent (~ independent) characters (and especially so for the
-## quinary characters), the differences are insufficient to explain why
-## morphological characters evolve at higher rates than ecological ones,
-## overall.
+## Conclusion: Dependent characters do not evolve at higher rates than their
+## contingent (~ independent) characters. In fact, morphologically "primary"
+## characters have slightly faster rates of character evolution. These
+## differences are insufficient to explain why morphological characters evolve
+## at higher rates than ecological ones, overall.
 
 # pdf(file = "PrimaryCharacterRates.pdf")
 par(mfrow = c(2, 2), mar = c(4.5, 4, 2, 0.1))
@@ -1000,19 +1013,19 @@ par(op)
 summary(morph.nstates)
 summary(eco.nstates)
 
-length(which(morph.nstates > 5))
-which(eco.nstates > 5)
+length(which(morph.nstates > 5)) # 10 morph. characters with more than 5 states
+length(which(eco.nstates > 5))   # 1 eco. character [= body size] with more than 5 states
 
 # Morphological characters
 aov <- aov(morph.rates$rate ~ morph.nstates)
 summary(aov)
-# F = 83.15, p < 2e-16
+# F = 158.9, p < 2e-16 ***
 boxplot(morph.rates$rate ~ morph.nstates)
 
 # Ecological characters
 aov <- aov(eco.rates$rate ~ eco.nstates)
 summary(aov)
-# F = 106.2, p < 1.48e-12
+# F = 60.84, p = 2.09e-09 ***
 boxplot(eco.rates$rate ~ eco.nstates)
 
 # What is the cause of this difference?
@@ -1024,29 +1037,32 @@ wilcox.test(morph.nstates, eco.nstates)
 # one/two-state versus multi-state
 which.multi.morph <- which(morph.nstates > 2)
 which.multi.eco <- which(eco.nstates > 2)
-summary(eco.rates$rate[which.multi.eco])
-summary(eco.rates$rate[-which.multi.eco])
-# Characters with > 2 states evolve ~ 8.1-times faster, on average
+summary(eco.rates$rate[which.multi.eco])  # mean rate = 13.4
+summary(eco.rates$rate[-which.multi.eco]) # mean rate =  2.2
+# Characters with > 2 states evolve ~ 6.0-times faster, on average
 
-summary(morph.rates$rate[which.multi.morph])
-summary(morph.rates$rate[-which.multi.morph])
-# Characters with > 2 states evolve ~ 4.9-times faster, on average
+summary(morph.rates$rate[which.multi.morph])  # mean rate = 12.3
+summary(morph.rates$rate[-which.multi.morph]) # mean rate =  2.9
+# Characters with > 2 states evolve ~ 4.3-times faster, on average
 
 # But are these significantly different?
 wilcox.test(eco.rates$rate[which.multi.eco], eco.rates$rate[-which.multi.eco])
-# W = 198, p < 0.0003
+# W = 203, p = 0.0001
 wilcox.test(morph.rates$rate[which.multi.morph], morph.rates$rate[-which.multi.morph])
-# W = 27758, p < 2.2e-16
+# W = 28647, p < 2.2e-16 Yes, characters with more states are significantly
+# faster evolving, in both data sets
 
-# OK, but are they different across data sets? This is the important question.
+# OK, but are they different *across* data sets? This is the important question.
 wilcox.test(morph.rates$rate[which.multi.morph], eco.rates$rate[which.multi.eco])
-# W = 386, p = 0.7696
+# W = 209, p = 0.0846
 wilcox.test(morph.rates$rate[-which.multi.morph], eco.rates$rate[-which.multi.eco])
-# W = 4571, p = 0.4128
+# W = 4072, p = 0.0667
 
 ## Conclusion: Although characters with greater numbers of states do evolve at
 ## faster rates than those with fewer states, the two data sets do not differ in
-## this regard, overall.
+## this regard, overall. (However, the statistical p-values are marginally
+## significant, suggesting a weak but statistically insignficant influence on
+## the rate differences.)
 
 
 # pdf(file = "CharacterStateRates.pdf")
@@ -1080,8 +1096,6 @@ hist(eco.rates$rate[-which.multi.eco], add = TRUE, border = "black",
      col = "transparent", breaks = breaks)
 par(op)
 # dev.off()
-
-
 
 
 
