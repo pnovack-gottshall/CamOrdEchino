@@ -1237,69 +1237,16 @@ save(eco.rates, file = "eco.rates")
 # load("morph.rates")
 # load("eco.rates")
 
-# Visualize rates through time (ignoring the partitions)
+# Visualize rates through time (ignore the partitions and focus on the time
+# trend)
 par(op)
-plot_rates_time2(test_rates_output = morph.rates, model_number = 1)
+plot_rates_time2(test_rates_output = morph.rates[[1]], model_number = 1)
 mtext("morphology", side = 3)
-plot_rates_time2(test_rates_output = eco.rates, model_number = 1)
+plot_rates_time2(test_rates_output = eco.rates[[1]], model_number = 1)
 mtext("ecology", side = 3)
 # Initially high rates (and last low rates) are because of very small bin
 # duration and few number of branches in these "edges".
 
-
-# Visualize clade partitions
-
-# Find lowest AIC models for clade partitions
-morph.aics <- sapply(1:length(morph.rates$clade_test_results), function(x) morph.rates$clade_test_results[[x]]$aic[1])
-# 10 best models
-data.frame(model = order(morph.aics)[1:10], AIC = round(morph.aics[order(morph.aics)[1:10]]))
-(morph.clade.model <- which.min(morph.aics))
-eco.aics <- sapply(1:length(eco.rates$clade_test_results), function(x) eco.rates$clade_test_results[[x]]$aic[1])
-# 10 best models
-data.frame(model = order(eco.aics)[1:10], AIC = round(eco.aics[order(eco.aics)[1:10]]))
-(eco.clade.model <- which.min(eco.aics))
-
-par(op)
-# pdf("clade_rates_morphology.pdf")
-plot_rates_tree(test_rates_output = morph.rates, model_type = "clade", 
-                model_number = morph.clade.model, cex = 0.75)
-legend("topright", inset = c(0.1, 0), legend = "morphology", bty = "n", cex = 1.5)
-# dev.off()
-# Best model has morphological rate slowing significantly among asterozoans,
-# echinoids, holothuroids, and ophiocistoids. 2nd best model throws in unusual
-# edrioasteroid Camptostroma. Most other viable models have higher rates at
-# origins of blastozoans + crinozoans.
-
-# pdf("clade_rates_ecology.pdf")
-plot_rates_tree(test_rates_output = eco.rates, model_type = "clade", 
-                model_number = eco.clade.model, cex = 0.75)
-legend("topright", inset = c(0.1, 0), legend = "ecology", bty = "n", cex = 1.5)
-# dev.off()
-
-# Best model has ecological rate slowing significantly among homostelean
-# cinctans. Other top models focus on higher rates among everything other than
-# ctenocystids + cinctans, higher rate among small group of asteroids, higher
-# rate among edrioasteroids + asteroids (plus ophios, holothuroids, echinoids, +
-# cyclocystoids).
-
-# Visualize edge rates
-# pdf("branch_rates_morphology.pdf")
-edge_rate_values <- log(morph.rates$branch_rates[, 2] + 1)
-phytools::plotBranchbyTrait(tree = tree, x = edge_rate_values, mode = "edge", 
-                            xlims = c(0, max(edge_rate_values)), 
-                            title = "log(Changes per lineage myr + 1)", 
-                            leg = max(nodeHeights(tree)), show.tip.label = FALSE)
-legend("topright", inset = c(0.1, 0), legend = "morphology", bty = "n", cex = 1.5)
-# dev.off()
-
-# pdf("branch_rates_ecology.pdf")
-edge_rate_values <- log(eco.rates$branch_rates[, 2] + 1)
-phytools::plotBranchbyTrait(tree = tree, x = edge_rate_values, mode = "edge", 
-                            xlims = c(0, max(edge_rate_values)), 
-                            title = "log(Changes per lineage myr + 1)", 
-                            leg = max(nodeHeights(tree)), show.tip.label = FALSE)
-legend("topright", inset = c(0.1, 0), legend = "ecology", bty = "n", cex = 1.5)
-# dev.off()
 
 
 # Plot rates on same timescale and axis
