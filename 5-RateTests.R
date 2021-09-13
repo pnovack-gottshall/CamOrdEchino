@@ -38,7 +38,46 @@ if(packageVersion("Claddis") < "0.4.1")
 # analyses below. Thanks, Graeme!
 source("~/Manuscripts/CamOrdEchinos/test_rates2.R")
 
-
+# Corrected Claddis::plot_rates_time() downloaded from GitHub on 9/13/2021 from
+# https://github.com/graemetlloyd/Claddis/blob/master/R/plot_rates_time.R.
+plot_rates_time2 <- function(test_rates_output, model_number, ...) {
+  
+  # Build vector of time bin midpoints for plotting:
+  time_bin_midpoints <- find_time_bin_midpoints(time_bins = test_rates_output$time_bins_used)
+  
+  # Get partitions used from results output:
+  time_bin_partitions <- lapply(X = test_rates_output$time_test_results, function(x) {
+    lapply(X = strsplit(x$partition, " \\| ")[[1]], function(y) {
+      if (length(x = grep("-", y)) > 0) {
+        z <- strsplit(y, split = "-")[[1]]
+        y <- paste0(z[1]:z[2])
+      }
+      as.numeric(y)
+    })
+  })
+  
+  # Get sampled rates for model:
+  time_rates <- cbind(
+    do.call(
+      rbind,
+      lapply(
+        X = time_bin_partitions[model_number][[1]],
+        function(x) rev(x = range(x = test_rates_output$time_bins_used[range(x = x), ]))
+      )
+    ),
+    test_rates_output$time_test_results[[model_number]]$rates,
+    test_rates_output$time_test_results[[model_number]]$rates
+  )
+  
+  # Create base plot of rates in each time bin with any other requested options paseed as ...:
+  geoscale::geoscalePlot(ages = time_bin_midpoints, data = test_rates_output$time_rates[, "rate"], age.lim = c(max(test_rates_output$time_bins_used), min(test_rates_output$time_bins_used)), data.lim = c(0, max(test_rates_output$time_rates[, "rate"]) * 1.1), pch = 20, cex.pt = 2, label = "Character changes per lineage million years", ...)
+  
+  # Add lines representing clustering of requested model to plot:
+  for (i in 1:nrow(time_rates)) lines(x = time_rates[i, 1:2], y = time_rates[i, 3:4])
+  
+  # Add model parameters (lambda values) to plot:
+  for (i in 1:nrow(time_rates)) text(x = mean(as.numeric(time_rates[i, 1:2])), y = as.numeric(time_rates[i, 3]), labels = eval(parse(text = paste0("expression(lambda[", i, "])"))), pos = 3)
+}
 
 ## IMPORT AND PROCESS FILES ####################################################
 
@@ -1126,42 +1165,83 @@ summary(lm.morph) # adj r2 = 0.079 with weak but significant inverse correlation
 # Because we are only interested in the rate and not in modeling rate
 # partitions, we simplify the test. We also remove invariant characters.
 
-# Isolate each block
-morph.data <- prune_cladistic_matrix(cladistic_matrix = data, blocks2prune = 2,
-                                     remove_invariant = TRUE)
-eco.data <- prune_cladistic_matrix(cladistic_matrix = data, blocks2prune = 1,
-                                   remove_invariant = TRUE)
+# Choose time partitions (requires different version than bins above to produce
+# equisized bins). Need the same one for all trees so can average within time
+# slices
+sq <- seq.int(length(data))
+max.root <- max(sapply(sq, function(sq) data[[sq]]$topper$tree$root.time))
+t.seq <- seq(from = max.root, to = min(TimeBins[, "lad"]), length.out = 65)
+tbins <- matrix(data = c(t.seq[1:64], t.seq[2:65]), nrow = 64, 
+                dimnames = list(as.character(1:64), c("fad", "lad")))
+class(tbins) <- "timeBins"
+mean(apply(tbins, 1, diff)) # 2 Myr bins
+time.partitions <- list(c(list(1), list(2:(nrow(tbins) - 1))))
 
-# Choose partitions
-tbins <- seq(from = min(TimeBins), to = max(TimeBins), length.out = 50)
-mean(diff(tbins)) # 3.96 Myr bins
-time.partitions <- list(c(list(1), list(2:(length(tbins) - 1))))
-branch.part <- list(c(list(1)))
-branch.part <- lapply(X = as.list(seq(1, length(tree$edge.length))), as.list)
-clade.part <- as.list(seq(ape::Ntip(tree) + 1, ape::Ntip(tree) + ape::Nnode(tree)))
+# Initialize and run the morphological data set in parallel
+(start <- Sys.time())
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+ntrees <- length(data)
+morph.rates <- foreach(i = 1:ntrees, .inorder = TRUE, 
+                            .packages = "Claddis") %dopar% {
+                              
+  # Isolate relevant block and remove invariant characters
+  class(data[[i]]) <- "cladisticMatrix"
+  morph.data <- prune_cladistic_matrix(cladistic_matrix = data[[i]], 
+                                       blocks2prune = 2,
+                                       remove_invariant = TRUE)
 
-morph.rates <- test_rates2(cladistic_matrix = morph.data, time_tree = tree, 
-                           time_bins = tbins, branch_partitions = branch.part,
-                           time_partitions = time.partitions,
-                           clade_partitions = clade.part)
-eco.rates <- test_rates2(cladistic_matrix = eco.data, time_tree = tree,
-                         time_bins = tbins, branch_partitions = branch.part,
-                         time_partitions = time.partitions,
-                         clade_partitions = clade.part)
-beep()
+  # Calculate rate partitions
+  tree <- data[[i]]$topper$tree
+  partition.rates <- 
+    test_rates2(cladistic_matrix = morph.data, time_tree = tree, 
+                time_bins = tbins, time_partitions = time.partitions)
+  }
+stopCluster(cl)
+(Sys.time() - start)     # 3.9 minutes on 8-core laptop
 
 # Save output
-# save(morph.rates, file = "morph.rates")
-# save(eco.rates, file = "eco.rates")
+save(morph.rates, file = "morph.rates")
+beep(3)
+
+# Initialize and run the ecological data set in parallel
+(start <- Sys.time())
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+ntrees <- length(data)
+eco.rates <- foreach(i = 1:ntrees, .inorder = TRUE, 
+                            .packages = "Claddis") %dopar% {
+                              
+  # Isolate relevant block and remove invariant characters
+  class(data[[i]]) <- "cladisticMatrix"
+  eco.data <- prune_cladistic_matrix(cladistic_matrix = data[[i]], 
+                                     blocks2prune = 1,
+                                     remove_invariant = TRUE)
+  
+  # Calculate rate partitions
+  tree <- data[[i]]$topper$tree
+  partition.rates <- 
+    test_rates2(cladistic_matrix = eco.data, time_tree = tree, 
+                time_bins = tbins, time_partitions = time.partitions)
+}
+stopCluster(cl)
+(Sys.time() - start)     # 3 minutes on 8-core laptop
+
+# Save output
+save(eco.rates, file = "eco.rates")
+
+
+# Load output (if needed)
 # load("morph.rates")
 # load("eco.rates")
 
-
 # Visualize rates through time (ignoring the partitions)
 par(op)
-plot_rates_time(test_rates_output = morph.rates, model_number = 1)
+plot_rates_time2(test_rates_output = morph.rates, model_number = 1)
 mtext("morphology", side = 3)
-plot_rates_time(test_rates_output = eco.rates, model_number = 1)
+plot_rates_time2(test_rates_output = eco.rates, model_number = 1)
 mtext("ecology", side = 3)
 # Initially high rates (and last low rates) are because of very small bin
 # duration and few number of branches in these "edges".
