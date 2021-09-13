@@ -2,7 +2,7 @@
 
 # Prior to running, run 2-InferAncestralStates.R to infer ancestral states using
 # 'Claddis' and run 3-DisparityDistances.R to calculate disparity distance
-# matrices. The code below is modified from that use in GSA 2019 analyses (ref
+# matrices. The code below is modified from that used in GSA 2019 analyses (ref
 # below), and uses a modification of calc_metrics() in 'ecospace' package.
 
 # Novack-Gottshall, P. M., A. Sultan, J. N. Purcell, I. Ranjha, and B. Deline.
@@ -11,13 +11,13 @@
 # Meeting, GSA Abstracts with Programs 51.
 
 # Note that substantial coding changes accompanied the update to Claddis v.
-# 0.6.0 in August 2020. The code here uses the functions as of 7/2/2020, v.
-# 0.4.1. Future users will need to either download the archived version of the
-# package from GitHub or alter the code accordingly to use the current argument
-# and function names.
+# 0.6.0 in August 2020. The code here uses the functions as of 7/29/2021, v.
+# 0.6.3. Users accustomed with earlier versions will need to either download the
+# archived version of the package from GitHub or alter the code accordingly to
+# use appropriate argument and function names.
 
 
-## 1- PREPARATIONS #############################################################
+## 1 - PREPARATIONS ############################################################
 rm(list = ls())
 op <- par()
 
@@ -29,19 +29,19 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 # Load packages
 library(beepr)      # v. 1.3
 library(paleotree)  # v. 3.3.25
-library(ape)        # v. 5.4
+library(ape)        # v. 5.5
 library(geoscale)   # v. 2.0
-library(ade4)       # v. 1.7-15
+library(ade4)       # v. 1.7-17
 library(geometry)   # v. 0.4.5
 library(FD)         # v. 1.0-12
-library(doParallel) # v. 1.0.15
-library(phytools)   # v. 0.7-54
-library(vegan)      # v. 2.5-6
-library(plotrix)    # v. 3.7-8
-library(viridisLite)# v. 0.3.0
-library(Claddis)    # v. 0.4.1 - Check SI for Lloyd 2018 for walk-through on code functions (in R experiments folder)
+library(doParallel) # v. 1.0.16
+library(phytools)   # v. 0.7-83
+library(vegan)      # v. 2.5-7
+library(plotrix)    # v. 3.8-1
+library(viridisLite)# v. 0.4.0
+library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
 if(packageVersion("Claddis") < "0.4.1")
-  stop("wrong version of 'Claddis' Get updated version from GitHub.\n")
+  stop("wrong version of 'Claddis' Get updated version from GitHub or CRAN.\n")
 
 # Modification of geoscale::geoscalePlot to allow ICS 2020 timescale 
 source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
@@ -61,8 +61,8 @@ source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 ## 2- IMPORT FILES #############################################################
 
 # Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchinos/equal.tree")
-tree <- equal.tree
+load("~/Manuscripts/CamOrdEchinos/cal3trees")
+trees <- cal3trees
 
 # Import ancestral states from 2-InferancestralStates.R
 load("mode.anc")
@@ -79,13 +79,15 @@ load("morph.distances.GED.5")
 
 
 ## 3 - GET EPOCH TIME BINS #####################################################
-strat_names <-
-  read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
-# strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
+# strat_names <- read.csv("https://www.paleobiodb.org/data1.2/intervals/list.csv?all_records&vocab=pbdb")
+strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
 # Eons are level 1, eras = level 2, periods = 3, epochs = 4, ages = 5
 ages <- strat_names[which(strat_names$scale_level == 5), ]
 # Limit to Cambrian and Ordovician
 ages <- ages[which(ages$max_ma > 444), ]
+# Add Ediacaran for any pre-Cambrian nodes
+ages <-
+  rbind(ages, strat_names[which(strat_names$interval_name == "Ediacaran"),])
 int.times <- ages[ ,9:10]  # Time bins used for disparity analyses below.
 mids <- apply(ages[ ,9:10], 1, mean)
 summary(int.times$max_ma - int.times$min_ma)
