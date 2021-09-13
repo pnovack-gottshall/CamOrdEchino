@@ -19,12 +19,13 @@ op <- par()
 setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
-library(beepr)      # v. 1.3
-library(plotrix)    # v. 3.8-1
-library(ape)        # v. 5.5
-library(geiger)     # v. 2.0.7
-library(doParallel) # v. 1.0.16
-library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
+library(beepr)       # v. 1.3
+library(plotrix)     # v. 3.8-1
+library(ape)         # v. 5.5
+library(geiger)      # v. 2.0.7
+library(viridisLite) # v. 0.4.0
+library(doParallel)  # v. 1.0.16
+library(Claddis)     # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
 if(packageVersion("Claddis") < "0.4.1")
   stop("wrong version of 'Claddis' Get updated version from GitHub or CRAN.\n")
 
@@ -78,6 +79,12 @@ plot_rates_time2 <- function(test_rates_output, model_number, ...) {
   # Add model parameters (lambda values) to plot:
   for (i in 1:nrow(time_rates)) text(x = mean(as.numeric(time_rates[i, 1:2])), y = as.numeric(time_rates[i, 3]), labels = eval(parse(text = paste0("expression(lambda[", i, "])"))), pos = 3)
 }
+
+# Modification of geoscale::geoscalePlot to allow ICS 2020 timescale and
+# multipanel plots
+source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
+
+
 
 ## IMPORT AND PROCESS FILES ####################################################
 
@@ -1233,7 +1240,7 @@ stopCluster(cl)
 save(eco.rates, file = "eco.rates")
 
 
-# Load output (if needed)
+# Load output (if needed):
 # load("morph.rates")
 # load("eco.rates")
 
@@ -1244,116 +1251,133 @@ plot_rates_time2(test_rates_output = morph.rates[[1]], model_number = 1)
 mtext("morphology", side = 3)
 plot_rates_time2(test_rates_output = eco.rates[[1]], model_number = 1)
 mtext("ecology", side = 3)
-# Initially high rates (and last low rates) are because of very small bin
-# duration and few number of branches in these "edges".
 
 
-
-# Plot rates on same timescale and axis
-
-# Modification of geoscale::geoscalePlot to allow ICS 2020 timescale and
-# multipanel plots
-source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
+## Plot rates on same timescale and axis
 
 # Import ICS 2020 timescale to use in plotting
 ICS2020 <- read.csv("~/Manuscripts/CamOrdEchinos/timescales2020.csv", 
                     stringsAsFactors =  TRUE)
 
-time_bin_mids <- 
-  (morph.rates$time_bins_used[2:length(x = morph.rates$time_bins_used)] 
-   + morph.rates$time_bins_used[1:(length(x = morph.rates$time_bins_used) - 1)]) / 2
-lim <- c(0, max(c(morph.rates$time_rates[, 2], eco.rates$time_rates[, 2])))
+# Unlist the rates and calculate trends in mean and SD
+time_bin_mids <- as.vector(apply(tbins, 1, mean))
+eco.rates.mean <- 
+  apply(simplify2array(lapply(sq, function(sq) eco.rates[[sq]]$time_rates[, "rate"])), 1, mean)
+eco.rates.sd <- 
+  apply(simplify2array(lapply(sq, function(sq) eco.rates[[sq]]$time_rates[, "rate"])), 1, sd)
+eco.top <- eco.rates.mean + eco.rates.sd
+eco.bottom <- eco.rates.mean - eco.rates.sd
+morph.rates.mean <- 
+  apply(simplify2array(lapply(sq, function(sq) morph.rates[[sq]]$time_rates[, "rate"])), 1, mean)
+morph.rates.sd <- 
+  apply(simplify2array(lapply(sq, function(sq) morph.rates[[sq]]$time_rates[, "rate"])), 1, sd)
+morph.top <- morph.rates.mean + morph.rates.sd
+morph.bottom <- morph.rates.mean - morph.rates.sd
+lim <- c(0, max(c(morph.top, eco.top)))
 
+# Same, but per-character
+eco.rates.mean.pc <- 
+  apply(simplify2array(lapply(sq, function(sq) eco.rates[[sq]]$time_rates[, "rate"])) / 40, 1, mean)
+eco.rates.sd.pc <- 
+  apply(simplify2array(lapply(sq, function(sq) eco.rates[[sq]]$time_rates[, "rate"])) / 40, 1, sd)
+eco.top.pc <- eco.rates.mean.pc + eco.rates.sd.pc
+eco.bottom.pc <- eco.rates.mean.pc - eco.rates.sd.pc
+morph.rates.mean.pc <- 
+  apply(simplify2array(lapply(sq, function(sq) morph.rates[[sq]]$time_rates[, "rate"])) / 413, 1, mean)
+morph.rates.sd.pc <- 
+  apply(simplify2array(lapply(sq, function(sq) morph.rates[[sq]]$time_rates[, "rate"])) / 413, 1, sd)
+morph.top.pc <- morph.rates.mean.pc + morph.rates.sd.pc
+morph.bottom.pc <- morph.rates.mean.pc - morph.rates.sd.pc
+lim.pc <- c(0, max(c(morph.top.pc, eco.top.pc)))
+
+cols <- viridisLite::plasma(3)         # Uses RGB-sensitive red and blue
+trans.cols <- viridisLite::plasma(3, alpha = 0.5) # Only for pdf versions
+# trans.cols <- c(rgb(20, 12, 203, max = 255), rgb(255, 105, 180, max = 255)) # For in R
+
+# Plot mean trends
 geoscalePlot2(tbins, rep(lim[1], length(tbins)), units = c("Epoch", "Period"), 
               tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
               cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
               ts.col = TRUE, label = "Character changes per lineage million years", 
               timescale = ICS2020, type = "n", abbrev = "Period")
 mtext(text = "Character rate", side = 3, cex = 1.25)
-cols <- viridisLite::plasma(3)         # Uses RGB-sensitive red and blue
-lines(time_bin_mids, eco.rates$time_rates[, 2], lwd = 4, lty = 1, col = cols[1])
-lines(time_bin_mids, morph.rates$time_rates[, 2], lwd = 4, lty = 6, col = cols[2])
+lines(time_bin_mids, eco.rates.mean, lwd = 4, lty = 1, col = cols[1])
+lines(time_bin_mids, morph.rates.mean, lwd = 4, lty = 6, col = cols[2])
 legend("topright", legend = c("ecology", "morphology"), col = cols, 
        bty = "n", lty = c(1, 6), lwd = 4, inset = 0.02, cex = 1.5)
 
-
-# Same, but as per-character rates (dividing by number of characters in each block)
+# Plot mean trends with SD error bars
 # pdf(file = "rate_through_time.pdf")
-lim <- c(0, max(c(morph.rates$time_rates[, 2] / 413, eco.rates$time_rates[, 2] / 40)))
 geoscalePlot2(tbins, rep(lim[1], length(tbins)), units = c("Epoch", "Period"), 
               tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
               cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+              ts.col = TRUE, label = "Character changes per lineage million years", 
+              timescale = ICS2020, type = "n", abbrev = "Period")
+mtext(text = "Character rate", side = 3, cex = 1.25)
+column <- cbind(c(time_bin_mids, rev(time_bin_mids)), 
+                c(eco.bottom, rev(eco.top)), c(morph.bottom, rev(morph.top)))
+polygon(column[ ,1], column[ ,3], col = trans.cols[2], lwd = 2, border = NA)
+lines(time_bin_mids, morph.rates.mean, lwd = 4, lty = 6, col = cols[2])
+polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+lines(time_bin_mids, eco.rates.mean, lwd = 4, lty = 1, col = cols[1])
+legend("topright", legend = c("ecology", "morphology"), col = cols, 
+       bty = "n", lty = c(1, 6), lwd = 4, inset = 0.02, cex = 1.5)
+# dev.off()
+
+
+# Same, but as per-character rates (dividing by number of characters in each block)
+# pdf(file = "rate_through_time_per_character.pdf")
+geoscalePlot2(tbins, rep(lim.pc[1], length(tbins)), units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim.pc, 
               ts.col = TRUE, label = "Per-character changes per lineage million years", 
               timescale = ICS2020, type = "n", abbrev = "Period")
 mtext(text = "Per-character rate", side = 3, cex = 1.25)
-lines(time_bin_mids, eco.rates$time_rates[, 2] / 40, lwd = 4, lty = 1, col = cols[1])
-lines(time_bin_mids, morph.rates$time_rates[, 2] / 413, lwd = 4, lty = 6, col = cols[2])
+column <- cbind(c(time_bin_mids, rev(time_bin_mids)), 
+                c(eco.bottom.pc, rev(eco.top.pc)), 
+                c(morph.bottom.pc, rev(morph.top.pc)))
+polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+lines(time_bin_mids, eco.rates.mean.pc, lwd = 4, lty = 1, col = cols[1])
+polygon(column[ ,1], column[ ,3], col = trans.cols[2], lwd = 2, border = NA)
+lines(time_bin_mids, morph.rates.mean.pc, lwd = 4, lty = 6, col = cols[2])
 legend("topright", legend = c("ecology", "morphology"), col = cols, 
        bty = "n", lty = c(1, 6), lwd = 4, inset = 0.02, cex = 1.5)
 # dev.off()
 
 
 # Summarize rates:
-summary(eco.rates$time_rates[, 2] / 40)
-summary(morph.rates$time_rates[, 2] / 413)
+summary(eco.rates.mean / 40)
+summary(morph.rates.mean / 413)
 
-hist(eco.rates$time_rates[, 2] / 40, 20)
-hist(morph.rates$time_rates[, 2] / 413, 20)
+hist(eco.rates.mean / 40, 20)
+hist(morph.rates.mean / 413, 20)
 
 # Both on same histogram
 breaks <-
-  pretty(c(eco.rates$time_rates[, 2] / 40, morph.rates$time_rates[, 2] / 413), 40)
-hist(eco.rates$time_rates[, 2] / 40, main = "Per-character rates", 
+  pretty(c(eco.rates.mean / 40, morph.rates.mean / 413), 40)
+hist(eco.rates.mean / 40, main = "Per-character rates", 
      xlab = "Rate (per-character changes / lineage Myr)", ylab = "Density", 
      breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
-hist(eco.rates$time_rates[, 2] / 40, add = TRUE, border = "white", col = "darkgray", 
+hist(eco.rates.mean / 40, add = TRUE, border = "white", col = "darkgray", 
      breaks = breaks, prob = TRUE)
-hist(morph.rates$time_rates[, 2] / 413, add = TRUE, border = "black", col = "transparent", 
+hist(morph.rates.mean / 413, add = TRUE, border = "black", col = "transparent", 
      breaks = breaks, prob = TRUE)
 legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 1, pt.cex = 2)
 
-# Same, without first two intervals
-breaks <-
-  pretty(c(eco.rates$time_rates[, 2][-(1:2)] / 40, morph.rates$time_rates[, 2][-(1:2)] / 413), 40)
-hist(eco.rates$time_rates[, 2][-(1:2)] / 40, main = "Per-character rates", 
-     xlab = "Rate (per-character changes / lineage Myr)", ylab = "Density", 
-     breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
-hist(eco.rates$time_rates[, 2][-(1:2)] / 40, add = TRUE, border = "white", col = "darkgray", 
-     breaks = breaks, prob = TRUE)
-hist(morph.rates$time_rates[, 2][-(1:2)] / 413, add = TRUE, border = "black", col = "transparent", 
-     breaks = breaks, prob = TRUE)
-legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
-       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
-       cex = 1, pt.cex = 2)
+# How much greater? (1.73 X)
+mean(morph.rates.mean / 413) / mean(eco.rates.mean / 40)
 
-# How much greater? (2.14 X)
-mean(morph.rates$time_rates[, 2] / 413) / mean(eco.rates$time_rates[, 2] / 40)
+# Statistical tests (recalling not valid; c.f. Graeme Lloyd's admonitions
+# above):
+wilcox.test(eco.rates.mean / 40, morph.rates.mean / 413)
+# W = 964, p = 2.4e-07: morphology greater
 
-# How much greater (excluding 1st or first two interval)?
-# (2.41 X)
-mean(morph.rates$time_rates[, 2][-1] / 413) / mean(eco.rates$time_rates[, 2][-1] / 40)
-# (2.22 X)
-mean(morph.rates$time_rates[, 2][-(1:2)] / 413) / mean(eco.rates$time_rates[, 2][-(1:2)] / 40)
+# Analyzing using first differences
+plot(diff(eco.rates.mean / 40), diff(morph.rates.mean / 413))
+cor(diff(eco.rates.mean / 40),
+    diff(morph.rates.mean / 413)) # r = + 0.761
+lm.diff <- lm(diff(eco.rates.mean / 40) ~ diff(morph.rates.mean / 413))
+summary(lm.diff) # p = 4.76e-13, strongly correlated
 
-
-# Statistical tests:
-wilcox.test(eco.rates$time_rates[, 2] / 40, morph.rates$time_rates[, 2] / 413)
-# W = 138, p < 2.2e-16: morphology greater
-
-
-plot(diff(eco.rates$time_rates[, 2] / 40),
-     diff(morph.rates$time_rates[, 2] / 413))
-cor(diff(eco.rates$time_rates[, 2] / 40),
-    diff(morph.rates$time_rates[, 2] / 413)) # r = + 0.423
-lm.diff <- lm(diff(eco.rates$time_rates[, 2] / 40) ~ diff(morph.rates$time_rates[, 2] / 413))
-summary(lm.diff) # p = 0.0028, strongly correlated
-
-# Remove first two time intervals because outliers
-plot(diff(eco.rates$time_rates[, 2] / 40)[-c(1:2)],
-     diff(morph.rates$time_rates[, 2] / 413)[-c(1:2)])
-cor(diff(eco.rates$time_rates[, 2] / 40)[-c(1:2)],
-    diff(morph.rates$time_rates[, 2] / 413)[-c(1:2)]) # r = + 0.204
-lm.diff <- lm(diff(eco.rates$time_rates[, 2] / 40)[-c(1:2)] ~ diff(morph.rates$time_rates[, 2] / 413)[-c(1:2)])
-summary(lm.diff) # p = 0.173, so only correlated because of the initially high rates
