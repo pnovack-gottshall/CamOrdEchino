@@ -52,7 +52,8 @@ eco.anc <- mode.anc
 # eco.anc <- raw.anc
 
 # Combine into list of single data matrices with two blocks in each (first for
-# morphology and second for ecology)
+# morphology and second for ecology). This data object is used throughout the
+# code below.
 data <- vector("list", length(morph.anc))
 for(i in 1:length(morph.anc)){
   data[[i]]$topper <- morph.anc[[i]]$topper
