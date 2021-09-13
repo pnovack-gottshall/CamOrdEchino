@@ -260,20 +260,6 @@ plot_rates_character(test_rates_output = AIC.rates[[50]], model_number = 2)
 # account for variation in the tree structure, using 2000 total replicates (with
 # 40 replicates for each of 50 trees, drawing 30 characters per replicate).
 
-# Import ancestral states from 2-InferAncestralStates.R
-load("morph.anc")
-load("mode.anc")
-eco.anc <- mode.anc
-
-# Combine into list of single data matrices with two blocks in each (first for
-# morphology and second for ecology)
-data <- vector("list", length(morph.anc))
-for(i in 1:length(morph.anc)){
-  data[[i]]$topper <- morph.anc[[i]]$topper
-  data[[i]]$matrix_1 <- morph.anc[[i]]$matrix_1
-  data[[i]]$matrix_2 <- eco.anc[[i]]$matrix_1
-}
-
 # Subsample to 30 characters
 n.char <- 30
 # Specify the subsampled partitions
