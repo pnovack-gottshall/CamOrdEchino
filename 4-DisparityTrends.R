@@ -60,9 +60,8 @@ source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 
 ## 2- IMPORT FILES #############################################################
 
-# Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchinos/cal3trees")
-trees <- cal3trees
+# Note because the cal3trees were modified after creation (to remove zero-length
+# branches), using the tree objects appended to the Claddis objects below.
 
 # Import ancestral states from 2-InferancestralStates.R
 load("mode.anc")
@@ -110,73 +109,70 @@ head(ICS2020)
 
 
 
-## GET FADs AND LADs FOR TIPS AND NODES ########################################
-## Note this code is modified from David Bapst's paleotree::phyloDiv(). Thanks,
-## Dave!
+## GET STRAT RANGES (FADs AND LADs) FOR TIPS AND NODES #########################
 
-# Use time-scaled tree branch lengths to get relative node ages
-ntime <- ape::node.depth.edgelength(tree)
+# Based on code written by Dave Bapst. Root node set as root age, with FAD =
+# LAD.
 
-# Use root time to scale nodes to absolute time
-ntime <- tree$root.time - ntime
-int.start <- int.times[, 1]
-int.end <- int.times[, 2]
+# All the 'X.anc' objects contain the same time-scaled trees as appended
+# objects. Using the ecological objects because they have smaller object sizes
+# (which enhances memory allocation).
 
-# Get strat ranges for tips and nodes (using branch-length ends 'ntime' for LADs
-# and using ancestral LAD for FAD)
-ranges <- matrix(nrow = (Ntip(tree) + Nnode(tree)), ncol = 2)
-colnames(ranges) <- c("FAD", "LAD")
-rownames(ranges) <- c(rownames(tree$ranges.used), Ntip(tree) + (1:Nnode(tree)))
-ranges[(1:Ntip(tree)), 2] <- tree$ranges.used[, 2]
-for (r in 1:nrow(ranges)) {
-  wh.tip <- which(tree$edge[, 2] == r)   # Find node for this tip
-  if (length(wh.tip) == 0L) {
-    # Only should occur for root node
-    ranges[r, ] <- rep(tree$root.time, 2) # Set root FAD = LAD
-    next
-  }
-  rels <- tree$edge[wh.tip, ]
-  ranges[r, 1] <- ntime[rels[1]]  # FAD based on node's LAD
-  # Now use FAD as the LAD for it's direct ancestor node
-  ranges[rels[1], 2] <- ranges[r, 1]
+ranges <- vector("list", length(mode.anc))
+for(t in 1:length(mode.anc)) {
+  tree <- mode.anc[[t]]$topper$tree
+  tree.ranges <- tree$edge
+  # Use time-scaled tree branch lengths to get relative node ages, and use root
+  # time to scale to absolute time
+  ntime <- tree$root.time - ape::node.depth.edgelength(tree)
+  tree.ranges[, 1] <- ntime[tree.ranges[, 1]]
+  tree.ranges[, 2] <- ntime[tree.ranges[, 2]]
+  # Now assign names for each lineage as row names
+  terminalEdges <- which(tree$edge[, 2] <= Ntip(tree))
+  colnames(tree.ranges) <- c("FAD", "LAD")
+  rownames(tree.ranges) <- as.character(tree$edge[, 2])
+  rownames(tree.ranges)[terminalEdges] <- tree$tip.label[tree$edge[terminalEdges, 2]]
+  # Add root node with FAD = LAD = root.time
+  tree.ranges <- rbind(tree.ranges, rep(tree$root.time, 2))
+  rownames(tree.ranges)[Nnode(tree) + Ntip(tree)] <- as.character(Ntip(tree) + 1)
+  # Reorder so matches order of the cladistic matrix
+  tree.ranges <-
+    tree.ranges[match(rownames(mode.anc[[t]]$matrix_1$matrix), rownames(tree.ranges)),]
+  ranges[[t]] <- tree.ranges
 }
 
-head(ranges)
-tail(ranges)
+# Observe mean ranges for tips and nodes
+sq <- 1:length(ranges)
+mean.FADs <-
+  apply(simplify2array(lapply(sq, function(sq) ranges[[sq]][, "FAD"])), 1, mean)
+mean.LADs <-
+  apply(simplify2array(lapply(sq, function(sq) ranges[[sq]][, "LAD"])), 1, mean)
+mean.ranges <- cbind(FAD = mean.FADs, LAD = mean.LADs)
+
+head(mean.ranges)
+tail(mean.ranges)
 
 # Export time-scaled ranges, converting to .csv
-# write.csv(ranges, file = "TSRanges.csv", row.names = TRUE)
-
-# Alternate (more efficient) version, thanks to Dave Bapst, but that does assign
-# root FAD/LAD
-# ranges <- tree$edge
-# ntime <- tree$root.time - ape::node.depth.edgelength(tree)
-# ranges[, 1] <- ntime[ranges[, 1]]
-# ranges[, 2] <- ntime[ranges[, 2]]
-# Now assign names for each lineage as row names
-# terminalEdges <- which(tree$edge[, 2] <= Ntip(tree))
-# row.names(ranges) <- as.character(tree$edge[, 2])
-# row.names(ranges)[terminalEdges] <- tree$tip.label[tree$edge[terminalEdges, 2]]
-
+# write.csv(mean.ranges, file = "TSRanges.csv", row.names = TRUE)
 
 # Which are the 30 oldest taxa?
-ranges[tail(order(ranges[, 1]), 30), ]
-# 16 ancestral nodes, but affinity-uncertain helicocystoid Helicocystis is
-# oldest tip, followed by eocrinoids Felbabkacystis, Cigara, Rhopalocystis, and
-# Cardiocystites (with remarkably long Cambrian ghost lineage!), and
-# helicoplacoid Polyplacus.
+mean.ranges[tail(order(mean.ranges[, "FAD"]), 30), ]
+# On average, the 10 oldest are all ancestral nodes. Helicoplacoids Polyplacus,
+# Helicoplacus, and Waucobella are the oldest tips, followed by eocrinoids
+# Felbabkacystis and Rhopalocystis, Helicocystis of uncertain affinity, stem
+# solute Coleicarpus, and edrioasteroid Camptostroma.
 
 # Stratigraphic range lengths
-diffs <- ranges[, 1] - ranges[, 2]
+diffs <- mean.ranges[, "FAD"] - mean.ranges[, "LAD"]
 hist(diffs, 50)
-summary(diffs)     # median = 10 Myr, min = ~0 Kyr, max = 121 Myr
-which(diffs == 0)  # Basal echinoderm
-which(diffs < .5)  # 49 stem lineages
-which.max(diffs)   # Rotasaccus, a Devonian-Mississippian ophiocistoid with lengthy stem to Late Ordovician
+summary(diffs)     # median = 8 Myr, min = ~0 Kyr, max = 130 Myr
+which(diffs == 0)  # Basal echinoderm (node 367)
+which(diffs < .5)  # 13 stem lineages
+which.max(diffs)   # Parisocrinus, a Late Ord-Mississippian crinoid
 
-# Explore ancestral reconstructions
-LHs <- apply(mode.anc$Matrix_1$Matrix, 1, paste, collapse="")
-mode.anc$Matrix_1$Matrix[which(LHs == LHs[367]), ]
+# Explore ancestral reconstructions (using tree #50)
+LHs <- apply(mode.anc[[50]]$matrix_1$matrix, 1, paste, collapse="")
+mode.anc[[50]]$matrix_1$matrix[which(LHs == LHs[367]), ]
 # Stem echinoderm reconstructed as relatively small (0.1 - 1 cubic cm),
 # epifaunal, unattached, intermittently mobile, microbivorous filter feeder with
 # low filtration density feeding elements, atop a soft substrate. (Same life
@@ -188,10 +184,11 @@ mode.anc$Matrix_1$Matrix[which(LHs == LHs[367]), ]
 
 # For the morphological dataset, there is no match. It is reconstructed as
 # following:
-morph.anc$Matrix_1$Matrix[367, ]
-which(morph.distances.GED.5$DistanceMatrix[367, ] < 1)
-# The closest morphological tip is the cinctan Asturicystis (although with so
-# many missing states, probably not a good comparitor.
+morph.anc[[50]]$matrix_1$matrix[367, ]
+which(morph.distances.GED.5[[50]]$distance_matrix[367, ] < 1.1)
+# The closest morphological tip is the cinctan Asturicystis followed by cinctant
+# Protocinctus (although with so many missing states, probably not a good
+# comparitor.
 
 
 
@@ -247,6 +244,8 @@ lines(divs$midpt, divs$div, lwd=3)
 # added for root). Use tips for LADs and nodes for FADs
 LAD <- ntime[1:Ntip(tree)]
 FAD <- ntime[(Ntip(tree) + 1):length(ntime)]
+int.start <- int.times[, 1]
+int.end <- int.times[, 2]
 div <- sapply(1:length(int.start), function(x)
   1 + sum(FAD >= int.end[x]) - sum(LAD > int.start[x]))
 
@@ -282,7 +281,7 @@ lines(mids.cont, div.cont[ ,3], lwd=3)
 taxon.bins <- matrix(FALSE, nrow = (ape::Ntip(tree) + ape::Nnode(tree)), 
                      ncol = nrow(ages))
 colnames(taxon.bins) <- ages$interval_name
-rownames(taxon.bins) <- rownames(morph.anc$Matrix_1$Matrix)
+rownames(taxon.bins) <- rownames(morph.anc$matrix_1$matrix)
 for (t in 1:ncol(taxon.bins)) {
   wh.row <- which(ranges[, 1] >= ages$min_ma[t] &
                     ranges[, 2] <= ages$max_ma[t])
@@ -454,20 +453,20 @@ dist.matrix <- mode.distances.GED.5
 # dist.matrix <- morph.distances.GED.5
 
 # View sample
-dist.matrix$DistanceMatrix[1:10, 1:4]
+dist.matrix$distance_matrix[1:10, 1:4]
 
 # Observe data structure of the data matrix:
-hist(c(dist.matrix$DistanceMatrix))
-summary(c(dist.matrix$DistanceMatrix))
+hist(c(dist.matrix$distance_matrix))
+summary(c(dist.matrix$distance_matrix))
 
 # Any missing distances? (Should only occur in pre-trimmed raw treatment)
-anyNA(dist.matrix$DistanceMatrix)
+anyNA(dist.matrix$distance_matrix)
 
 # Any non-diagonal zeros (potentially problematic for some ordination analyses)
-length(dist.matrix$DistanceMatrix == 0) - nrow(dist.matrix$DistanceMatrix)
+length(dist.matrix$distance_matrix == 0) - nrow(dist.matrix$distance_matrix)
 
 # Is it Euclidean?
-ade4::is.euclid(as.dist(dist.matrix$DistanceMatrix))
+ade4::is.euclid(as.dist(dist.matrix$distance_matrix))
 
 
 
@@ -492,14 +491,14 @@ ade4::is.euclid(as.dist(dist.matrix$DistanceMatrix))
 # correction is not possible, so "none" is used for this single treatment.
 
 # Want to remove missing taxa? (Only used for 'raw' data treatment)
-# trim.matrix <- TrimMorphDistMatrix(dist.matrix$DistanceMatrix, Tree = tree)
-# dist.matrix$DistanceMatrix <- trim.matrix$DistMatrix
+# trim.matrix <- TrimMorphDistMatrix(dist.matrix$distance_matrix, Tree = tree)
+# dist.matrix$distance_matrix <- trim.matrix$DistMatrix
 # dist.matrix$Tree <- trim.matrix$Tree
 # dist.matrix$RemovedTaxa <- trim.matrix$RemovedTaxa
 
-pcoa_results <- ape::pcoa(dist.matrix$DistanceMatrix,
+pcoa_results <- ape::pcoa(dist.matrix$distance_matrix,
                           correction = "cailliez", 
-                          rn = rownames(dist.matrix$DistanceMatrix))
+                          rn = rownames(dist.matrix$distance_matrix))
 # Append Tree, required for Claddis function
 if(is.null(pcoa_results$Tree)) pcoa_results$Tree <- tree
 # Use following ONLY for trimmed 'raw' treatment:
@@ -596,18 +595,18 @@ mock.loadings <- function(orig.vars = NULL, ord.coord = NULL, vars = 6,
   return(out)
 }
 
-loadings.morph <- mock.loadings(orig.vars = morph.anc$Matrix_1$Matrix,
+loadings.morph <- mock.loadings(orig.vars = morph.anc$matrix_1$matrix,
                                 ord.coord = morph.pcoa$vectors.cor, vars = 6,
                                 cutoff = 0.8)
 na.omit(loadings.morph)
 
-loadings.mode <- mock.loadings(orig.vars = mode.anc$Matrix_1$Matrix, 
+loadings.mode <- mock.loadings(orig.vars = mode.anc$matrix_1$matrix, 
                                ord.coord = mode.pcoa$vectors.cor, vars = 6, 
                                cutoff = 0.4)
 na.omit(loadings.mode)
 
 # Note using uncorrected eigenvectors for 'constant' treatment:
-loadings.constant <- mock.loadings(orig.vars = constant.anc$Matrix_1$Matrix,
+loadings.constant <- mock.loadings(orig.vars = constant.anc$matrix_1$matrix,
                                    ord.coord = constant.pcoa$vectors, vars = 6,
                                    cutoff = 0.4)
 na.omit(loadings.constant)
@@ -617,8 +616,8 @@ na.omit(loadings.constant)
 # renumbered when making distance matrix)
 nt <- Ntip(raw.pcoa$Tree)
 wh.to.keep <- na.omit(match(rownames(raw.pcoa$vectors.cor[1:nt, ]),
-                            rownames(raw.anc$Matrix_1$Matrix)[1:nt]))
-loadings.raw <- mock.loadings(orig.vars = raw.anc$Matrix_1$Matrix[wh.to.keep, ],
+                            rownames(raw.anc$matrix_1$matrix)[1:nt]))
+loadings.raw <- mock.loadings(orig.vars = raw.anc$matrix_1$matrix[wh.to.keep, ],
                               ord.coord = raw.pcoa$vectors.cor[1:length(wh.to.keep), ], vars = 6, 
                               cutoff = 0.3)
 na.omit(loadings.raw)
@@ -791,10 +790,10 @@ load("raw.pcoa")
 load("morph.pcoa")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc$Matrix_1$Matrix; dist.matrix <- mode.distances.GED.5$DistanceMatrix; pcoa_results <- mode.pcoa
-# anc <- constant.anc$Matrix_1$Matrix; dist.matrix <- constant.distances.GED.5$DistanceMatrix; pcoa_results <- constant.pcoa
-# anc <- raw.anc$Matrix_1$Matrix; dist.matrix <- raw.distances.GED.5$DistanceMatrix; pcoa_results <- raw.pcoa
-# anc <- morph.anc$Matrix_1$Matrix; dist.matrix <- morph.distances.GED.5$DistanceMatrix; pcoa_results <- morph.pcoa
+anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa_results <- mode.pcoa
+# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa_results <- constant.pcoa
+# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa_results <- raw.pcoa
+# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa_results <- morph.pcoa
 
 # Load taxon.bins (built above)
 load("taxon.bins")
@@ -1045,10 +1044,10 @@ load("raw.distances.GED.5")
 load("morph.distances.GED.5")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc$Matrix_1$Matrix; dist.matrix <- mode.distances.GED.5$DistanceMatrix; pcoa_results <- mode.pcoa
-# anc <- constant.anc$Matrix_1$Matrix; dist.matrix <- constant.distances.GED.5$DistanceMatrix; pcoa_results <- constant.pcoa
-# anc <- raw.anc$Matrix_1$Matrix; dist.matrix <- raw.distances.GED.5$DistanceMatrix; pcoa_results <- raw.pcoa
-# anc <- morph.anc$Matrix_1$Matrix; dist.matrix <- morph.distances.GED.5$DistanceMatrix; pcoa_results <- morph.pcoa
+anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa_results <- mode.pcoa
+# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa_results <- constant.pcoa
+# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa_results <- raw.pcoa
+# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa_results <- morph.pcoa
 
 # Load taxon.bins and class.list (built above)
 load("taxon.bins")
@@ -1797,9 +1796,9 @@ par(op)
 ## Same, with 'raw' ecological data set
 
 # Remove missing taxa (Only used for 'raw' data treatment)
-trim.matrix <- TrimMorphDistMatrix(raw.distances.GED.5$DistanceMatrix, 
+trim.matrix <- TrimMorphDistMatrix(raw.distances.GED.5$distance_matrix, 
                                    Tree = tree)
-raw.distances.GED.5$DistanceMatrix <- trim.matrix$DistMatrix
+raw.distances.GED.5$distance_matrix <- trim.matrix$DistMatrix
 raw.distances.GED.5$Tree <- trim.matrix$Tree
 raw.distances.GED.5$RemovedTaxa <- trim.matrix$RemovedTaxa
 
@@ -2414,7 +2413,7 @@ load("morph.distances.GED.5")
 
 # Convert distance matrixes (restricting to tips) to cluster analysis
 morph.hc <-
-  hclust(as.dist(morph.distances.GED.5$DistanceMatrix[1:Ntip(tree), 1:Ntip(tree)]))
+  hclust(as.dist(morph.distances.GED.5$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
 tr.morph <- as.phylo(morph.hc)
 tr.morph$tip.label <-  tree$tip.label
 plot(tr.morph)
@@ -2478,7 +2477,7 @@ hist(morph.offset, main = "rank mismatch between phylogeny and morphogram",
 ## Do the same for the ecology tree (using mode data set)
 # Convert distance matrixes (restricting to tips) to cluster analysis
 eco.hc <-
-  hclust(as.dist(mode.distances.GED.5$DistanceMatrix[1:Ntip(tree), 1:Ntip(tree)]))
+  hclust(as.dist(mode.distances.GED.5$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
 tr.eco <- as.phylo(eco.hc)
 tr.eco$tip.label <-  tree$tip.label
 plot(tr.eco)
