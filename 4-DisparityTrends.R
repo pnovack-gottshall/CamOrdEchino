@@ -303,6 +303,7 @@ taxon.bins[[1]][360:370,]
 
 # Save object
 # save(taxon.bins, file = "taxon.bins")
+# load("taxon.bins")
 
 # Confirm matches the diversity curve
 new.div <- apply(taxon.bins[[1]], 2, sum)
@@ -427,16 +428,16 @@ sort(table(taxon.list[[50]][, "subphylum"]), decreasing = FALSE)
 
 
 ## CLASS DIVERSITY TRENDS ######################################################
-unique.classes <- sort(unique(taxon.list))
+unique.classes <- sort(unique(taxon.list[[1]][, "class"]))
 class.bins <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
 colnames(class.bins) <- ages$interval_name
 rownames(class.bins) <- unique.classes
 for (c in 1:nrow(class.bins)) {
-  wh.class <- which(taxon.list == rownames(class.bins)[c])
+  wh.class <- which(taxon.list[[1]][, "class"] == rownames(class.bins)[c])
   if (length(wh.class) == 1L)
-    class.bins[c, ] <- as.numeric(taxon.bins[wh.class, ])
+    class.bins[c, ] <- as.numeric(taxon.bins[[1]][wh.class, ])
   else
-    class.bins[c, ] <- apply(taxon.bins[wh.class, ], 2, sum)
+    class.bins[c, ] <- apply(taxon.bins[[1]][wh.class, ], 2, sum)
 }
 head(class.bins)
 
@@ -454,13 +455,13 @@ lines(mids, cl.div, lwd=3)
 # pdf(file = "Stacked class richness.pdf")
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
-class.order <- order(table(taxon.list), decreasing = TRUE)
+class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
 stack.color <- rev(viridisLite::inferno(nrow(class.bins)))
 # Use next if prefer non-adjacents
 # set.seed(1234); stack.color <- sample(rev(viridisLite::inferno(nrow(class.bins))))
 stackpoly(x = -mids, y = t(class.bins[class.order, ]), col = stack.color,
           xlab = "time", ylab = "number of genera", stack = TRUE, 
-          main = "genus richness (by class)")
+          xlim = c(-541, -444), main = "genus richness (by class)")
 legend("topleft", legend = rev(unique.classes[class.order]), pch = 15, ncol = 3, 
        pt.cex = 1, cex = .55, col = rev(stack.color), bty = "n")
 par(op)
