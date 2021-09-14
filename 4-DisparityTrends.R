@@ -140,6 +140,8 @@ for(t in 1:length(mode.anc)) {
     tree.ranges[match(rownames(mode.anc[[t]]$matrix_1$matrix), rownames(tree.ranges)),]
   ranges[[t]] <- tree.ranges
 }
+# Save for later use
+# save(ranges, file = "ranges")
 
 # Observe mean ranges for tips and nodes
 sq <- 1:length(ranges)
@@ -205,6 +207,9 @@ which(morph.distances.GED.5[[50]]$distance_matrix[367, ] < 1.1)
 #
 ## Total D, total number of taxa in interval (X-FL + X-bL + X-Ft + X-bt)
 
+# Switch between using 'mean.ranges' and 'ranges[[x]]' depending on what want
+# diversity curve you wish to calculate and plot
+
 # Genus-level diversity curve (using database occurrences above)
 mids <- apply(ages[ ,9:10], 1, mean)
 divs <- data.frame(interval = ages$interval_name, base = ages$max_ma,
@@ -212,18 +217,18 @@ divs <- data.frame(interval = ages$interval_name, base = ages$max_ma,
 # Use if wish to restrict to tips (i.e., to not run as a phylogenetic lineage
 # richness)
 incl.nodes <- TRUE
-inc.rows <- if(incl.nodes) 1:nrow(ranges) else 1:Ntip(tree)
+inc.rows <- if(incl.nodes) 1:nrow(mean.ranges) else 1:Ntip(tree)
 for(t in 1:nrow(divs)) {
-  FL <- length(which(ranges[inc.rows, 1] <= divs$base[t] &
-                       ranges[inc.rows, 2] >= divs$top[t]))
-  bL <- length(which(ranges[inc.rows, 1] > divs$base[t] &
-                       ranges[inc.rows, 2] < divs$base[t] &
-                       ranges[inc.rows, 2] >= divs$top[t]))
-  Ft <- length(which(ranges[inc.rows, 2] < divs$top[t] &
-                       ranges[inc.rows, 1] <= divs$base[t] &
-                       ranges[inc.rows, 1] > divs$top[t]))
-  bt <- length(which(ranges[inc.rows, 1] > divs$base[t] &
-                       ranges[inc.rows, 2] < divs$top[t]))
+  FL <- length(which(mean.ranges[inc.rows, 1] <= divs$base[t] &
+                       mean.ranges[inc.rows, 2] >= divs$top[t]))
+  bL <- length(which(mean.ranges[inc.rows, 1] > divs$base[t] &
+                       mean.ranges[inc.rows, 2] < divs$base[t] &
+                       mean.ranges[inc.rows, 2] >= divs$top[t]))
+  Ft <- length(which(mean.ranges[inc.rows, 2] < divs$top[t] &
+                       mean.ranges[inc.rows, 1] <= divs$base[t] &
+                       mean.ranges[inc.rows, 1] > divs$top[t]))
+  bt <- length(which(mean.ranges[inc.rows, 1] > divs$base[t] &
+                       mean.ranges[inc.rows, 2] < divs$top[t]))
   divs$div[t] <- FL + bL + Ft + bt
 }
 divs
@@ -278,27 +283,31 @@ lines(mids.cont, div.cont[ ,3], lwd=3)
 
 ## CREATE TAXON - TIME BIN MATRIX ##############################################
 # Used to sample taxa in each bin for disparity analyses below.
-taxon.bins <- matrix(FALSE, nrow = (ape::Ntip(tree) + ape::Nnode(tree)), 
-                     ncol = nrow(ages))
-colnames(taxon.bins) <- ages$interval_name
-rownames(taxon.bins) <- rownames(morph.anc$matrix_1$matrix)
-for (t in 1:ncol(taxon.bins)) {
-  wh.row <- which(ranges[, 1] >= ages$min_ma[t] &
-                    ranges[, 2] <= ages$max_ma[t])
-  taxon.bins[wh.row, t] <- TRUE
+taxon.bins <- vector("list", length(mode.anc))
+for(t in 1:length(mode.anc)) {
+  tree <- mode.anc[[t]]$topper$tree
+  t.taxon.bins <- matrix(FALSE, nrow = (ape::Ntip(tree) + ape::Nnode(tree)),
+                         ncol = nrow(ages))
+  colnames(t.taxon.bins) <- ages$interval_name
+  rownames(t.taxon.bins) <- rownames(morph.anc[[t]]$matrix_1$matrix)
+  for (i in 1:ncol(t.taxon.bins)) {
+    wh.row <- which(ranges[[t]][, 1] >= ages$min_ma[i] &
+                      ranges[[t]][, 2] <= ages$max_ma[i])
+    t.taxon.bins[wh.row, i] <- TRUE
+  }
+  taxon.bins[[t]] <- t.taxon.bins
 }
 
 # View output
-taxon.bins[360:370,]
+taxon.bins[[1]][360:370,]
 
 # Save object
 # save(taxon.bins, file = "taxon.bins")
 
 # Confirm matches the diversity curve
-new.div <- apply(taxon.bins, 2, sum)
+new.div <- apply(taxon.bins[[1]], 2, sum)
 data.frame(divs$div, new.div)
-identical(divs$div, as.vector(new.div)) # TRUE
-
+identical(divs$div, as.vector(new.div)) # TRUE (if use 'ranges[[1]]' above when calc divs)
 
 
 
