@@ -314,49 +314,88 @@ identical(divs$div, as.vector(new.div)) # TRUE (if use 'ranges[[1]]' above when 
 
 
 ## ASSIGN TAXONOMIC CLASS FROM TREE ############################################
+
 # Logic: Move from tips to nodes, classifying a node to a taxonomic class (only)
 # if both descendants are in same class, and leaving unclassified otherwise.
+# Also appends genus names to ease in future handling, and more intuitive
+# confirmation working as intended. Because the order of tip labels varies among
+# trees, need to re-order each set so output in the same order as the input data
+# sets (which are roughly alphabetical).
 
 # Import ecological data set:
-data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
-                header = TRUE, stringsAsFactors = FALSE)
+data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", header = TRUE, stringsAsFactors = FALSE)
 
-# Confirm list of genera is sorted in same order as in tree file
-for(n in 1:length(data$Genus)) {
-  if (!identical(data$Genus[n], mode.pcoa$Tree$tip.label[n]))
-      warning(data$Genus[n], " is not identical to ", 
-              mode.pcoa$Tree$tip.label[n])
-}
-# Anatifopsis is false-positive because replaced with two subgenera in the tree
-# files.
+# Confirm list of genera in spreadsheet is same as in tree
+setdiff(mode.anc[[1]]$topper$tree$tip.label, data$Genus)
+setdiff(data$Genus, mode.anc[[1]]$topper$tree$tip.label)
+# Anatifopsis is false-positive because replaced with two subgenera
+# (Anatiferocystis & Guichenocarpos in the tree files. These require special
+# handling below.
 
-start <- Ntip(tree) + Nnode(tree)
-end <- Ntip(tree) + 1               # End at root (= first node)
-class.list <- character(start)
-class.list[seq.int(data$Class)] <- data$Class
-orig.classes <- class.list
-for(n in start:end) {
-  wh.tips <- which(tree$edge[, 1] == n)   # Find tips for this node
-  tip.classes <- class.list[tree$edge[wh.tips, 2]]
-  if (identical(tip.classes[1], tip.classes[2]))
-    class.list[n] <- tip.classes[1]
+# Change names to match tree tip labels
+data$Genus[which(data$Genus == "Anatifopsis")] <- c("Anatiferocystis", "Guichenocarpos")
+
+# Two passes. Start at tips and move down list, then reverse, moving from last
+# node to root. Note the order of the list is determined by the tree$tip.labels,
+# which differs from that in the raw input data (e.g.,
+# EchinoLHData_Mode_NAreformatted.csv).
+class.list <- vector("list", length(mode.anc))
+for(t in 1:length(class.list)) {
+  tree <- mode.anc[[t]]$topper$tree
+  # First pass (tips to their MRCA node)
+  t.class.list <- character(Ntip(tree) + Nnode(tree))
+  genus.match <- match(tree$tip.label, data$Genus)
+  genus.list <- data$Genus[genus.match]
+  t.class.list[seq.int(Ntip(tree))] <- data$Class[genus.match]
+  orig.classes <- t.class.list
+  # First pass along tips
+  for (n in 1:Ntip(tree)) {
+    wh.node <-
+      tree$edge[which(tree$edge[, 2] == n), ][1]   # Find node for this tip
+    tip.classes <- t.class.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
+    if (identical(tip.classes[1], tip.classes[2]))
+      t.class.list[wh.node] <- tip.classes[1]
+  }
+  # Second pass moving nodes down to root (incl. some redundancy from above)
+  start <- Ntip(tree) + Nnode(tree)
+  end <- Ntip(tree) + 1               # End at root (= first node)
+  for (n in start:end) {
+    wh.node <-
+      tree$edge[which(tree$edge[, 2] == n), ][1]   # Find node for this tip
+    tip.classes <- t.class.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
+    if (identical(tip.classes[1], tip.classes[2]))
+      t.class.list[wh.node] <- tip.classes[1]
+  }
+  # Replace class = "" with class = "UNCERTAIN"
+  t.class.list <- replace(t.class.list, which(t.class.list == ""), "UNCERTAIN") 
+  # Change back to original input data order
+  tip.match <- match(data$Genus, tree$tip.label)
+  reordered.classes <-
+    c(t.class.list[tip.match], t.class.list[(Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))])
+  genus.list <- c(data$Genus, as.character((Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))))
+  class.list[[t]] <- cbind(class = reordered.classes, genus = genus.list)
 }
+
+# save(class.list, file = "class.list")
+
+# View output to confirm worked as intended (If monophyletic, nodes should be
+# adjacent and ne less than the tips)
+head(class.list[[1]])
+class.list[[1]][which(class.list[[1]][, "class"] == "Helicoplacoidea"), ]
+class.list[[1]][which(class.list[[1]][, "class"] == "Ctenocystoidea"), ]
 
 # If each class is monophyletic, the final tallies should be 2 * Ntip(class i) -
-# 1. Let's see
-sort((table(orig.classes) * 2 - 1) - table(class.list), decreasing = FALSE)
+# 1. Let's see:
+orig.classes <- replace(orig.classes, which(orig.classes == ""), "UNCERTAIN") 
+sort((table(orig.classes) * 2 - 1) - table(class.list[[10]][, "class"]), 
+     decreasing = FALSE)
 # Results: Most are monophyletic, but rhombiferans and eocrinoids have
 # substantial non-monophyly, with smaller amounts among stenuroids,
 # diploporitans, somasteroids, edrioasteroids, paracrinoids, asteroids, and the
 # known paraphyletic 'diploporitans'.
 
-# Replace class = "" with class = "UNCERTAIN"
-class.list <- replace(class.list, which(class.list == ""), "UNCERTAIN") 
-# save(class.list, file = "class.list")
-
 sort(table(orig.classes), decreasing = FALSE)
-sort(table(class.list), decreasing = FALSE)
-
+sort(table(class.list[[50]][, "class"]), decreasing = FALSE)
 
 
 
