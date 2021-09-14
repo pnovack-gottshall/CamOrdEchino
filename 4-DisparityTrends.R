@@ -313,14 +313,14 @@ identical(divs$div, as.vector(new.div)) # TRUE (if use 'ranges[[1]]' above when 
 
 
 
-## ASSIGN TAXONOMIC CLASS FROM TREE ############################################
+## ASSIGN TAXONOMIC CLASS AND SUBPHYLUM FROM TREE ##############################
 
-# Logic: Move from tips to nodes, classifying a node to a taxonomic class (only)
-# if both descendants are in same class, and leaving unclassified otherwise.
-# Also appends genus names to ease in future handling, and more intuitive
-# confirmation working as intended. Because the order of tip labels varies among
-# trees, need to re-order each set so output in the same order as the input data
-# sets (which are roughly alphabetical).
+# Logic: Move from tips to nodes, classifying a node to a taxonomic class and
+# subphylum (only) if both descendants are in same class/subphylum, and leaving
+# unclassified otherwise. Also appends genus names to ease in future handling,
+# and more intuitive confirmation working as intended. Because the order of tip
+# labels varies among trees, need to re-order each set so output in the same
+# order as the input data sets (which are roughly alphabetical).
 
 # Import ecological data set:
 data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -339,15 +339,16 @@ data$Genus[which(data$Genus == "Anatifopsis")] <- c("Anatiferocystis", "Guicheno
 # node to root. Note the order of the list is determined by the tree$tip.labels,
 # which differs from that in the raw input data (e.g.,
 # EchinoLHData_Mode_NAreformatted.csv).
-class.list <- vector("list", length(mode.anc))
-for(t in 1:length(class.list)) {
+taxon.list <- vector("list", length(mode.anc))
+for(t in 1:length(taxon.list)) {
   tree <- mode.anc[[t]]$topper$tree
-  # First pass (tips to their MRCA node)
-  t.class.list <- character(Ntip(tree) + Nnode(tree))
+  t.class.list <- t.subphylum.list <- character(Ntip(tree) + Nnode(tree))
   genus.match <- match(tree$tip.label, data$Genus)
   genus.list <- data$Genus[genus.match]
   t.class.list[seq.int(Ntip(tree))] <- data$Class[genus.match]
+  t.subphylum.list[seq.int(Ntip(tree))] <- data$Subphylum[genus.match]
   orig.classes <- t.class.list
+  orig.subphyla <- t.subphylum.list
   # First pass along tips
   for (n in 1:Ntip(tree)) {
     wh.node <-
@@ -355,7 +356,10 @@ for(t in 1:length(class.list)) {
     tip.classes <- t.class.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
     if (identical(tip.classes[1], tip.classes[2]))
       t.class.list[wh.node] <- tip.classes[1]
-  }
+    tip.subphyla <- t.subphylum.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
+    if (identical(tip.subphyla[1], tip.subphyla[2]))
+      t.subphylum.list[wh.node] <- tip.subphyla[1]
+    }
   # Second pass moving nodes down to root (incl. some redundancy from above)
   start <- Ntip(tree) + Nnode(tree)
   end <- Ntip(tree) + 1               # End at root (= first node)
@@ -365,85 +369,70 @@ for(t in 1:length(class.list)) {
     tip.classes <- t.class.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
     if (identical(tip.classes[1], tip.classes[2]))
       t.class.list[wh.node] <- tip.classes[1]
+    tip.subphyla <- t.subphylum.list[tree$edge[which(tree$edge[,1] == wh.node), 2]]
+    if (identical(tip.subphyla[1], tip.subphyla[2]))
+      t.subphylum.list[wh.node] <- tip.subphyla[1]
   }
-  # Replace class = "" with class = "UNCERTAIN"
-  t.class.list <- replace(t.class.list, which(t.class.list == ""), "UNCERTAIN") 
+  # Replace class/subphylum = "" with class = "UNCERTAIN"
+  t.class.list <-
+    replace(t.class.list, which(t.class.list == ""), "UNCERTAIN")
+  t.subphylum.list <-
+    replace(t.subphylum.list, which(t.subphylum.list == ""), "UNCERTAIN")
   # Change back to original input data order
   tip.match <- match(data$Genus, tree$tip.label)
   reordered.classes <-
     c(t.class.list[tip.match], t.class.list[(Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))])
-  genus.list <- c(data$Genus, as.character((Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))))
-  class.list[[t]] <- cbind(class = reordered.classes, genus = genus.list)
+  reordered.subphyla <-
+    c(t.subphylum.list[tip.match], t.subphylum.list[(Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))])
+  genus.list <-
+    c(data$Genus, as.character((Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))))
+  taxon.list[[t]] <- cbind(subphylum = reordered.subphyla, 
+                           class = reordered.classes, genus = genus.list)
 }
 
-# save(class.list, file = "class.list")
+# save(taxon.list, file = "taxon.list")
 
 # View output to confirm worked as intended (If monophyletic, nodes should be
 # adjacent and ne less than the tips)
-head(class.list[[1]])
-class.list[[1]][which(class.list[[1]][, "class"] == "Helicoplacoidea"), ]
-class.list[[1]][which(class.list[[1]][, "class"] == "Ctenocystoidea"), ]
+head(taxon.list[[1]])
+taxon.list[[1]][360:370, ]
+taxon.list[[1]][which(taxon.list[[1]][, "class"] == "Helicoplacoidea"), ]
+taxon.list[[1]][which(taxon.list[[1]][, "class"] == "Ctenocystoidea"), ]
+taxon.list[[1]][which(taxon.list[[1]][, "subphylum"] == "Echinozoa"), ]
+table(taxon.list[[1]][, "class"], taxon.list[[1]][, "subphylum"])
+# Note all Subphylum Uncertain also in Class Uncertain, but not the other way
+# around (as expected if tips are in different classes in same subphylum)
 
 # If each class is monophyletic, the final tallies should be 2 * Ntip(class i) -
 # 1. Let's see:
 orig.classes <- replace(orig.classes, which(orig.classes == ""), "UNCERTAIN") 
-sort((table(orig.classes) * 2 - 1) - table(class.list[[10]][, "class"]), 
+sort((table(orig.classes) * 2 - 1) - table(taxon.list[[10]][, "class"]), 
      decreasing = FALSE)
 # Results: Most are monophyletic, but rhombiferans and eocrinoids have
 # substantial non-monophyly, with smaller amounts among stenuroids,
 # diploporitans, somasteroids, edrioasteroids, paracrinoids, asteroids, and the
 # known paraphyletic 'diploporitans'.
 
+orig.subphyla <- replace(orig.subphyla, which(orig.subphyla == ""), "UNCERTAIN") 
+sort((table(orig.subphyla) * 2 - 1) - table(taxon.list[[10]][, "subphylum"]), 
+     decreasing = FALSE)
+# Results: Blastozoans have decent amount of non-monophyly and a few crinozoans
+# do, too. But asterozoans and echinozoans are monophyletic.
+
 sort(table(orig.classes), decreasing = FALSE)
-sort(table(class.list[[50]][, "class"]), decreasing = FALSE)
-
-
-
-## ASSIGN TAXONOMIC SUBPHYLUM FROM TREE ########################################
-# Same algorithm as done for 'class.list' in 4-DisparityTrends.R, but
-# classifying subphyla.
-
-# Import ecological data set:
-data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
-                 header = TRUE, stringsAsFactors = FALSE)
-
-# Confirm list of genera is sorted in same order as in tree file
-for(n in 1:length(data$Genus)) {
-  if (!identical(data$Genus[n], mode.pcoa$Tree$tip.label[n]))
-    warning(data$Genus[n], " is not identical to ", 
-            mode.pcoa$Tree$tip.label[n])
-}
-# Anatifopsis is false-positive because replaced with two subgenera in the tree
-# files.
-
-start <- Ntip(tree) + Nnode(tree)
-end <- Ntip(tree) + 1               # End at root (= first node)
-subphylum.list <- character(start)
-subphylum.list[seq.int(data$Subphylum)] <- data$Subphylum
-orig.subphyla <- subphylum.list
-for(n in start:end) {
-  wh.tips <- which(tree$edge[, 1] == n)   # Find tips for this node
-  tip.subphyla <- subphylum.list[tree$edge[wh.tips, 2]]
-  if (identical(tip.subphyla[1], tip.subphyla[2]))
-    subphylum.list[n] <- tip.subphyla[1]
-}
-
-# Replace subphylum = "" with subphylum = "UNCERTAIN"
-subphylum.list <- replace(subphylum.list, which(subphylum.list == ""), "UNCERTAIN") 
-# save(subphylum.list, file = "subphylum.list")
+sort(table(taxon.list[[50]][, "class"]), decreasing = FALSE)
 
 sort(table(orig.subphyla), decreasing = FALSE)
-sort(table(subphylum.list), decreasing = FALSE)
-
+sort(table(taxon.list[[50]][, "subphylum"]), decreasing = FALSE)
 
 
 ## CLASS DIVERSITY TRENDS ######################################################
-unique.classes <- sort(unique(class.list))
+unique.classes <- sort(unique(taxon.list))
 class.bins <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
 colnames(class.bins) <- ages$interval_name
 rownames(class.bins) <- unique.classes
 for (c in 1:nrow(class.bins)) {
-  wh.class <- which(class.list == rownames(class.bins)[c])
+  wh.class <- which(taxon.list == rownames(class.bins)[c])
   if (length(wh.class) == 1L)
     class.bins[c, ] <- as.numeric(taxon.bins[wh.class, ])
   else
@@ -465,7 +454,7 @@ lines(mids, cl.div, lwd=3)
 # pdf(file = "Stacked class richness.pdf")
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
-class.order <- order(table(class.list), decreasing = TRUE)
+class.order <- order(table(taxon.list), decreasing = TRUE)
 stack.color <- rev(viridisLite::inferno(nrow(class.bins)))
 # Use next if prefer non-adjacents
 # set.seed(1234); stack.color <- sample(rev(viridisLite::inferno(nrow(class.bins))))
@@ -1097,13 +1086,13 @@ anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_ma
 # anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa_results <- raw.pcoa
 # anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa_results <- morph.pcoa
 
-# Load taxon.bins and class.list (built above)
+# Load taxon.bins and taxon.list (built above)
 load("taxon.bins")
-load("class.list")
+load("taxon.list")
 if(nrow(taxon.bins) != nrow(dist.matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
-if(nrow(taxon.bins) != length(class.list))
-  stop("Need to re-build class.list because some taxa were removed when running the 'raw' treatment.\n")
+if(nrow(taxon.bins) != length(taxon.list))
+  stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
 
 # Because a correction wasn't able to be applied for the 'constant' treatment,
 # need to amend as if it were (for consistency in downstream scripts)
@@ -1931,9 +1920,9 @@ par(op)
 
 ## KMEANS CLUSTERING TO INTERPRET SPACES #######################################
 
-load("class.list")
-if(nrow(morph.pcoa$vectors.cor) != length(class.list))
-  stop("Need to re-build class.list because some taxa were removed when running the 'raw' treatment.\n")
+load("taxon.list")
+if(nrow(morph.pcoa$vectors.cor) != length(taxon.list))
+  stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
 
 # Plot within-cluster sum-of-squares vs no. of clusters
 # pdf(file = "morph.kmeans.choice.pdf")
@@ -1961,7 +1950,7 @@ pchs <-as.character(km$cluster)
 plot(morph.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(morph.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(morph.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(class.list, km$cluster) # If phylogenetic structure, lots of zeros
+table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
 legend.groups <- c("edrio, aster, ech, oph & cyclo", 
                    "stylo, homo, solut, cteno, helico",
                    "crin, eocr, rhomb, diplo, paracr", "more crinoids")
@@ -1998,7 +1987,7 @@ pchs <-as.character(km$cluster)
 plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(mode.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(class.list, km$cluster) # If phylogenetic structure, lots of zeros
+table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
 legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
                    "edr, eocr, rh, dipl, paracr, hel & more cri",
                    "stylo, homo, solut, ctenoc, cyclo, some rhomb",
@@ -2045,7 +2034,7 @@ pchs <-as.character(km$cluster)
 plot(constant.pcoa$vectors[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(class.list, km$cluster) # If phylogenetic structure, lots of zeros
+table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
 legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
                    "edr, eocr, rh, dipl, paracr, hel & more cri",
                    "stylo, homo, solut, ctenoc, cyclo, some rhomb",
@@ -2077,8 +2066,8 @@ par(op)
 m <- 2
 
 # Process the classes:
-load("class.list")
-class.tab <- sort(table(class.list), decreasing = TRUE)
+load("taxon.list")
+class.tab <- sort(table(taxon.list), decreasing = TRUE)
 classes <- names(class.tab)
 # Remove genera with UNCERTAIN class affiliation
 classes <- classes[-which(classes == "UNCERTAIN")]
@@ -2097,7 +2086,7 @@ eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor,
                                    eigenvalues = eco.pcoa$values$Corr_eig)
 
 for(cl in 1:nrow(class.space)) {
-  wh.cl <- which(class.list == classes[cl])
+  wh.cl <- which(taxon.list == classes[cl])
   eco.coords <- eco.pcoa$vectors.cor[wh.cl, 1:m]
   morph.coords <- morph.pcoa$vectors.cor[wh.cl, 1:m]
   if (length(eco.coords) == 2L) next
@@ -2356,10 +2345,10 @@ node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
                                 as.character(Tree$edge[, 2])))
 # Process the classes (removing UNCERTAINs):
-load("class.list")
+load("taxon.list")
 # Replace Class Homostelea with (here synonymous) Cincta instead
-class.list[which(class.list == "Homostelea")] <- "Cincta"
-(class.tab <- sort(table(class.list), decreasing = TRUE))
+taxon.list[which(taxon.list == "Homostelea")] <- "Cincta"
+(class.tab <- sort(table(taxon.list), decreasing = TRUE))
 classes <- names(class.tab)
 classes <- classes[which(classes != "UNCERTAIN")]
 
@@ -2371,13 +2360,13 @@ wh.cam <- which(data$Subclass == "Camerata")
 
 ncl <- length(classes)
 for(cl in 1:ncl) {
-  wh.gr <- which(class.list == classes[cl])
+  wh.gr <- which(taxon.list == classes[cl])
   
   # Combine Diploporita with paraphyletic 'diploporitan'
   if (classes[cl] == "'diploporitan'")
     next
   if (classes[cl] == "Diploporita") {
-    wh.gr <- which(class.list == "Diploporita" | class.list == "'diploporitan'")
+    wh.gr <- which(taxon.list == "Diploporita" | taxon.list == "'diploporitan'")
   }
   
   wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
