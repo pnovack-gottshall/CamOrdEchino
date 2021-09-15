@@ -94,6 +94,8 @@ summary(int.times$max_ma - int.times$min_ma)
 ages$interval_name <-
   replace(ages$interval_name, which(ages$interval_name == "Series 3"), 
           "Miaolingian")
+series.boundaries <- c(521, 509, 497, 470, 458.4)
+pd.boundaries <- c(541, 485.4, 443.8)
 ages[, c(5, 9:10)]
 
 # Import ICS 2020 timescale to use in plotting
@@ -392,6 +394,7 @@ for(t in 1:length(taxon.list)) {
 }
 
 # save(taxon.list, file = "taxon.list")
+# load("taxon.list")
 
 # View output to confirm worked as intended (If monophyletic, nodes should be
 # adjacent and ne less than the tips)
@@ -426,23 +429,37 @@ sort(table(taxon.list[[50]][, "class"]), decreasing = FALSE)
 sort(table(orig.subphyla), decreasing = FALSE)
 sort(table(taxon.list[[50]][, "subphylum"]), decreasing = FALSE)
 
-
 ## CLASS DIVERSITY TRENDS ######################################################
 unique.classes <- sort(unique(taxon.list[[1]][, "class"]))
-class.bins <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
-colnames(class.bins) <- ages$interval_name
-rownames(class.bins) <- unique.classes
-for (c in 1:nrow(class.bins)) {
-  wh.class <- which(taxon.list[[1]][, "class"] == rownames(class.bins)[c])
-  if (length(wh.class) == 1L)
-    class.bins[c, ] <- as.numeric(taxon.bins[[1]][wh.class, ])
-  else
-    class.bins[c, ] <- apply(taxon.bins[[1]][wh.class, ], 2, sum)
+class.bins <- vector("list", 50)
+for (t in 1:length(class.bins)){
+  t.class.bins <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
+  colnames(t.class.bins) <- ages$interval_name
+  rownames(t.class.bins) <- unique.classes
+  for (c in 1:nrow(t.class.bins)) {
+    wh.class <- which(taxon.list[[t]][, "class"] == rownames(t.class.bins)[c])
+    if (length(wh.class) == 1L)
+      t.class.bins[c, ] <- as.numeric(taxon.bins[[t]][wh.class, ])
+    else
+      t.class.bins[c, ] <- apply(taxon.bins[[t]][wh.class, ], 2, sum)
+  }
+  class.bins[[t]] <- t.class.bins
 }
-head(class.bins)
+
+# View output
+head(class.bins[[50]])
+
+# Save (and reload)
+# save("class.bins", file = "class.bins")
+# load("class.bins")
+
+# Calculate median class.bins
+mean.class.bins <- apply(simplify2array(class.bins), 1:2, median)
+head(mean.class.bins)
 
 # Plot diversity curve
-cl.div <- sapply(1:ncol(class.bins), function(x) sum(class.bins[, x] > 0))
+cl.div <-
+  sapply(1:ncol(mean.class.bins), function(x) sum(mean.class.bins[, x] > 0))
 geoscalePlot2(mids, cl.div, units = c("Epoch", "Period"), 
               tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
               cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), 
@@ -456,12 +473,15 @@ lines(mids, cl.div, lwd=3)
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
 class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
-stack.color <- rev(viridisLite::inferno(nrow(class.bins)))
+# stack.color <- rev(viridisLite::turbo(nrow(mean.class.bins)))
 # Use next if prefer non-adjacents
-# set.seed(1234); stack.color <- sample(rev(viridisLite::inferno(nrow(class.bins))))
-stackpoly(x = -mids, y = t(class.bins[class.order, ]), col = stack.color,
+set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(mean.class.bins))))
+stackpoly(x = -mids, y = t(mean.class.bins[class.order, ]), col = stack.color,
           xlab = "time", ylab = "number of genera", stack = TRUE, 
-          xlim = c(-541, -444), main = "genus richness (by class)")
+          xlim = c(-541, -443.8), main = "genus richness (by class)")
+abline(v = -series.boundaries, col = "white", lty = 5)
+abline(v = -pd.boundaries, col = "white", lty = 1, lwd = 2)
+box()
 legend("topleft", legend = rev(unique.classes[class.order]), pch = 15, ncol = 3, 
        pt.cex = 1, cex = .55, col = rev(stack.color), bty = "n")
 par(op)
@@ -491,11 +511,11 @@ dist.matrix <- mode.distances.GED.5
 # dist.matrix <- morph.distances.GED.5
 
 # View sample
-dist.matrix$distance_matrix[1:10, 1:4]
+dist.matrix[[50]]$distance_matrix[1:10, 1:4]
 
 # Observe data structure of the data matrix:
-hist(c(dist.matrix$distance_matrix))
-summary(c(dist.matrix$distance_matrix))
+hist(c(dist.matrix[[50]]$distance_matrix))
+summary(c(dist.matrix[[50]]$distance_matrix))
 
 # Any missing distances? (Should only occur in pre-trimmed raw treatment)
 anyNA(dist.matrix$distance_matrix)
