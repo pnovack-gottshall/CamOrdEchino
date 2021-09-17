@@ -495,20 +495,20 @@ par(op)
 
 ## CALCULATE PCoA ORDINATIONS AND MORPHO/ECOSPACES #############################
 
-# Given high correlations among distance matrices, using GED.5. (The distance
-# metric is Will's 1988 generalized Euclidean distance, which replaces missing
-# character states using the mean pairwise dissimilarity for each pairwise
-# comparison. Hierarchical character dependencies are weighted using Hopkins and
-# St. John 2018 alpha = 0.5, which in which the primary character contributes
-# weight according to the fraction of shared secondary [and tertiary, etc.]
-# characters.
+# Given high correlations among distance matrices, using GED.5 as the distance
+# metric. (It is Will's 1988 generalized Euclidean distance, which replaces
+# missing character states using the mean pairwise dissimilarity for each
+# pairwise comparison. Hierarchical character dependencies are weighted using
+# Hopkins and St. John 2018 alpha = 0.5, which in which the primary character
+# contributes weight according to the fraction of shared secondary [and
+# tertiary, etc.] characters.
 
-
-## Pick desired distance matrix
-dist.matrix <- mode.distances.GED.5
-# dist.matrix <- constant.distances.GED.5
-# dist.matrix <- raw.distances.GED.5
-# dist.matrix <- morph.distances.GED.5
+## Pick desired distance matrix (and corresponding ancestral state
+## reconstruction objects, for the data-specific tree object)
+# dist.matrix <- mode.distances.GED.5; anc <- mode.anc
+# dist.matrix <- constant.distances.GED.5; anc <- constant.anc
+# dist.matrix <- raw.distances.GED.5; anc <- raw.anc
+# dist.matrix <- morph.distances.GED.5; anc <- morph.anc
 
 # View sample
 dist.matrix[[50]]$distance_matrix[1:10, 1:4]
@@ -517,74 +517,120 @@ dist.matrix[[50]]$distance_matrix[1:10, 1:4]
 hist(c(dist.matrix[[50]]$distance_matrix))
 summary(c(dist.matrix[[50]]$distance_matrix))
 
-# Any missing distances? (Should only occur in pre-trimmed raw treatment)
-anyNA(dist.matrix$distance_matrix)
+# Any missing distances? (Should only be TRUE for pre-trimmed raw treatment)
+sq <- 1:50
+table(sapply(sq, function(sq) anyNA(dist.matrix[[sq]]$distance_matrix)))
 
 # Any non-diagonal zeros (potentially problematic for some ordination analyses)
-length(dist.matrix$distance_matrix == 0) - nrow(dist.matrix$distance_matrix)
+table(sapply(sq, function(sq)
+  (length(dist.matrix[[sq]]$distance_matrix == 0) - nrow(dist.matrix[[sq]]$distance_matrix)) > 0))
 
-# Is it Euclidean?
-ade4::is.euclid(as.dist(dist.matrix$distance_matrix))
-
+# Are they Euclidean? (recommend using the Cailliez or Lingoes correction for
+# negative eigenvalues)
+table(sapply(sq, function(sq)
+  ade4::is.euclid(as.dist(dist.matrix[[sq]]$distance_matrix))))
 
 
 
 ## Perform a phylogenetic Principal Coordinates Analysis:
 
-# Skip 'MorphMatrix2PCoA' [which bundles ancestral state reconstruction and
-# calculation of distance matrices] by using direct calculation of PCoA so can
-# directly import in previously calculated distance matrices.
+# Skip 'Claddis::ordinate_cladistic_matrix' [which bundles ancestral state
+# reconstruction and calculation of distance matrices] by using direct
+# calculation of PCoA so can directly import in previously calculated distance
+# matrices.
 
 # For consistency with other Claddis functions, using ape::pcoa() instead of
 # 'ecospace' and 'FD's use of ade4::dudi.pco(), which produces identical output
 # (in different formats), and are essentially equally fast. Variation typically
 # has to do with how many non-negative eigenvectors are returned, and with
 # arbitrary reversing of axes. Eigenvectors are identical for at least first
-# 11-15 axes. Using Claddis' recommended "Cailliez" correction here and below
-# for consistency in how all morphospace/ecospace disparity metrics are
-# calculated. Tests (not demonstrated here, see "X_Diff pcoa trials.R")
-# demonstrate that the "Lingoes" correction works less often with the data
-# structure of some data treatments, especially the high proportion of zero
-# lengths for many data pairs. In the case of the constant treatment, a Cailliez
-# correction is not possible, so "none" is used for this single treatment.
+# 11-15 axes (not demonstrated here, see "X_Diff pcoa trials.R")
 
-# Want to remove missing taxa? (Only used for 'raw' data treatment)
-# trim.matrix <- TrimMorphDistMatrix(dist.matrix$distance_matrix, Tree = tree)
-# dist.matrix$distance_matrix <- trim.matrix$DistMatrix
-# dist.matrix$Tree <- trim.matrix$Tree
-# dist.matrix$RemovedTaxa <- trim.matrix$RemovedTaxa
+# Although many of the distance matrices are non-Euclidean and return negative
+# eigenvalues, we are using no (= "none") eigenvalue correction below for
+# several reasons. First, the Cailliez and Lingoes corrections are unable to be
+# implemented for approximately half of the morphological distance matrices and
+# about a quarter of the ecological ones (and essentially none of the constant
+# and raw treatments). The primary cause of the errors is the presence of
+# numerous non-diagonal zeros in the phylogenetic distance matrix, which is an
+# inevitable result of the high diversification rate in the time-scaled trees,
+# and the way in which Claddis handles polymorphic or unknown ancestral
+# character state. Second, comparion of the character-space
+# (morphospace/ecospace) structure for the first 6 axes are essentially
+# identical across corrections (for those distance matrices that can be
+# calculated for them). Third, the use of all eigenvalues is only required for
+# the FEve functional diversity metric; all others are calculated directly on
+# the distance matrix or on a reduced-dimensional PCoA eigenvalue space.
 
-pcoa_results <- ape::pcoa(dist.matrix$distance_matrix,
-                          correction = "cailliez", 
-                          rn = rownames(dist.matrix$distance_matrix))
-# Append Tree, required for Claddis function
-if(is.null(pcoa_results$Tree)) pcoa_results$Tree <- tree
-# Use following ONLY for trimmed 'raw' treatment:
-# if(is.null(pcoa_results$Tree)) pcoa_results$Tree <- trim.matrix$Tree
+# Prior sensitivity analyses (not demonstrated here, see "X_Diff pcoa trials.R")
+# demonstrate that the "Lingoes" correction computes more successfully than the
+# Cailliez correction with the data structure of some data treatments,
+# especially the high proportion of zero lengths for many data pairs. In the
+# case of the 'constant' treatment, a Cailliez correction is not possible, so
+# "none" is used for this single treatment.
+
+# Want to remove missing taxa? (Only used for 'raw' data treatment, as not
+# relevant for other data sets)
+# anc <- raw.anc
+# for(t in 1:length(anc)) {
+#   tree <- anc[[t]]$topper$tree
+#   trim.matrix <- trim_matrix(dist.matrix[[t]]$distance_matrix, tree = tree)
+#   dist.matrix[[t]]$distance_matrix <- trim.matrix$distance_matrix
+#   dist.matrix[[t]]$tree <- trim.matrix$tree
+#   dist.matrix[[t]]$removed_taxa <- trim.matrix$removed_taxa
+# }
+# beep() # May take a few minutes to process
+
+# Running as a loop to enhance diagnostic abilities because of the idiosyncratic
+# nature of pcoa calculations.
+pcoa.results <- vector("list", length(dist.matrix))
+index <- c(1, seq(5, 50, by = 5))
+for(t in 1:length(pcoa.results)) {
+# for(t in 36:length(pcoa.results)) {
+    if (t %in% index)
+    cat("processing", t, "\n")
+  t.pcoa.results <- ape::pcoa(dist.matrix[[t]]$distance_matrix,
+                              correction = "none",
+                              rn = rownames(dist.matrix[[t]]$distance_matrix))
+  # Append tree, required for downstream Claddis functions
+  if (is.null(t.pcoa.results$tree)) t.pcoa.results$tree <- anc[[t]]$topper$tree
+  # Only use next line instead for the 'raw' treatment (where trimmed tree was
+  # added in pre-processing):
+  # if (is.null(t.pcoa.results$tree)) t.pcoa.results$tree <- dist.matrix[[t]]$tree
+  pcoa.results[[t]] <- t.pcoa.results
+}
+
+# Save (and re-load) PCoA output:
+# mode.pcoa <- pcoa.results; save(mode.pcoa, file = "mode.pcoa")
+# constant.pcoa <- pcoa.results; save(constant.pcoa, file = "constant.pcoa")
+# raw.pcoa <- pcoa.results; save(raw.pcoa, file = "raw.pcoa")
+morph.pcoa <- pcoa.results; save(morph.pcoa, file = "morph.pcoa")
+# load("morph.pcoa"); pcoa.results <- morph.pcoa
+# load("mode.pcoa"); pcoa.results <- mode.pcoa
+# load("constant.pcoa"); pcoa.results <- constant.pcoa
+# load("raw.pcoa"); pcoa.results <- raw.pcoa
 beep()
 
-# Save PCoA output
-# mode.pcoa <- pcoa_results; save(mode.pcoa, file = "mode.pcoa")
-# constant.pcoa <- pcoa_results; save(constant.pcoa, file = "constant.pcoa")
-# raw.pcoa <- pcoa_results; save(raw.pcoa, file = "raw.pcoa")
-# morph.pcoa <- pcoa_results; save(morph.pcoa, file = "morph.pcoa")
-# load("morph.pcoa"); pcoa_results <- morph.pcoa
-# load("mode.pcoa"); pcoa_results <- mode.pcoa
-# load("constant.pcoa"); pcoa_results <- constant.pcoa
-# load("raw.pcoa"); pcoa_results <- raw.pcoa
+# Errors using Cailliez: "Error in min(toto.cor$values)"; testing confirms
+# because of presence of imaginary values produced
+# Morph errors: #3-4, 6-7, 10, 12-13, 15, etc.
+#    With Lingoes: 4-5, 11
+#    Morph also errors with no correction for #31-35 ("Error in eigen(delta1) : infinite or missing values in 'x'")
+# Mode errors: #5, 9, 11-12, 15, etc. (Lingoes errors: 1-5, etc. None: )
+# Rec: Use the non-corrected FOR ALL (but try using the 'raw' treatment to prune to see if a work-around)
 
 
-# Plot scree plot and biplot
-barplot(100 * pcoa_results$values$Rel_corr_eig[1:15], main = "first 10 axes", names.arg = 1:15,
+# Plot sample scree plot and biplot
+barplot(100 * pcoa.results[[50]]$values$Relative_eig[1:15], main = "first 10 axes", names.arg = 1:15,
         xlab = "Axes", ylab = "relative % explained")
-barplot(100 * cumsum(pcoa_results$values$Rel_corr_eig)[1:15], names.arg = 1:15,
+barplot(100 * cumsum(pcoa.results[[50]]$values$Relative_eig)[1:15], names.arg = 1:15,
         xlab = "Axes", ylab = "relative % explained", 
         main = "cum var explained for first 10 axes")
-plot(pcoa_results$vectors.cor[, 1], pcoa_results$vectors.cor[, 2], xlab = "PCoA axis 1", 
+plot(pcoa.results[[50]]$vectors[, 1], pcoa.results[[50]]$vectors[, 2], xlab = "PCoA axis 1", 
      ylab = "PCoA axis 2")
 
-round(100 * pcoa_results$values$Rel_corr_eig[1:10], 2)
-round(100 * cumsum(pcoa_results$values$Rel_corr_eig)[1:30], 1)
+round(100 * pcoa.results[[50]]$values$Relative_eig[1:10], 2)
+round(100 * cumsum(pcoa.results[[50]]$values$Relative_eig)[1:30], 1)
 
 
 # RESULTS (% explained; cumulative % explained):
@@ -602,20 +648,20 @@ round(100 * cumsum(pcoa_results$values$Rel_corr_eig)[1:30], 1)
 # pdf(file = "PCoAScreePlots.pdf")
 par(mfrow = c(2,2), mar = c(4, 4, 2, .1))
 load("morph.pcoa")
-barplot(100 * morph.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * morph.pcoa$values$Relative_eig[1:10], names.arg = 1:10, 
         main = "morphology", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
 load("mode.pcoa")
-barplot(100 * mode.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * mode.pcoa$values$Relative_eig[1:10], names.arg = 1:10, 
         main = "ecology (mode)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
 load("constant.pcoa")
 # note no correction used, but pcoa() still calculates 'corrected' eigenvalues
-barplot(100 * constant.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * constant.pcoa$values$Relative_eig[1:10], names.arg = 1:10, 
         main = "ecology (constant)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
 load("raw.pcoa")
-barplot(100 * raw.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * raw.pcoa$values$Relative_eig[1:10], names.arg = 1:10, 
         main = "ecology (raw)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
 par(op)
@@ -654,12 +700,12 @@ mock.loadings <- function(orig.vars = NULL, ord.coord = NULL, vars = 6,
 }
 
 loadings.morph <- mock.loadings(orig.vars = morph.anc$matrix_1$matrix,
-                                ord.coord = morph.pcoa$vectors.cor, vars = 6,
+                                ord.coord = morph.pcoa$vectors, vars = 6,
                                 cutoff = 0.8)
 na.omit(loadings.morph)
 
 loadings.mode <- mock.loadings(orig.vars = mode.anc$matrix_1$matrix, 
-                               ord.coord = mode.pcoa$vectors.cor, vars = 6, 
+                               ord.coord = mode.pcoa$vectors, vars = 6, 
                                cutoff = 0.4)
 na.omit(loadings.mode)
 
@@ -672,11 +718,11 @@ na.omit(loadings.constant)
 # For the raw treatment, need to remove genera with missing data excluded from
 # PCoA (and just focusing on tips to keep things simpler because nodes were
 # renumbered when making distance matrix)
-nt <- Ntip(raw.pcoa$Tree)
-wh.to.keep <- na.omit(match(rownames(raw.pcoa$vectors.cor[1:nt, ]),
+nt <- Ntip(raw.pcoa$tree)
+wh.to.keep <- na.omit(match(rownames(raw.pcoa$vectors[1:nt, ]),
                             rownames(raw.anc$matrix_1$matrix)[1:nt]))
 loadings.raw <- mock.loadings(orig.vars = raw.anc$matrix_1$matrix[wh.to.keep, ],
-                              ord.coord = raw.pcoa$vectors.cor[1:length(wh.to.keep), ], vars = 6, 
+                              ord.coord = raw.pcoa$vectors[1:length(wh.to.keep), ], vars = 6, 
                               cutoff = 0.3)
 na.omit(loadings.raw)
 
@@ -747,13 +793,13 @@ stand.pcoa <- function(vectors = NULL, eigenvalues = NULL) {
 }
 
 # Compare before and after standardizing
-new <- pcoa_results
-new$vectors.cor <- stand.pcoa(vectors = pcoa_results$vectors.cor,
-                          eigenvalues = pcoa_results$values$Corr_eig)
-pcoa_results$vectors.cor[1:5, 1:5]
-new$vectors.cor[1:5, 1:5]
-plot(pcoa_results$vectors.cor[, 1], pcoa_results$vectors.cor[, 2])
-plot(new$vectors.cor[, 1], new$vectors.cor[, 2])
+new <- pcoa.results
+new$vectors <- stand.pcoa(vectors = pcoa.results$vectors,
+                          eigenvalues = pcoa.results$values$Eigenvalues)
+pcoa.results$vectors[1:5, 1:5]
+new$vectors[1:5, 1:5]
+plot(pcoa.results$vectors[, 1], pcoa.results$vectors[, 2])
+plot(new$vectors[, 1], new$vectors[, 2])
 
 # CONCLUSION: The axes are rescaled correctly. (Note that doing so affects
 # [i.e., stabilizes across time intervals] the values returned for FRic
@@ -769,71 +815,23 @@ plot(new$vectors.cor[, 1], new$vectors.cor[, 2])
 ## PLOT ORDINATIONS USING CLADDIS FUNCTIONS ####################################
 
 # Plot a 2-dimensional morphospace with tips, nodes, and root:
-MorphospacePlot(pcoa_results)
-tip.seq <- 1:Ntip(pcoa_results$Tree)
+plot_morphospace(pcoa.results)
+tip.seq <- 1:Ntip(pcoa.results$tree)
 node.seq <-
-  (Ntip(pcoa_results$Tree) + 1):(Ntip(pcoa_results$Tree) + Nnode(pcoa_results$Tree))
-points(x = pcoa_results$vectors.cor[node.seq, 1],
-       y = pcoa_results$vectors.cor[node.seq, 2], col = "gray", pch = 16) # nodes
-points(x = pcoa_results$vectors.cor[tip.seq, 1], 
-       y = pcoa_results$vectors.cor[tip.seq, 2])                          # tips
-points(x = pcoa_results$vectors.cor[max(node.seq), 1], 
-       y = pcoa_results$vectors.cor[max(node.seq), 2], col = "red", pch = 16, 
+  (Ntip(pcoa.results$tree) + 1):(Ntip(pcoa.results$tree) + Nnode(pcoa.results$tree))
+points(x = pcoa.results$vectors[node.seq, 1],
+       y = pcoa.results$vectors[node.seq, 2], col = "gray", pch = 16) # nodes
+points(x = pcoa.results$vectors[tip.seq, 1], 
+       y = pcoa.results$vectors[tip.seq, 2])                          # tips
+points(x = pcoa.results$vectors[max(node.seq), 1], 
+       y = pcoa.results$vectors[max(node.seq), 2], col = "red", pch = 16, 
        cex = 1.5)                                                     # root
 
 # Plot additional morphospace axes:
-MultiMorphospacePlot(pcoa_results, N_axes = 3)
+plot_multi_morphospace(pcoa.results, n_axes = 3)
 
 # Plot a chronophylomorphospace:
-ChronoPhyloMorphospacePlot(pcoa_results)
-
-
-
-## Plot stacked (Footeogram) ordination spaces
-# Note that this uses raw strat ranges of tips and not the ancestral nodes
-
-# 1. Import strat ranges (previously downloaded fom PBDB)
-strat.ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", 
-                 header = TRUE)
-strat.ranges <- strat.ranges[, -1]
-colnames(strat.ranges) <- c("FAD", "LAD")
-
-# Use series ages for bins
-strat_names <- read.csv("~/Manuscripts/CamOrdEchinos/strat_names.csv")
-ages2 <- strat_names[which(strat_names$scale_level == 4), ]
-ages2 <- ages2[which(ages2$max_ma > 443), ]
-
-StackPlot(ordination_axes = pcoa_results$vectors.cor, ages = strat.ranges, 
-          time_slices = ages2$max_ma)
-
-# pdf(file = "FootePlot_morph.pdf")
-pcoa_results <- morph.pcoa
-StackPlot(ordination_axes = pcoa_results$vectors.cor, ages = strat.ranges, 
-          time_slices = ages2$max_ma, axis_label = "PCoA")
-mtext(text = "morphology, tips only", side = 3, cex = 1.25)
-# dev.off()
-
-# pdf(file = "FootePlot_mode.pdf")
-pcoa_results <- mode.pcoa
-StackPlot(ordination_axes = pcoa_results$vectors.cor, ages = strat.ranges, 
-          time_slices = ages2$max_ma, axis_label = "PCoA")
-mtext(text = "ecology (mode), tips only", side = 3, cex = 1.25)
-# dev.off()
-
-# pdf(file = "FootePlot_constant.pdf")
-# Using uncorrected eigenvectors here
-pcoa_results <- constant.pcoa
-StackPlot(ordination_axes = pcoa_results$vectors, ages = strat.ranges, 
-          time_slices = ages2$max_ma, axis_label = "PCoA")
-mtext(text = "ecology (constant), tips only", side = 3, cex = 1.25)
-# dev.off()
-
-# pdf(file = "FootePlot_raw.pdf")
-pcoa_results <- raw.pcoa
-StackPlot(ordination_axes = pcoa_results$vectors.cor, ages = strat.ranges, 
-          time_slices = ages2$max_ma, axis_label = "PCoA")
-mtext(text = "ecology (raw), tips only", side = 3, cex = 1.25)
-# dev.off()
+plot_chronophylomorphospace(pcoa.results)
 
 
 
@@ -848,20 +846,21 @@ load("raw.pcoa")
 load("morph.pcoa")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa_results <- mode.pcoa
-# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa_results <- constant.pcoa
-# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa_results <- raw.pcoa
-# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa_results <- morph.pcoa
+anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
+# anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa.results <- mode.pcoa
+# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa.results <- constant.pcoa
+# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa.results <- raw.pcoa
+# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa.results <- morph.pcoa
 
 # Load taxon.bins (built above)
 load("taxon.bins")
-if(nrow(taxon.bins) != nrow(dist.matrix))
+if(nrow(taxon.bins[[1]]) != nrow(dist.matrix[[1]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
 
 # Because a correction wasn't able to be applied for the 'constant' treatment,
 # need to amend as if it were (for consistency in downstream scripts)
-# pcoa_results$vectors.cor <- pcoa_results$vectors
-# pcoa_results$values$Corr_eig <- pcoa_results$values$Eigenvalues
+# pcoa.results$vectors <- pcoa.results$vectors
+# pcoa.results$values$Eigenvalues <- pcoa.results$values$Eigenvalues
 
 ## Want to remove missing taxa? (Only used for 'raw' data treatment)
 # Note the 'tree' is not included to prevent renumbering! For some reason I
@@ -869,8 +868,8 @@ if(nrow(taxon.bins) != nrow(dist.matrix))
 # tree is present, with 515 taxa with tree and 511 without. In order for the
 # trends code to work, the following is required to get all associated disparity
 # objects with same taxa.
-# trim.matrix <- TrimMorphDistMatrix(dist.matrix)
-# trim.matrix.for.pcoa <- TrimMorphDistMatrix(dist.matrix, Tree = tree)
+# trim.matrix <- trim_matrix(dist.matrix)
+# trim.matrix.for.pcoa <- trim_matrix(dist.matrix, Tree = tree)
 # dim(trim.matrix.for.pcoa$DistMatrix)
 # dim(trim.matrix$DistMatrix)
 
@@ -880,10 +879,10 @@ if(nrow(taxon.bins) != nrow(dist.matrix))
 # taxon.bins <- taxon.bins[wh.to.keep, ]
 # dist.matrix <- trim.matrix$DistMatrix
 # Note still wrong dims:
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa_results$vectors.cor)
+# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors)
 
 # Easy to fix with named tips:
-# wh.to.cut <- which(!rownames(dist.matrix)[1:258] %in% rownames(pcoa_results$vectors.cor)[1:256])
+# wh.to.cut <- which(!rownames(dist.matrix)[1:258] %in% rownames(pcoa.results$vectors)[1:256])
 # rownames(dist.matrix)[wh.to.cut] # row 202: Protocrinites & row 228: Sphaeronites
 
 # Not so easy with re-named ancestors, so need a work-around: Go through and
@@ -899,15 +898,16 @@ if(nrow(taxon.bins) != nrow(dist.matrix))
 # anc <- anc[-wh.to.cut, ]
 # taxon.bins <- taxon.bins[-wh.to.cut, ]
 # dist.matrix <- dist.matrix[-wh.to.cut, -wh.to.cut]
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa_results$vectors.cor)
+# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors)
 # Yay, all now match! Use these for disparity analyses.
 
 
 # View to confirm 
-taxon.bins[1:5, 1:5]
-anc[1:10, 1:10]
-dist.matrix[1:4, 1:4]
-pcoa_results$vectors.cor[1:4, 1:4]
+taxon.bins[[50]][1:5, 1:5]
+anc[[50]]$matrix_1$matrix[1:10, 1:10]
+dist.matrix[[50]]$distance_matrix[1:4, 1:4]
+pcoa.results[[50]]$vectors[1:4, 1:4]
+
 
 ## How many dimensions in PCoA for FRic and FDiv?
 
@@ -934,6 +934,7 @@ pcoa_results$vectors.cor[1:4, 1:4]
 #        'dist.matrix')
 #  M  =  maximum range in GED (using 'dist.matrix')
 #  V  =  total variance (using 'anc')
+#  R  =  sum of ranges (using 'pcoa' eigenvectors)
 # FRic = functional richness / convex hull volume (using 'pcoa' eigenvectors)
 # FEve = functional evenness (evenness in minimum spanning tree) (using
 #        'pcoa' eigenvectors)
@@ -944,29 +945,63 @@ pcoa_results$vectors.cor[1:4, 1:4]
 
 # Note that because of problematic taxa, unable to calculate FRic and FDiv with
 # the 'raw' treatment. So set calc.FRic.and.FDiv = FALSE
+
+
 m <- 6
+ntrees <- length(anc)
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+# Use load-balancing because of different run times for the MCMC optimizations
+opts <- list(preschedule = FALSE)
+clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
 (start <- Sys.time())
-nc <- ncol(taxon.bins)
-metrics <- data.frame(Age = as.numeric(mids), S = NA, H = NA, D = NA, M = NA, 
-                      V = NA, FRic = NA, FEve = NA, FDiv = NA, FDis = NA, 
-                      qual.FRic = NA)
-for(t in 1:nc) {
-  wh.gr <- unname(which(taxon.bins[, t]))
-  S <- length(wh.gr)
-  cat("age =", mids[t], ", ", S, "genera", "\n")
-  anc.sam <- anc[wh.gr, ]
-  dist.anc.sam <- dist.matrix[wh.gr, wh.gr]
-  pcoa.sam <- pcoa_results
-  pcoa.sam$vectors.cor <- pcoa_results$vectors.cor[wh.gr, ]
-  H <- nrow(unique(dist.anc.sam)) # NEW CHANGE: BETTER NA HANDLING
-  if (any(is.nan(dist.anc.sam)) | length(dist.anc.sam) == 0) next
-  if (S <= m | H <= m) next
-  FD <- calc_metrics2(sample = anc.sam, dist.sam = dist.anc.sam, 
-                      pcoa = pcoa.sam, m = m, stand.pcoa = TRUE, 
-                      calc.FRic.and.FDiv = TRUE)
-  metrics[t, 1 + seq.int(length(FD))] <- FD
+# Run each tree in parallel
+metrics <- foreach(i = 1:ntrees, .options.snow = opts, .inorder = TRUE, 
+                   .packages = "FD") %dopar% {
+  nc <- ncol(taxon.bins[[i]])
+  t.metrics <- data.frame(Age = as.numeric(mids), S = NA, H = NA, D = NA, 
+                          M = NA, V = NA, R = NA, FRic = NA, FEve = NA, 
+                          FDiv = NA, FDis = NA, qual.FRic = NA)
+  for(t in 1:nc) {
+    wh.gr <- unname(which(taxon.bins[[i]][, t]))
+    S <- length(wh.gr)
+    anc.sam <- anc[[i]]$matrix_1$matrix[wh.gr,]
+    dist.anc.sam <- dist.matrix[[i]]$distance_matrix[wh.gr, wh.gr]
+    pcoa.sam <- pcoa.results[[i]]
+    H <- nrow(unique(dist.anc.sam))
+    if (any(is.nan(dist.anc.sam)) | length(dist.anc.sam) == 0) next
+    if (S <= m | H <= m) next
+    FD <- calc_metrics2(sample = anc.sam, dist.sam = dist.anc.sam, 
+                        pcoa = pcoa.sam, m = m, stand.pcoa = TRUE, 
+                        calc.FRic.and.FDiv = FALSE)
+    t.metrics[t, 1 + seq.int(FD)] <- FD
+  }
+  return(t.metrics)
 }
+stopCluster(cl)
 (Sys.time() - start)
+
+## Save / reload metrics
+# morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
+# mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
+# constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
+# raw.metrics <- metrics; save(raw.metrics, file = "raw.metrics")
+# load("morph.metrics")
+# load("mode.metrics")
+# load("constant.metrics")
+# load("raw.metrics")
+beep(3)
+
+# Save tree 50 to .csv
+# write.csv(metrics, file = "metrics_morph.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_LH_mode.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_LH_constant.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_LH_raw.csv", row.names = FALSE)
+# metrics <- read.csv(file = "metrics_morph.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_LH_mode.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_LH_constant.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_LH_raw.csv", header = TRUE)
+
 
 # What proportion of PCoA eigenvalues included in ordination-based metrics?
 # (Note that because calculated on the entire PCoA eigenvectors, will not change
@@ -976,16 +1011,6 @@ round(summary(metrics$qual.FRic), 3)
 beep(3)
 head(metrics)
 
-
-## Save metrics
-# write.csv(metrics, file = "metrics_morph.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_LH_mode.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_LH_constant.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_LH_raw.csv", row.names = FALSE)
-# metrics <- read.csv(file = "metrics_morph.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_mode.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_constant.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_raw.csv", header = TRUE)
 
 par(mfrow = c(2, 4), mar = c(4, 4, 1, 0.2))
 for (c in 3:10) {
@@ -1089,7 +1114,7 @@ load("constant.pcoa")
 load("raw.pcoa")
 load("morph.pcoa")
 
-# Import ancestral states from 2-InferancestralStates.R
+# Import ancestral states from 2-InferAncestralStates.R
 load("mode.anc")
 load("constant.anc")
 load("raw.anc")
@@ -1102,10 +1127,10 @@ load("raw.distances.GED.5")
 load("morph.distances.GED.5")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa_results <- mode.pcoa
-# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa_results <- constant.pcoa
-# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa_results <- raw.pcoa
-# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa_results <- morph.pcoa
+anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa.results <- mode.pcoa
+# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa.results <- constant.pcoa
+# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa.results <- raw.pcoa
+# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa.results <- morph.pcoa
 
 # Load taxon.bins and taxon.list (built above)
 load("taxon.bins")
@@ -1117,30 +1142,30 @@ if(nrow(taxon.bins) != length(taxon.list))
 
 # Because a correction wasn't able to be applied for the 'constant' treatment,
 # need to amend as if it were (for consistency in downstream scripts)
-# pcoa_results$vectors.cor <- pcoa_results$vectors
-# pcoa_results$values$Corr_eig <- pcoa_results$values$Eigenvalues
+# pcoa.results$vectors <- pcoa.results$vectors
+# pcoa.results$values$Eigenvalues <- pcoa.results$values$Eigenvalues
 
 ## Want to remove missing taxa? (Only used for 'raw' data treatment)
 # Note the 'tree' is not included to prevent renumbering! See above for more
 # explanation.
-# trim.matrix <- TrimMorphDistMatrix(dist.matrix)
+# trim.matrix <- trim_matrix(dist.matrix)
 # wh.to.keep <- match(rownames(trim.matrix$DistMatrix), rownames(anc))
 # anc <- anc[wh.to.keep, ]
 # taxon.bins <- taxon.bins[wh.to.keep, ]
 # dist.matrix <- trim.matrix$DistMatrix
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa_results$vectors.cor)
+# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors)
 # wh.to.cut <- c(202, 228, 388, 394)
 # anc <- anc[-wh.to.cut, ]
 # taxon.bins <- taxon.bins[-wh.to.cut, ]
 # dist.matrix <- dist.matrix[-wh.to.cut, -wh.to.cut]
 # Confirm all these 4 objects have the same number of rows!
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa_results$vectors.cor)
+# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors)
 
 # View to confirm
 anc[1:5, 1:10]
 dist.matrix[1:5, 1:4]
 taxon.bins[1:5, 1:4]
-pcoa_results$vectors.cor[1:5, 1:5]
+pcoa.results$vectors[1:5, 1:5]
 
 ## Number of genera per interval
 
@@ -1189,8 +1214,8 @@ for(t in 1:nc) {
   if(S < std.g) next
   anc.sam <- anc[wh.gr, ]
   dist.anc.sam <- dist.matrix[wh.gr, wh.gr]
-  pcoa.sam <- pcoa_results
-  pcoa.sam$vectors.cor <- pcoa.sam$vectors.cor[wh.gr, ]
+  pcoa.sam <- pcoa.results
+  pcoa.sam$vectors <- pcoa.sam$vectors[wh.gr, ]
   H <- nrow(unique(dist.anc.sam))
   if (any(is.nan(dist.anc.sam)) | length(dist.anc.sam) == 0) next
   if (S <= m | H <= m) next
@@ -1205,7 +1230,7 @@ for(t in 1:nc) {
     sub.sam <- anc.sam[sampled, ]
     sub.dist <- dist.anc.sam[sampled, sampled]
     sub.pcoa <- pcoa.sam
-    sub.pcoa$vectors.cor <- sub.pcoa$vectors.cor[sampled, ]
+    sub.pcoa$vectors <- sub.pcoa$vectors[sampled, ]
 
     # Calculate metrics for each subsample
     FD <- calc_metrics2(sample = sub.sam, dist.sam = sub.dist, 
@@ -1616,63 +1641,63 @@ node.col <- "#A020F07F"  # Set purple transparent so overlays as density
 root.col <- "#FDE725FF"  # viridisLite::viridis(3)[3]
 
 # Set phylomorphospace/phyloecospace plotting variables
-Tree <- morph.pcoa$Tree
+Tree <- morph.pcoa$tree
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
                                 as.character(Tree$edge[, 2])))
-x.lab1 <- paste0("PCO 1 (", round(100 * morph.pcoa$values$Rel_corr_eig[1], 1), 
+x.lab1 <- paste0("PCO 1 (", round(100 * morph.pcoa$values$Relative_eig[1], 1), 
                  "% of total variance)")
-y.lab2 <- paste0("PCO 2 (", round(100 * morph.pcoa$values$Rel_corr_eig[2], 1), 
+y.lab2 <- paste0("PCO 2 (", round(100 * morph.pcoa$values$Relative_eig[2], 1), 
                  "% of total variance)")
-x.lab3 <- paste0("PCO 3 (", round(100 * morph.pcoa$values$Rel_corr_eig[3], 1), 
+x.lab3 <- paste0("PCO 3 (", round(100 * morph.pcoa$values$Relative_eig[3], 1), 
                  "% of total variance)")
-y.lab4 <- paste0("PCO 4 (", round(100 * morph.pcoa$values$Rel_corr_eig[4], 1), 
+y.lab4 <- paste0("PCO 4 (", round(100 * morph.pcoa$values$Relative_eig[4], 1), 
                  "% of total variance)")
-x.lab5 <- paste0("PCO 5 (", round(100 * morph.pcoa$values$Rel_corr_eig[5], 1), 
+x.lab5 <- paste0("PCO 5 (", round(100 * morph.pcoa$values$Relative_eig[5], 1), 
                  "% of total variance)")
-y.lab6 <- paste0("PCO 6 (", round(100 * morph.pcoa$values$Rel_corr_eig[6], 1), 
+y.lab6 <- paste0("PCO 6 (", round(100 * morph.pcoa$values$Relative_eig[6], 1), 
                  "% of total variance)")
 
 # pdf(file = "morphospace.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
-                           A = morph.pcoa$vectors.cor[node.seq, 1:2], 
+phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 1:2], 
+                           A = morph.pcoa$vectors[node.seq, 1:2], 
                            control = con, label = "off", xlab = x.lab1, 
                            ylab = y.lab2, pch = NA)
-points(x = morph.pcoa$vectors.cor[node.seq, 1],
-       y = morph.pcoa$vectors.cor[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[tip.seq, 1], 
-       y = morph.pcoa$vectors.cor[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 1], 
-       y = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 2], col = root.col, pch = 16, 
+points(x = morph.pcoa$vectors[node.seq, 1],
+       y = morph.pcoa$vectors[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[tip.seq, 1], 
+       y = morph.pcoa$vectors[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[(max(tip.seq) + 1), 1], 
+       y = morph.pcoa$vectors[(max(tip.seq) + 1), 2], col = root.col, pch = 16, 
        cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 3:4], 
-                           A = morph.pcoa$vectors.cor[node.seq, 3:4], 
+phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 3:4], 
+                           A = morph.pcoa$vectors[node.seq, 3:4], 
                            control = con, label = "off", xlab = x.lab3, 
                            ylab = y.lab4, pch = NA)
-points(x = morph.pcoa$vectors.cor[node.seq, 3],
-       y = morph.pcoa$vectors.cor[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[tip.seq, 3], 
-       y = morph.pcoa$vectors.cor[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 3], 
-       y = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
+points(x = morph.pcoa$vectors[node.seq, 3],
+       y = morph.pcoa$vectors[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[tip.seq, 3], 
+       y = morph.pcoa$vectors[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[(max(tip.seq) + 1), 3], 
+       y = morph.pcoa$vectors[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 5:6], 
-                           A = morph.pcoa$vectors.cor[node.seq, 5:6], 
+phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 5:6], 
+                           A = morph.pcoa$vectors[node.seq, 5:6], 
                            control = con, label = "off", xlab = x.lab5, 
                            ylab = y.lab6, pch = NA)
-points(x = morph.pcoa$vectors.cor[node.seq, 5],
-       y = morph.pcoa$vectors.cor[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[tip.seq, 5], 
-       y = morph.pcoa$vectors.cor[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
-points(x = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 5], 
-       y = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
+points(x = morph.pcoa$vectors[node.seq, 5],
+       y = morph.pcoa$vectors[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[tip.seq, 5], 
+       y = morph.pcoa$vectors[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
+points(x = morph.pcoa$vectors[(max(tip.seq) + 1), 5], 
+       y = morph.pcoa$vectors[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
        cex = 1.25)
 
 par(mar = c(0, 0, 0, 0))
@@ -1685,71 +1710,71 @@ par(op)
 
 
 # First 3 in 3-D (wait a few seconds while renders)
-phylomorphospace3d(tree = morph.pcoa$Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:3], 
-                 A = morph.pcoa$vectors.cor[node.seq, 1:3], 
+phylomorphospace3d(tree = morph.pcoa$tree, X = morph.pcoa$vectors[tip.seq, 1:3], 
+                 A = morph.pcoa$vectors[node.seq, 1:3], 
                  control = c(con, list(ftype = "off")))
 par(op)
 
 
 ## Same, with 'mode' ecological data set
 # Set phylomorphospace/phylomorphospace plotting variables
-Tree <- mode.pcoa$Tree
+Tree <- mode.pcoa$tree
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
                                 as.character(Tree$edge[, 2])))
-x.lab1 <- paste0("PCO 1 (", round(100 * mode.pcoa$values$Rel_corr_eig[1], 1), 
+x.lab1 <- paste0("PCO 1 (", round(100 * mode.pcoa$values$Relative_eig[1], 1), 
                  "% of total variance)")
-y.lab2 <- paste0("PCO 2 (", round(100 * mode.pcoa$values$Rel_corr_eig[2], 1), 
+y.lab2 <- paste0("PCO 2 (", round(100 * mode.pcoa$values$Relative_eig[2], 1), 
                  "% of total variance)")
-x.lab3 <- paste0("PCO 3 (", round(100 * mode.pcoa$values$Rel_corr_eig[3], 1), 
+x.lab3 <- paste0("PCO 3 (", round(100 * mode.pcoa$values$Relative_eig[3], 1), 
                  "% of total variance)")
-y.lab4 <- paste0("PCO 4 (", round(100 * mode.pcoa$values$Rel_corr_eig[4], 1), 
+y.lab4 <- paste0("PCO 4 (", round(100 * mode.pcoa$values$Relative_eig[4], 1), 
                  "% of total variance)")
-x.lab5 <- paste0("PCO 5 (", round(100 * mode.pcoa$values$Rel_corr_eig[5], 1), 
+x.lab5 <- paste0("PCO 5 (", round(100 * mode.pcoa$values$Relative_eig[5], 1), 
                  "% of total variance)")
-y.lab6 <- paste0("PCO 6 (", round(100 * mode.pcoa$values$Rel_corr_eig[6], 1), 
+y.lab6 <- paste0("PCO 6 (", round(100 * mode.pcoa$values$Relative_eig[6], 1), 
                  "% of total variance)")
 
 # pdf(file = "ecospace_mode.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
-                           A = mode.pcoa$vectors.cor[node.seq, 1:2], 
+phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 1:2], 
+                           A = mode.pcoa$vectors[node.seq, 1:2], 
                            control = con, label = "off", xlab = x.lab1, 
                            ylab = y.lab2, pch = NA)
-points(x = mode.pcoa$vectors.cor[node.seq, 1],
-       y = mode.pcoa$vectors.cor[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[tip.seq, 1], 
-       y = mode.pcoa$vectors.cor[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 1], 
-       y = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 2], col = root.col, pch = 16, 
+points(x = mode.pcoa$vectors[node.seq, 1],
+       y = mode.pcoa$vectors[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[tip.seq, 1], 
+       y = mode.pcoa$vectors[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[(max(tip.seq) + 1), 1], 
+       y = mode.pcoa$vectors[(max(tip.seq) + 1), 2], col = root.col, pch = 16, 
        cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 3:4], 
-                           A = mode.pcoa$vectors.cor[node.seq, 3:4], 
+phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 3:4], 
+                           A = mode.pcoa$vectors[node.seq, 3:4], 
                            control = con, label = "off", xlab = x.lab3, 
                            ylab = y.lab4, pch = NA)
-points(x = mode.pcoa$vectors.cor[node.seq, 3],
-       y = mode.pcoa$vectors.cor[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[tip.seq, 3], 
-       y = mode.pcoa$vectors.cor[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 3], 
-       y = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
+points(x = mode.pcoa$vectors[node.seq, 3],
+       y = mode.pcoa$vectors[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[tip.seq, 3], 
+       y = mode.pcoa$vectors[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[(max(tip.seq) + 1), 3], 
+       y = mode.pcoa$vectors[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 5:6], 
-                           A = mode.pcoa$vectors.cor[node.seq, 5:6], 
+phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 5:6], 
+                           A = mode.pcoa$vectors[node.seq, 5:6], 
                            control = con, label = "off", xlab = x.lab5, 
                            ylab = y.lab6, pch = NA)
-points(x = mode.pcoa$vectors.cor[node.seq, 5],
-       y = mode.pcoa$vectors.cor[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[tip.seq, 5], 
-       y = mode.pcoa$vectors.cor[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
-points(x = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 5], 
-       y = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
+points(x = mode.pcoa$vectors[node.seq, 5],
+       y = mode.pcoa$vectors[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[tip.seq, 5], 
+       y = mode.pcoa$vectors[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
+points(x = mode.pcoa$vectors[(max(tip.seq) + 1), 5], 
+       y = mode.pcoa$vectors[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
        cex = 1.25)
 
 par(mar = c(0, 0, 0, 0))
@@ -1761,8 +1786,8 @@ legend("left", title = "phyloecospace (mode)", legend = c("tips", "nodes", "root
 
 
 # First 3 in 3-D (wait a few seconds while renders)
-phylomorphospace3d(tree = mode.pcoa$Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:3], 
-                   A = mode.pcoa$vectors.cor[node.seq, 1:3], 
+phylomorphospace3d(tree = mode.pcoa$tree, X = mode.pcoa$vectors[tip.seq, 1:3], 
+                   A = mode.pcoa$vectors[node.seq, 1:3], 
                    control = c(con, list(ftype = "off")))
 par(op)
 
@@ -1773,7 +1798,7 @@ par(op)
 ## Same, with 'constant' ecological data set
 # Set phylomorphospace/phylomorphospace plotting variables
 # Plotting uncorrected eigenvectors instead of corrected ones
-Tree <- constant.pcoa$Tree
+Tree <- constant.pcoa$tree
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
@@ -1842,8 +1867,8 @@ par(op)
 
 
 # First 3 in 3-D (wait a few seconds while renders)
-phylomorphospace3d(tree = constant.pcoa$Tree, X = constant.pcoa$vectors.cor[tip.seq, 1:3], 
-                A = constant.pcoa$vectors.cor[node.seq, 1:3], 
+phylomorphospace3d(tree = constant.pcoa$tree, X = constant.pcoa$vectors[tip.seq, 1:3], 
+                A = constant.pcoa$vectors[node.seq, 1:3], 
                 control = c(con, list(ftype = "off")))
 par(op)
 
@@ -1854,69 +1879,69 @@ par(op)
 ## Same, with 'raw' ecological data set
 
 # Remove missing taxa (Only used for 'raw' data treatment)
-trim.matrix <- TrimMorphDistMatrix(raw.distances.GED.5$distance_matrix, 
+trim.matrix <- trim_matrix(raw.distances.GED.5$distance_matrix, 
                                    Tree = tree)
 raw.distances.GED.5$distance_matrix <- trim.matrix$DistMatrix
-raw.distances.GED.5$Tree <- trim.matrix$Tree
-raw.distances.GED.5$RemovedTaxa <- trim.matrix$RemovedTaxa
+raw.distances.GED.5$tree <- trim.matrix$tree
+raw.distances.GED.5$removed_taxa <- trim.matrix$removed_taxa
 
 # Set phylomorphospace/phylomorphospace plotting variables
-Tree <- raw.distances.GED.5$Tree  # Note using the trimmed tree here (unlike above)
+Tree <- raw.distances.GED.5$tree  # Note using the trimmed tree here (unlike above)
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
                                 as.character(Tree$edge[, 2])))
-x.lab1 <- paste0("PCO 1 (", round(100 * raw.pcoa$values$Rel_corr_eig[1], 1), 
+x.lab1 <- paste0("PCO 1 (", round(100 * raw.pcoa$values$Relative_eig[1], 1), 
                  "% of total variance)")
-y.lab2 <- paste0("PCO 2 (", round(100 * raw.pcoa$values$Rel_corr_eig[2], 1), 
+y.lab2 <- paste0("PCO 2 (", round(100 * raw.pcoa$values$Relative_eig[2], 1), 
                  "% of total variance)")
-x.lab3 <- paste0("PCO 3 (", round(100 * raw.pcoa$values$Rel_corr_eig[3], 1), 
+x.lab3 <- paste0("PCO 3 (", round(100 * raw.pcoa$values$Relative_eig[3], 1), 
                  "% of total variance)")
-y.lab4 <- paste0("PCO 4 (", round(100 * raw.pcoa$values$Rel_corr_eig[4], 1), 
+y.lab4 <- paste0("PCO 4 (", round(100 * raw.pcoa$values$Relative_eig[4], 1), 
                  "% of total variance)")
-x.lab5 <- paste0("PCO 5 (", round(100 * raw.pcoa$values$Rel_corr_eig[5], 1), 
+x.lab5 <- paste0("PCO 5 (", round(100 * raw.pcoa$values$Relative_eig[5], 1), 
                  "% of total variance)")
-y.lab6 <- paste0("PCO 6 (", round(100 * raw.pcoa$values$Rel_corr_eig[6], 1), 
+y.lab6 <- paste0("PCO 6 (", round(100 * raw.pcoa$values$Relative_eig[6], 1), 
                  "% of total variance)")
 
 # pdf(file = "ecospace_raw.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 1:2],
-                           A = raw.pcoa$vectors.cor[node.seq, 1:2],
+phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors[tip.seq, 1:2],
+                           A = raw.pcoa$vectors[node.seq, 1:2],
                            control = con, label = "off", xlab = x.lab1,
                            ylab = y.lab2, pch = NA)
-points(x = raw.pcoa$vectors.cor[node.seq, 1],
-       y = raw.pcoa$vectors.cor[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[tip.seq, 1], 
-       y = raw.pcoa$vectors.cor[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 1], 
-       y = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 2], col = root.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[node.seq, 1],
+       y = raw.pcoa$vectors[node.seq, 2], col = node.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[tip.seq, 1], 
+       y = raw.pcoa$vectors[tip.seq, 2], col = tip.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[(max(tip.seq) + 1), 1], 
+       y = raw.pcoa$vectors[(max(tip.seq) + 1), 2], col = root.col, pch = 16, cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 3:4], 
-                           A = raw.pcoa$vectors.cor[node.seq, 3:4],
+phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors[tip.seq, 3:4], 
+                           A = raw.pcoa$vectors[node.seq, 3:4],
                            control = con, label = "off", xlab = x.lab3,
                            ylab = y.lab4, pch = NA)
-points(x = raw.pcoa$vectors.cor[node.seq, 3],
-       y = raw.pcoa$vectors.cor[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[tip.seq, 3], 
-       y = raw.pcoa$vectors.cor[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 3], 
-       y = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
+points(x = raw.pcoa$vectors[node.seq, 3],
+       y = raw.pcoa$vectors[node.seq, 4], col = node.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[tip.seq, 3], 
+       y = raw.pcoa$vectors[tip.seq, 4], col = tip.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[(max(tip.seq) + 1), 3], 
+       y = raw.pcoa$vectors[(max(tip.seq) + 1), 4], col = root.col, pch = 16, 
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 5:6], 
-                           A = raw.pcoa$vectors.cor[node.seq, 5:6],
+phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors[tip.seq, 5:6], 
+                           A = raw.pcoa$vectors[node.seq, 5:6],
                            control = con, label = "off", xlab = x.lab5,
                            ylab = y.lab6, pch = NA)
-points(x = raw.pcoa$vectors.cor[node.seq, 5],
-       y = raw.pcoa$vectors.cor[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[tip.seq, 5], 
-       y = raw.pcoa$vectors.cor[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
-points(x = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 5], 
-       y = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
+points(x = raw.pcoa$vectors[node.seq, 5],
+       y = raw.pcoa$vectors[node.seq, 6], col = node.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[tip.seq, 5], 
+       y = raw.pcoa$vectors[tip.seq, 6], col = tip.col, pch = 16, cex = 1.25)
+points(x = raw.pcoa$vectors[(max(tip.seq) + 1), 5], 
+       y = raw.pcoa$vectors[(max(tip.seq) + 1), 6], col = root.col, pch = 16, 
        cex = 1.25)
 
 par(mar = c(0, 0, 0, 0))
@@ -1930,9 +1955,9 @@ par(op)
 
 
 # First 3 in 3-D (wait a few seconds while renders)
-phylomorphospace3d(tree = raw.distances.GED.5$Tree, 
-                   X = raw.pcoa$vectors.cor[tip.seq, 1:3], 
-                   A = raw.pcoa$vectors.cor[node.seq, 1:3],
+phylomorphospace3d(tree = raw.distances.GED.5$tree, 
+                   X = raw.pcoa$vectors[tip.seq, 1:3], 
+                   A = raw.pcoa$vectors[node.seq, 1:3],
                    control = c(con, list(ftype = "off")))
 par(op)
 
@@ -1942,7 +1967,7 @@ par(op)
 ## KMEANS CLUSTERING TO INTERPRET SPACES #######################################
 
 load("taxon.list")
-if(nrow(morph.pcoa$vectors.cor) != length(taxon.list))
+if(nrow(morph.pcoa$vectors) != length(taxon.list))
   stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
 
 # Plot within-cluster sum-of-squares vs no. of clusters
@@ -1951,7 +1976,7 @@ no.axes <- 6
 ks <- c(1:10, seq(20, 50, by = 10), 75, 100)
 sum.sq <- array(dim = length(ks))
 for(k in 1:length(ks)){
-  sum.sq[k] <- kmeans(morph.pcoa$vectors.cor[, 1:no.axes], centers = ks[k],
+  sum.sq[k] <- kmeans(morph.pcoa$vectors[, 1:no.axes], centers = ks[k],
                       nstart = 25, iter.max = 1000)$tot.withinss
 }
 plot(ks, sum.sq, type = "b", pch = 16, xlab = "No. k-means clusters",
@@ -1964,13 +1989,13 @@ par(op)
 # pdf(file = "kmeans_morph.pdf")
 k <- 4
 set.seed(1234) # To allow replication of order
-km <- kmeans(morph.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 100)
+km <- kmeans(morph.pcoa$vectors[, 1:6], centers = k, nstart = 25, iter.max = 100)
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
 cols <- plasma(k)[km$cluster]
 pchs <-as.character(km$cluster)
-plot(morph.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
-plot(morph.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
-plot(morph.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
+plot(morph.pcoa$vectors[, 1:2], col = cols, pch = pchs, cex = 0.75)
+plot(morph.pcoa$vectors[, 3:4], col = cols, pch = pchs, cex = 0.75)
+plot(morph.pcoa$vectors[, 5:6], col = cols, pch = pchs, cex = 0.75)
 table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
 legend.groups <- c("edrio, aster, ech, oph & cyclo", 
                    "stylo, homo, solut, cteno, helico",
@@ -1988,7 +2013,7 @@ no.axes <- 4
 ks <- c(1:10, seq(20, 50, by = 10), 75, 100)
 sum.sq <- array(dim = length(ks))
 for(k in 1:length(ks)){
-  sum.sq[k] <- kmeans(mode.pcoa$vectors.cor[, 1:no.axes], centers = ks[k],
+  sum.sq[k] <- kmeans(mode.pcoa$vectors[, 1:no.axes], centers = ks[k],
                       nstart = 25, iter.max = 1000)$tot.withinss
 }
 plot(ks, sum.sq, type = "b", pch = 16, xlab = "No. k-means clusters",
@@ -2001,13 +2026,13 @@ par(op)
 # pdf(file = "kmeans_eco_mode.pdf")
 k <- 4
 set.seed(1) # To allow replication of order
-km <- kmeans(mode.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 100)
+km <- kmeans(mode.pcoa$vectors[, 1:6], centers = k, nstart = 25, iter.max = 100)
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
 cols <- plasma(k)[km$cluster]
 pchs <-as.character(km$cluster)
-plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
-plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
-plot(mode.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
+plot(mode.pcoa$vectors[, 1:2], col = cols, pch = pchs, cex = 0.75)
+plot(mode.pcoa$vectors[, 3:4], col = cols, pch = pchs, cex = 0.75)
+plot(mode.pcoa$vectors[, 5:6], col = cols, pch = pchs, cex = 0.75)
 table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
 legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
                    "edr, eocr, rh, dipl, paracr, hel & more cri",
@@ -2101,15 +2126,15 @@ eco.pcoa <- mode.pcoa
 # load("constant.pcoa"); eco.pcoa <- constant.pcoa
 # load("raw.pcoa"); eco.pcoa <- raw.pcoa
 # Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
+morph.pcoa$vectors <- stand.pcoa(vectors = morph.pcoa$vectors, 
+                                     eigenvalues = morph.pcoa$values$Eigenvalues)
+eco.pcoa$vectors <- stand.pcoa(vectors = eco.pcoa$vectors, 
+                                   eigenvalues = eco.pcoa$values$Eigenvalues)
 
 for(cl in 1:nrow(class.space)) {
   wh.cl <- which(taxon.list == classes[cl])
-  eco.coords <- eco.pcoa$vectors.cor[wh.cl, 1:m]
-  morph.coords <- morph.pcoa$vectors.cor[wh.cl, 1:m]
+  eco.coords <- eco.pcoa$vectors[wh.cl, 1:m]
+  morph.coords <- morph.pcoa$vectors[wh.cl, 1:m]
   if (length(eco.coords) == 2L) next
   # Can not calculate if there are less than 'm' distinct points
   H.eco <- nrow(unique(round(eco.coords, 5)))
@@ -2121,8 +2146,8 @@ for(cl in 1:nrow(class.space)) {
 }
 
 # Standardize by entire morphospace / ecospace
-morph.total <- geometry::convhulln(morph.pcoa$vectors.cor[, 1:m], "FA")$vol
-eco.total <- geometry::convhulln(eco.pcoa$vectors.cor[, 1:m], "FA")$vol
+morph.total <- geometry::convhulln(morph.pcoa$vectors[, 1:m], "FA")$vol
+eco.total <- geometry::convhulln(eco.pcoa$vectors[, 1:m], "FA")$vol
 class.space$morph <- class.space$morph / morph.total
 class.space$eco <- class.space$eco / eco.total
 
@@ -2178,15 +2203,15 @@ eco.pcoa <- mode.pcoa
 # load("constant.pcoa"); eco.pcoa <- constant.pcoa
 # load("raw.pcoa"); eco.pcoa <- raw.pcoa
 # Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
+morph.pcoa$vectors <- stand.pcoa(vectors = morph.pcoa$vectors, 
+                                     eigenvalues = morph.pcoa$values$Eigenvalues)
+eco.pcoa$vectors <- stand.pcoa(vectors = eco.pcoa$vectors, 
+                                   eigenvalues = eco.pcoa$values$Eigenvalues)
 
 for(subph in 1:nrow(subphylum.space)) {
   wh.subph <- which(subphylum.list == subphyla[subph])
-  eco.coords <- eco.pcoa$vectors.cor[wh.subph, 1:m]
-  morph.coords <- morph.pcoa$vectors.cor[wh.subph, 1:m]
+  eco.coords <- eco.pcoa$vectors[wh.subph, 1:m]
+  morph.coords <- morph.pcoa$vectors[wh.subph, 1:m]
   if (length(eco.coords) == 2L) next
   # Can not calculate if there are less than 'm' distinct points
   H.eco <- nrow(unique(round(eco.coords, 5)))
@@ -2198,8 +2223,8 @@ for(subph in 1:nrow(subphylum.space)) {
 }
 
 # Standardize by entire morphospace / ecospace
-morph.total <- geometry::convhulln(morph.pcoa$vectors.cor[, 1:m], "FA")$vol
-eco.total <- geometry::convhulln(eco.pcoa$vectors.cor[, 1:m], "FA")$vol
+morph.total <- geometry::convhulln(morph.pcoa$vectors[, 1:m], "FA")$vol
+eco.total <- geometry::convhulln(eco.pcoa$vectors[, 1:m], "FA")$vol
 subphylum.space$morph <- subphylum.space$morph / morph.total
 subphylum.space$eco <- subphylum.space$eco / eco.total
 
@@ -2248,14 +2273,14 @@ eco.pcoa <- mode.pcoa
 # load("constant.pcoa"); eco.pcoa <- constant.pcoa
 # load("raw.pcoa"); eco.pcoa <- raw.pcoa
 # Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
+morph.pcoa$vectors <- stand.pcoa(vectors = morph.pcoa$vectors, 
+                                     eigenvalues = morph.pcoa$values$Eigenvalues)
+eco.pcoa$vectors <- stand.pcoa(vectors = eco.pcoa$vectors, 
+                                   eigenvalues = eco.pcoa$values$Eigenvalues)
 phylum.space <- data.frame(morph = NA, eco = NA)
 
-eco.coords <- eco.pcoa$vectors.cor[, 1:m]
-morph.coords <- morph.pcoa$vectors.cor[, 1:m]
+eco.coords <- eco.pcoa$vectors[, 1:m]
+morph.coords <- morph.pcoa$vectors[, 1:m]
 # Can not calculate if there are less than 'm' distinct points
 H.eco <- nrow(unique(round(eco.coords, 5)))
 H.morph <- nrow(unique(round(morph.coords, 5)))
@@ -2291,7 +2316,7 @@ par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25), pty = "m")
 branch.col <- "gray75"
 tip.col <- "#0000FF7F"   # Set blue transparent so overlays as density
 node.col <- "#A020F07F"  # Set purple transparent so overlays as density
-Tree <- morph.pcoa$Tree  # Same tree topology for both morphology and ecology
+Tree <- morph.pcoa$tree  # Same tree topology for both morphology and ecology
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
@@ -2303,45 +2328,45 @@ for(t in nt:1) {
   wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   wh.node <- wh.gr[which(wh.gr > Ntip(Tree))]
 
-  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
-                             A = morph.pcoa$vectors.cor[node.seq, 1:2], 
+  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 1:2], 
+                             A = morph.pcoa$vectors[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
   mtext(paste(colnames(taxon.bins)[t], "morphospace"))
-  points(x = morph.pcoa$vectors.cor[wh.node, 1],
-         y = morph.pcoa$vectors.cor[wh.node, 2], col = node.col, pch = 16)
-  points(x = morph.pcoa$vectors.cor[wh.tip, 1], 
-         y = morph.pcoa$vectors.cor[wh.tip, 2], col = tip.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.node, 1],
+         y = morph.pcoa$vectors[wh.node, 2], col = node.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.tip, 1], 
+         y = morph.pcoa$vectors[wh.tip, 2], col = tip.col, pch = 16)
 
-  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
-                             A = mode.pcoa$vectors.cor[node.seq, 1:2], 
+  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 1:2], 
+                             A = mode.pcoa$vectors[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
   mtext(paste(colnames(taxon.bins)[t], "ecospace"))
-  points(x = mode.pcoa$vectors.cor[wh.node, 1],
-         y = mode.pcoa$vectors.cor[wh.node, 2], col = node.col, pch = 16)
-  points(x = mode.pcoa$vectors.cor[wh.tip, 1], 
-         y = mode.pcoa$vectors.cor[wh.tip, 2], col = tip.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.node, 1],
+         y = mode.pcoa$vectors[wh.node, 2], col = node.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.tip, 1], 
+         y = mode.pcoa$vectors[wh.tip, 2], col = tip.col, pch = 16)
   
-  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 3:4], 
-                             A = morph.pcoa$vectors.cor[node.seq, 3:4], 
+  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 3:4], 
+                             A = morph.pcoa$vectors[node.seq, 3:4], 
                              control = con, label = "off", xlab = "PCO 3", 
                              ylab = "PCO 4", pch = NA)
   mtext(paste(colnames(taxon.bins)[t], "morphospace"))
-  points(x = morph.pcoa$vectors.cor[wh.node, 3],
-         y = morph.pcoa$vectors.cor[wh.node, 4], col = node.col, pch = 16)
-  points(x = morph.pcoa$vectors.cor[wh.tip, 3], 
-         y = morph.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.node, 3],
+         y = morph.pcoa$vectors[wh.node, 4], col = node.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.tip, 3], 
+         y = morph.pcoa$vectors[wh.tip, 4], col = tip.col, pch = 16)
   
-  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 3:4], 
-                             A = mode.pcoa$vectors.cor[node.seq, 3:4], 
+  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 3:4], 
+                             A = mode.pcoa$vectors[node.seq, 3:4], 
                              control = con, label = "off", xlab = "PCO 3", 
                              ylab = "PCO 4", pch = NA)
   mtext(paste(colnames(taxon.bins)[t], "ecospace"))
-  points(x = mode.pcoa$vectors.cor[wh.node, 3],
-         y = mode.pcoa$vectors.cor[wh.node, 4], col = node.col, pch = 16)
-  points(x = mode.pcoa$vectors.cor[wh.tip, 3], 
-         y = mode.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.node, 3],
+         y = mode.pcoa$vectors[wh.node, 4], col = node.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.tip, 3], 
+         y = mode.pcoa$vectors[wh.tip, 4], col = tip.col, pch = 16)
 
   }
 # dev.off()
@@ -2360,7 +2385,7 @@ branch.col <- "gray75"
 tip.col <- "#0000FF7F"   # Set blue transparent so overlays as density
 node.col <- "#A020F07F"  # Set purple transparent so overlays as density
 cam.col <- "#87CEEB7F"   # For Camerata, overlay sky blue 
-Tree <- morph.pcoa$Tree  # Same tree topology for both morphology and ecology
+Tree <- morph.pcoa$tree  # Same tree topology for both morphology and ecology
 tip.seq <- 1:Ntip(Tree)
 node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
@@ -2393,58 +2418,58 @@ for(cl in 1:ncl) {
   wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   wh.node <- wh.gr[which(wh.gr > Ntip(Tree))]
   
-  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
-                             A = morph.pcoa$vectors.cor[node.seq, 1:2], 
+  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 1:2], 
+                             A = morph.pcoa$vectors[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
   mtext(paste(classes[cl], "morphospace"))
-  points(x = morph.pcoa$vectors.cor[wh.node, 1],
-         y = morph.pcoa$vectors.cor[wh.node, 2], col = node.col, pch = 16)
-  points(x = morph.pcoa$vectors.cor[wh.tip, 1], 
-         y = morph.pcoa$vectors.cor[wh.tip, 2], col = tip.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.node, 1],
+         y = morph.pcoa$vectors[wh.node, 2], col = node.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.tip, 1], 
+         y = morph.pcoa$vectors[wh.tip, 2], col = tip.col, pch = 16)
   # Overlay camerate crinoids
   if (classes[cl] == "Crinoidea")
-    points(x = morph.pcoa$vectors.cor[wh.cam, 1],
-           y = morph.pcoa$vectors.cor[wh.cam, 2], col = cam.col, pch = 16)
+    points(x = morph.pcoa$vectors[wh.cam, 1],
+           y = morph.pcoa$vectors[wh.cam, 2], col = cam.col, pch = 16)
 
-  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
-                             A = mode.pcoa$vectors.cor[node.seq, 1:2], 
+  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 1:2], 
+                             A = mode.pcoa$vectors[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
   mtext(paste(classes[cl], "ecospace"))
-  points(x = mode.pcoa$vectors.cor[wh.node, 1],
-         y = mode.pcoa$vectors.cor[wh.node, 2], col = node.col, pch = 16)
-  points(x = mode.pcoa$vectors.cor[wh.tip, 1], 
-         y = mode.pcoa$vectors.cor[wh.tip, 2], col = tip.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.node, 1],
+         y = mode.pcoa$vectors[wh.node, 2], col = node.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.tip, 1], 
+         y = mode.pcoa$vectors[wh.tip, 2], col = tip.col, pch = 16)
   if (classes[cl] == "Crinoidea")
-    points(x = mode.pcoa$vectors.cor[wh.cam, 1],
-           y = mode.pcoa$vectors.cor[wh.cam, 2], col = cam.col, pch = 16)
+    points(x = mode.pcoa$vectors[wh.cam, 1],
+           y = mode.pcoa$vectors[wh.cam, 2], col = cam.col, pch = 16)
   
-  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 3:4], 
-                             A = morph.pcoa$vectors.cor[node.seq, 3:4], 
+  phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors[tip.seq, 3:4], 
+                             A = morph.pcoa$vectors[node.seq, 3:4], 
                              control = con, label = "off", xlab = "PCO 3", 
                              ylab = "PCO 4", pch = NA)
   mtext(paste(classes[cl], "morphospace"))
-  points(x = morph.pcoa$vectors.cor[wh.node, 3],
-         y = morph.pcoa$vectors.cor[wh.node, 4], col = node.col, pch = 16)
-  points(x = morph.pcoa$vectors.cor[wh.tip, 3], 
-         y = morph.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.node, 3],
+         y = morph.pcoa$vectors[wh.node, 4], col = node.col, pch = 16)
+  points(x = morph.pcoa$vectors[wh.tip, 3], 
+         y = morph.pcoa$vectors[wh.tip, 4], col = tip.col, pch = 16)
   if (classes[cl] == "Crinoidea")
-    points(x = morph.pcoa$vectors.cor[wh.cam, 3],
-           y = morph.pcoa$vectors.cor[wh.cam, 4], col = cam.col, pch = 16)
+    points(x = morph.pcoa$vectors[wh.cam, 3],
+           y = morph.pcoa$vectors[wh.cam, 4], col = cam.col, pch = 16)
   
-  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 3:4], 
-                             A = mode.pcoa$vectors.cor[node.seq, 3:4], 
+  phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors[tip.seq, 3:4], 
+                             A = mode.pcoa$vectors[node.seq, 3:4], 
                              control = con, label = "off", xlab = "PCO 3", 
                              ylab = "PCO 4", pch = NA)
   mtext(paste(classes[cl], "ecospace"))
-  points(x = mode.pcoa$vectors.cor[wh.node, 3],
-         y = mode.pcoa$vectors.cor[wh.node, 4], col = node.col, pch = 16)
-  points(x = mode.pcoa$vectors.cor[wh.tip, 3], 
-         y = mode.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.node, 3],
+         y = mode.pcoa$vectors[wh.node, 4], col = node.col, pch = 16)
+  points(x = mode.pcoa$vectors[wh.tip, 3], 
+         y = mode.pcoa$vectors[wh.tip, 4], col = tip.col, pch = 16)
   if (classes[cl] == "Crinoidea")
-    points(x = mode.pcoa$vectors.cor[wh.cam, 3],
-           y = mode.pcoa$vectors.cor[wh.cam, 4], col = cam.col, pch = 16)
+    points(x = mode.pcoa$vectors[wh.cam, 3],
+           y = mode.pcoa$vectors[wh.cam, 4], col = cam.col, pch = 16)
   
 }
 # dev.off()
