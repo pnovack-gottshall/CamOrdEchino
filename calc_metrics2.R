@@ -19,9 +19,9 @@ calc_metrics2 <- function(sample = NA,
     setwd(tempdir())     # Specify the pre-built (and CPU-process unique) temp directory for storage of vert.txt temp files for convex hull calculations
   on.exit(setwd(odir))
   sam.out <- data.frame(S = integer(1), H = integer(1), D = numeric(1), 
-                        M = numeric(1), V = numeric(1), FRic = numeric(1), 
-                        FEve = numeric(1), FDiv = numeric(1), FDis = numeric(1),
-                        qual.FRic = numeric(1))
+                        M = numeric(1), V = numeric(1), R = numeric(1), 
+                        FRic = numeric(1), FEve = numeric(1), FDiv = numeric(1), 
+                        FDis = numeric(1), qual.FRic = numeric(1))
   sam <- sample[1:s,]
   sam.out$S <- s
   H <- nrow(unique(dist.sam))
@@ -31,6 +31,9 @@ calc_metrics2 <- function(sample = NA,
   sam.out$D <- mean(dist.sam, na.rm = TRUE)
   sam.out$M <- max(dist.sam, na.rm = TRUE)
   sam.out$V <- sqrt(sum(apply(sam, 2, var, na.rm = TRUE), na.rm = TRUE))
+  maxes <- apply(pcoa$vectors, 2, max, na.rm = TRUE)
+  mins <- apply(pcoa$vectors, 2, min, na.rm = TRUE)
+  sam.out$R <- sum(maxes - mins, na.rm = TRUE)
   if (s <= m | H <= m)
     next
   FD <- simple.dbFD(pcoa = pcoa, dist.matrix = dist.sam, m = m, 
