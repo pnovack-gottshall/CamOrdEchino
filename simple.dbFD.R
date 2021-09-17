@@ -41,13 +41,13 @@ simple.dbFD <- function(pcoa = NULL, dist.matrix = NULL, m = NA,
   }
   # Standardize the eigenvectors according to magnitude of eigenvalues (if desired)
   if(stand.pcoa)
-    all.vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
+    vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
   if (!"dist" %in% class(dist.matrix))
     dist.matrix <- as.dist(dist.matrix)
   if (is.na(m))
     stop("Must supply 'm' to calculate functional diversity metrics.")
   # The eigenvectors with 'm' reduced dimensionality:
-  m.vectors <- all.vectors[, 1:m]
+  m.vectors <- vectors[, 1:m]
   
   ## FDis: Functional dispersion
   # No modification needed. Use dbFD::fdisp(d).

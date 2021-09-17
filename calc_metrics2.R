@@ -57,10 +57,10 @@ calc_metrics2 <- function(sample = NA,
   }
   # Standardize the eigenvectors according to magnitude of eigenvalues (if desired)
   if(stand.pcoa)
-    all.vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
+    vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
 
-  maxes <- apply(all.vectors, 2, max, na.rm = TRUE)
-  mins <- apply(all.vectors, 2, min, na.rm = TRUE)
+  maxes <- apply(vectors, 2, max, na.rm = TRUE)
+  mins <- apply(vectors, 2, min, na.rm = TRUE)
   sam.out$R <- sum(maxes - mins, na.rm = TRUE)
   if (s <= m | H <= m)
     next
