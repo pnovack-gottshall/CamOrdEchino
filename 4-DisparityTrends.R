@@ -55,6 +55,9 @@ source("~/Manuscripts/CamOrdEchinos/simple.dbFD.R")
 # Modification of ecospace::calc_metrics. See source file for modifications.
 source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 
+# Corrected resampling function
+sample2 <- function(x, ...) x[sample.int(length(x), ...)]
+
 
 
 
@@ -1105,8 +1108,19 @@ legend("topleft", legend = c("ecology", "morphology"), col = cols,
 
 ## DISPARITY / FD TRENDS (AT STANDARD SAMPLE SIZE) #############################
 
-# corrected resampling function
-sample2 <- function(x, ...) x[sample.int(length(x), ...)]
+# Subsampling samples both across time intervals and across trees simultaneously
+# to account for variation in the tree structure, using 3000 total replicates
+# (with 50 trees, drawing standard number of taxa per time interval, replicated
+# 60 times per tree).
+
+# See numreps_confirmation.xlsx for confirmation for why 3,000 replicates is
+# sufficient to get relative error (CV = sd/mean) within 0.1% for all time
+# intervals and (phylum-wide) sample sizes. Tested using the two time intervals
+# with largest (= Floian) and smallest (= Paibian) species richness, using the
+# fast-to-calculate D metric. (As expected, intervals with greater richness have
+# greater sampling variability, which decreases with smaller resampling pools
+# and greater numbers of replicates.)
+
 
 # Load PCoA output from ape::pcoa
 load("mode.pcoa")
@@ -1127,23 +1141,18 @@ load("raw.distances.GED.5")
 load("morph.distances.GED.5")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa.results <- mode.pcoa
-# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa.results <- constant.pcoa
-# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa.results <- raw.pcoa
-# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa.results <- morph.pcoa
+# anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
+# anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
+# anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
+anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
 
 # Load taxon.bins and taxon.list (built above)
 load("taxon.bins")
 load("taxon.list")
-if(nrow(taxon.bins) != nrow(dist.matrix))
+if(nrow(taxon.bins[[50]]) != nrow(dist.matrix[[50]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
-if(nrow(taxon.bins) != length(taxon.list))
+if(nrow(taxon.bins[[50]]) != nrow(taxon.list[[50]]))
   stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
-
-# Because a correction wasn't able to be applied for the 'constant' treatment,
-# need to amend as if it were (for consistency in downstream scripts)
-# pcoa.results$vectors <- pcoa.results$vectors
-# pcoa.results$values$Eigenvalues <- pcoa.results$values$Eigenvalues
 
 ## Want to remove missing taxa? (Only used for 'raw' data treatment)
 # Note the 'tree' is not included to prevent renumbering! See above for more
@@ -1162,95 +1171,141 @@ if(nrow(taxon.bins) != length(taxon.list))
 # dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors)
 
 # View to confirm
-anc[1:5, 1:10]
-dist.matrix[1:5, 1:4]
-taxon.bins[1:5, 1:4]
-pcoa.results$vectors[1:5, 1:5]
+taxon.bins[[50]][1:5, 1:5]
+anc[[50]]$matrix_1$matrix[1:10, 1:10]
+dist.matrix[[50]]$distance_matrix[1:4, 1:4]
+pcoa.results[[50]]$vectors[1:4, 1:4]
 
-## Number of genera per interval
+# How many reps per tree per time interval?
+nreps <- 60
+cat("There will be", nreps * length(anc), 
+    "total replicates for each time bin, sampling equally across", length(anc), "trees\n")
 
-# Use 50 for echinoderm-wide
-std.g <- 50
-# Use TRUE if want to first check sample sizes to obtain std.g
-check.std.g <- FALSE
-
-# Initialize parallel cluster:
-# See numreps_confirmation.xlsx for confirmation for why 3,000 replicates is
-# sufficient to get relative error (CV = sd/mean) within 0.1% for all time
-# intervals and (phylum-wide) sample sizes. Tested using the two time intervals
-# with largest (= Floian) and smallest (= Paibian) species richness, using the
-# fast-to-calculate D metric. (As expected, intervals with greater richness have
-# greater sampling variability, which decreases with smaller resampling pools
-# and greater numbers of replicates.)
-numrep <- 3000
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-# Use load-balancing because of different run times for the MCMC optimizations
-opts <- list(preschedule = FALSE)
-clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+# Create index for pre-allocating position in trees and replicate number)
+tree.seq <- rep(seq.int(anc), nreps)
 
 # How many dimensions in PCoA for FRic and FDiv? Use 6 for phylum-level
 m <- 6
-nc <- ncol(taxon.bins)
+
+# How many time bins?
+nc <- ncol(taxon.bins[[1]])
+
+# How many genera to sample per interval? (Use 29 for echinoderm-wide)
+std.g <- 29
+
+# Use TRUE if want to first check sample sizes to obtain std.g
+check.std.g <- FALSE
+
+# If wanting to confirm appropriate sampling quota
+if (check.std.g) {
+  for (b in 1:nc) {
+    sq <- seq.int(tree.seq)
+    bin.richness <- 
+      unlist(lapply(sq, function(sq) length(which(taxon.bins[[tree.seq[sq]]][, b]))))
+    cat("richness in bin", b, "across all trees: min = ", min(bin.richness), 
+        ", median = ", median(bin.richness), "\n")
+  }
+}
+# 29 is lowest median richness across time bins (excl. Ediacaran)
+
+
+## Loop through each time interval, running the sample-standardization
+## replicates in parallel
+
+# Create data frame to store means and SDs for each bin (across trees/replicates)
 metrics <- data.frame(Age = as.numeric(mids), S = std.g, H = NA, SE.H = NA,
-                      D = NA, SE.D = NA, M = NA, SE.M = NA, V = NA, SE.V = NA, FRic = NA, 
-                      SE.FRic = NA, FEve = NA, SE.FEve = NA, FDiv = NA, SE.FDiv = NA, 
-                      FDis = NA, SE.FDis = NA, qual.FRic = NA, SE.qual.FRic = NA)
+                      D = NA, SE.D = NA, M = NA, SE.M = NA, V = NA, SE.V = NA, 
+                      R = NA, SE.R = NA, FRic = NA, SE.FRic = NA, FEve = NA, 
+                      SE.FEve = NA, FDiv = NA, SE.FDiv = NA, FDis = NA, 
+                      SE.FDis = NA, qual.FRic = NA, SE.qual.FRic = NA)
+mean.cols <- c(2, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21)
+sd.cols <- c(4, 6, 8, 10, 12, 14, 16, 18, 20, 22)
+
 (start <- Sys.time())
-# Loop through each time interval, running the sample-standardization replicates
-# in parallel
-
-# (Was done in following manner in summer 2020, but if need to run again, refer
-# to 6-Phylogenetic inertia.R for better way to implement load-balancing where
-# the L-Ecuyer RNG seed can allow replication.)
-
 for(t in 1:nc) {
-  wh.gr <- unname(which(taxon.bins[, t]))
-  S <- length(wh.gr)
-  cat(round(Sys.time() - start, 0), "min., age =", mids[t], ", ", 
-      S, "genera", "\n")
-  if (check.std.g) next
-  if(S < std.g) metrics[t, 3:20] <- NA
-  if(S < std.g) next
-  anc.sam <- anc[wh.gr, ]
-  dist.anc.sam <- dist.matrix[wh.gr, wh.gr]
-  pcoa.sam <- pcoa.results
-  pcoa.sam$vectors <- pcoa.sam$vectors[wh.gr, ]
-  H <- nrow(unique(dist.anc.sam))
-  if (any(is.nan(dist.anc.sam)) | length(dist.anc.sam) == 0) next
-  if (S <= m | H <= m) next
-  max.seq <- seq.int(nrow(anc.sam))
+  cat("resampling bin =", mids[t], "Mya,", round(Sys.time() - start, 0), 
+      "min since started.\n")
+
+  # Initialize parallel cluster:
+  cl <- makeCluster(detectCores())
+  registerDoParallel(cl)
+  # Use load-balancing because of different run times for the MCMC optimizations
+  opts <- list(preschedule = FALSE)
+  clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
   
   # Build numrep in parallel
-  bin.metrics <- foreach(i = 1:numrep, .options.snow = opts, .combine = "rbind", 
-                         .inorder = FALSE, .packages = "FD") %dopar% {
-                           
-    # Create a new subsample each replicate
-    sampled <- sample2(max.seq, std.g, replace = FALSE)
-    sub.sam <- anc.sam[sampled, ]
-    sub.dist <- dist.anc.sam[sampled, sampled]
-    sub.pcoa <- pcoa.sam
-    sub.pcoa$vectors <- sub.pcoa$vectors[sampled, ]
+  par.bin.metrics <- foreach(i = 1:(nreps * length(anc)), .options.snow = opts, 
+                             .combine = rbind, .inorder = FALSE, 
+                             .packages = "FD") %dopar% {
 
-    # Calculate metrics for each subsample
-    FD <- calc_metrics2(sample = sub.sam, dist.sam = sub.dist, 
-                        pcoa = sub.pcoa, m = m, stand.pcoa = TRUE, 
-                        calc.FRic.and.FDiv = FALSE)
+    # Create data.frame to store subsampled metrics
+    sam.metrics <- data.frame(Age = as.numeric(mids[t]), S = std.g, H = NA, 
+                              D = NA, M = NA, V = NA, R = NA, FRic = NA, 
+                              FEve = NA, FDiv = NA, FDis = NA, qual.FRic = NA)
+
+    FD <- rep(NA, 11)
+    # Restrict to taxa (from relevant 'taxon.bin') occurring in bin 't' from
+    # tree (specified in 'tree.seq')
+    wh.gr <- unname(which(taxon.bins[[tree.seq[i]]][, t]))
+    S <- length(wh.gr)
+
+    # Only calculate next stats if more taxa than sampling quota
+    if (S >= std.g) {
+      
+      # Extract relevant data for selected time-scaled tree
+      anc.tree <- anc[[tree.seq[i]]]$matrix_1$matrix[wh.gr, ]
+      dist.anc.tree <- dist.matrix[[tree.seq[i]]]$distance_matrix[wh.gr, wh.gr]
+      pcoa.tree <- pcoa.results[[tree.seq[i]]]
+      H <- nrow(unique(dist.anc.tree))
+
+      # Only calculate next stats if complete distance matrix for tree sample
+      if (!any(is.nan(dist.anc.tree)) & !length(dist.anc.tree) == 0) {
+
+        # And only if more taxa or unique morphotypes/life habits than 'm'
+        if (S > m | H > m) {
+          
+          # Create a new subsample each replicate
+          max.seq <- seq.int(nrow(anc.tree))
+          sampled <- sample2(max.seq, std.g, replace = FALSE)
+          sub.tree <- anc.tree[sampled, ]
+          sub.dist <- dist.anc.tree[sampled, sampled]
+          sub.pcoa <- pcoa.tree
+          if (!is.null(sub.pcoa))
+            sub.pcoa$vectors <- sub.pcoa$vectors[sampled,]
+          
+          # Calculate metrics for each subsample
+          FD <- calc_metrics2(sample = sub.tree, dist.sam = sub.dist, 
+                              pcoa = sub.pcoa, m = m, stand.pcoa = TRUE, 
+                              calc.FRic.and.FDiv = TRUE)
+          }
+        }
     }
-
+    sam.metrics[,2:12] <- FD
+  }
+  stopCluster(cl)
+  
   # Summarize bin metrics
-  mean.cols <- c(2, 3, 5, 7, 9, 11, 13, 15, 17, 19)
-  sd.cols <- c(4, 6, 8, 10, 12, 14, 16, 18, 20)
-  metrics[t, mean.cols] <- apply(bin.metrics, 2, mean)
-  metrics[t, sd.cols] <- apply(bin.metrics[,-1], 2, sd)
+  metrics[t, mean.cols] <- apply(par.bin.metrics, 2, mean, na.rm = TRUE)
+  metrics[t, sd.cols] <- apply(par.bin.metrics[, -1], 2, sd, na.rm = TRUE)
 }
-stopCluster(cl)
 (Sys.time() - start)
-beep(3)
 # 28 min for 8 cores, 3000 replicates using mode treatment
 # 29 min for 8 cores, 3000 replicates using constant treatment
-# 28 min for 8 cores, 3000 replicates using raw treatment (b/c no FRic & DViv)
+# 28 min for 8 cores, 3000 replicates using raw treatment (b/c no FRic & FDiv)
 # 33 min for 8 cores, 3000 replicates using morph treatment
+
+## Save / reload metrics
+morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
+# mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
+# constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
+# raw.metrics <- metrics; save(raw.metrics, file = "raw.metrics")
+# load("morph.metrics")
+# load("mode.metrics")
+# load("constant.metrics")
+# load("raw.metrics")
+
+beep(3)
+
 
 ## Save metrics
 # write.csv(metrics, file = "metrics_StdG50_morph.csv", row.names = FALSE)
