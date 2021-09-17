@@ -6,9 +6,9 @@
 # magnitude. Modified from FD::dbFD written by Etienne Laliberté. 
 # Thanks, Etienne!
 # 
-#           pcoa.all = output from ape::pcoa, with $correction noting the  
-#                      eigenvalue correction used (e.g., Cailliez, etc.), and  
-#                      using vectors.cor for corrected eigenvectors.
+#               pcoa = output from ape::pcoa, with $correction noting the  
+#                      eigenvalue correction used (e.g., Cailliez, etc.), and, 
+#                      if so, using vectors.cor for corrected eigenvectors.
 #        dist.matrix = distance matrix used to create pcoa.
 #                  m = number of PCoA eigenvalues to reduce dimensionality to.
 #         stand.pcoa = logical indicating whether to standardize PCoA  
@@ -31,9 +31,14 @@ simple.dbFD <- function(pcoa = NULL, dist.matrix = NULL, m = NA,
     return(vectors)
   }
   
-  # Get components
-  vectors <- pcoa$vectors.cor
-  eigenvalues <- pcoa$values$Corr_eig
+  # Get components (with switch for whether corrected or not)
+  if (pcoa$correction[1] == "none") {
+    vectors <- pcoa$vectors
+    eigenvalues <- pcoa$values$Eigenvalues
+  } else {
+    vectors <- pcoa$vectors.cor
+    eigenvalues <- pcoa$values$Corr.eig
+  }
   # Standardize the eigenvectors according to magnitude of eigenvalues (if desired)
   if(stand.pcoa)
     all.vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
