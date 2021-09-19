@@ -66,48 +66,49 @@ simple.dbFD <- function(pcoa = NULL, dist.matrix = NULL, m = NA,
       vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
     if (is.na(m))
       stop("Must supply 'm' to calculate functional diversity metrics.")
+    
     # The eigenvectors with 'm' reduced dimensionality:
     m.vectors <- vectors[, 1:m]
     
     ## FRic: Functional richness
     # With earlier processing of reduced dimensionality and standardized PCoA, no
     # novel function needed.
-    FRic <- NA
-    if (calc.FRic.and.FDiv)
+    FRic <- FDiv <- FEve <- NA
+    
+    if (calc.FRic.and.FDiv) {
       FRic <- geometry::convhulln(m.vectors, "FA")$vol
     
-    ## FDiv: Functional divergence
-    #    v = eigenvector matrix output from ape::pcoa (with 'm' reduced 
-    #        dimensionality and stand.pcoa pre-standardized).
-    calc.FDiv <- function(v = NULL) {
-      # calculate vertices
-      vert0 <- geometry::convhulln(v, "Fx TO 'vert.txt'")
-      vert1 <- scan("vert.txt", quiet = TRUE)
-      vert2 <- vert1 + 1
-      vertices <- vert2[-1]
-      # traits values of vertices
-      trvertices <- v[vertices, ]
-      # coordinates of the center of gravity of the vertices (Gv)
-      baryv <- apply(trvertices, 2, mean)
-      # Euclidean distances to Gv (dB)
-      S <- nrow(v)
-      distbaryv <- rep(0, S)
-      for (j in 1:S) {
-        distbaryv[j] <- (sum((v[j, ] - baryv) ^ 2)) ^ 0.5
+      ## FDiv: Functional divergence
+      #    v = eigenvector matrix output from ape::pcoa (with 'm' reduced 
+      #        dimensionality and stand.pcoa pre-standardized).
+      calc.FDiv <- function(v = NULL) {
+        # calculate vertices
+        vert0 <- geometry::convhulln(v, "Fx TO 'vert.txt'")
+        vert1 <- scan("vert.txt", quiet = TRUE)
+        vert2 <- vert1 + 1
+        vertices <- vert2[-1]
+        # traits values of vertices
+        trvertices <- v[vertices, ]
+        # coordinates of the center of gravity of the vertices (Gv)
+        baryv <- apply(trvertices, 2, mean)
+        # Euclidean distances to Gv (dB)
+        S <- nrow(v)
+        distbaryv <- rep(0, S)
+        for (j in 1:S) {
+          distbaryv[j] <- (sum((v[j, ] - baryv) ^ 2)) ^ 0.5
+        }
+        # mean of dB values
+        meandB <- mean(distbaryv)
+        # deviations to mean of db
+        devdB <- distbaryv - meandB
+        # computation of FDiv (using equal-weighting, i.e., ignoring rel. abund.)
+        out <- (sum(devdB) + meandB) / (sum(abs(devdB)) + meandB)
+        return(out)
       }
-      # mean of dB values
-      meandB <- mean(distbaryv)
-      # deviations to mean of db
-      devdB <- distbaryv - meandB
-      # computation of FDiv (using equal-weighting, i.e., ignoring rel. abund.)
-      out <- (sum(devdB) + meandB) / (sum(abs(devdB)) + meandB)
-      return(out)
+    
+      FDiv <- calc.FDiv(v = m.vectors)
     }
     
-    FDiv <- NA
-    if (calc.FRic.and.FDiv)
-      FDiv <- calc.FDiv(v = m.vectors)
-  
     ## FEve: Functional evenness
     #    v = eigenvector matrix output from ape::pcoa (with all 'm' eigenvalues
     #        and with stand.pcoa pre-standardized).
@@ -176,9 +177,8 @@ simple.dbFD <- function(pcoa = NULL, dist.matrix = NULL, m = NA,
     }
     
     qual.FRic <- calc.qual.FRic(pcoa = pcoa, dist.matrix = dist.matrix, m = m)
-    
   }
-  
+      
   # Clean up output
   out <- list(FRic = FRic, FEve = FEve, FDis = FDis, FDiv = FDiv, 
               qual.FRIC = qual.FRic)

@@ -33,7 +33,6 @@ calc_metrics2 <- function(sample = NA,
   odir <-
     setwd(tempdir())     # Specify the pre-built (and CPU-process unique) temp directory for storage of vert.txt temp files for convex hull calculations
   on.exit(setwd(odir))
-#  sam.out <- data.frame(S = integer(1), H = integer(1), D = numeric(1), M = numeric(1), V = numeric(1), R = numeric(1), FRic = numeric(1), FEve = numeric(1), FDiv = numeric(1), FDis = numeric(1), qual.FRic = numeric(1))
   sam.out <- data.frame(S = NA, H = NA, D = NA, M = NA, V = NA, R = NA, FRic = NA, FEve = NA, FDiv = NA, FDis = NA, qual.FRic = NA)
   sam <- sample[1:s,]
   sam.out$S <- s
@@ -55,8 +54,9 @@ calc_metrics2 <- function(sample = NA,
         vectors <- pcoa$vectors.cor
         eigenvalues <- pcoa$values$Corr.eig
       }
+      
       # Standardize the eigenvectors according to magnitude of eigenvalues (if desired)
-      if(stand.pcoa)
+      if (stand.pcoa)
         vectors <- stand.pcoa.fn(vectors = vectors, eigenvalues = eigenvalues)
     
       maxes <- apply(vectors, 2, max, na.rm = TRUE)
