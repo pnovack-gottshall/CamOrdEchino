@@ -176,7 +176,7 @@ divRate # 0.047 genus extinctions per million years
 # implies a rather complete fossil record. The improved maximum-likelihood
 # method (Foote, 1997) yields unrealistically high sampling estimates because of
 # zero-length branches in the raw form, so a crinoid-wide sampling rate from
-# (Foote and Raup, 1964), converted to appropriate units (c.f., Bapst and
+# (Foote and Raup, 1996), converted to appropriate units (c.f., Bapst and
 # Hopkins, 2016), was used for the 'cal3' trees. Using either sampling rate
 # value yielded similar tree structures.
 
