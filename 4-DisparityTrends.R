@@ -843,29 +843,28 @@ plot_chronophylomorphospace(pcoa.results)
 ## DISPARITY / FUNCTIONAL DIVERSITY TRENDS #####################################
 
 # Import ancestral states from 2-InferancestralStates.R
+load("morph.anc")
 load("mode.anc")
 load("constant.anc")
 load("raw.anc")
-load("morph.anc")
 
 # Import distance matrices from 3-DisparityDistances.R
+load("morph.distances.GED.5")
 load("mode.distances.GED.5")
 load("constant.distances.GED.5")
 load("raw.distances.GED.5")
-load("morph.distances.GED.5")
 
 # Load PCoA output from ape::pcoa
+load("morph.pcoa")
 load("mode.pcoa")
 load("constant.pcoa")
 load("raw.pcoa")
-load("morph.pcoa")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
-# anc <- mode.anc$matrix_1$matrix; dist.matrix <- mode.distances.GED.5$distance_matrix; pcoa.results <- mode.pcoa
-# anc <- constant.anc$matrix_1$matrix; dist.matrix <- constant.distances.GED.5$distance_matrix; pcoa.results <- constant.pcoa
-# anc <- raw.anc$matrix_1$matrix; dist.matrix <- raw.distances.GED.5$distance_matrix; pcoa.results <- raw.pcoa
-# anc <- morph.anc$matrix_1$matrix; dist.matrix <- morph.distances.GED.5$distance_matrix; pcoa.results <- morph.pcoa
+anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
+# anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
+# anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
+# anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
 
 # Load taxon.bins (built above)
 load("taxon.bins")
@@ -995,21 +994,21 @@ metrics <- foreach(i = 1:ntrees, .options.snow = opts, .inorder = TRUE,
   return(t.metrics)
 }
 stopCluster(cl)
-(Sys.time() - start) # 3.74 hrs for mode
+(Sys.time() - start) # 5.8 minutes on 8-core laptop
 
 ## Save / reload metrics
-# morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
-mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
+morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
+# mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
 # constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
 # raw.metrics <- metrics; save(raw.metrics, file = "raw.metrics")
-# load("morph.metrics")
-load("mode.metrics")
+load("morph.metrics")
+# load("mode.metrics")
 # load("constant.metrics")
 # load("raw.metrics")
 beep(3)
 
 # Save tree 50 to .csv
-# write.csv(metrics[[50]], file = "metrics_morph.csv", row.names = FALSE)
+write.csv(metrics[[50]], file = "metrics_morph.csv", row.names = FALSE)
 # write.csv(metrics[[50]], file = "metrics_LH_mode.csv", row.names = FALSE)
 # write.csv(metrics[[50]], file = "metrics_LH_constant.csv", row.names = FALSE)
 # write.csv(metrics[[50]], file = "metrics_LH_raw.csv", row.names = FALSE)
@@ -1136,25 +1135,25 @@ legend("topleft", legend = c("ecology", "morphology"), col = cols,
 
 
 # Load PCoA output from ape::pcoa
+load("morph.pcoa")
 load("mode.pcoa")
 load("constant.pcoa")
 load("raw.pcoa")
-load("morph.pcoa")
 
 # Import ancestral states from 2-InferAncestralStates.R
+load("morph.anc")
 load("mode.anc")
 load("constant.anc")
 load("raw.anc")
-load("morph.anc")
 
 # Import distance matrices from 3-DisparityDistances.R
+load("morph.distances.GED.5")
 load("mode.distances.GED.5")
 load("constant.distances.GED.5")
 load("raw.distances.GED.5")
-load("morph.distances.GED.5")
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
-anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
+# anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
 # anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
 # anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
 # anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
@@ -1189,9 +1188,9 @@ anc[[50]]$matrix_1$matrix[1:10, 1:10]
 dist.matrix[[50]]$distance_matrix[1:4, 1:4]
 pcoa.results[[50]]$vectors[1:4, 1:4]
 
-# How many reps per tree per time interval?
+# How many reps per tree per time interval? (60 provides sufficient control of
+# variability per tree-bin)
 nreps <- 60
-# nreps <- 100
 cat("There will be", nreps * length(anc), 
     "total replicates for each time bin, sampling equally across", length(anc), "trees\n")
 
@@ -1205,8 +1204,12 @@ m <- 6
 # different taxon.bin tree)
 (nc <- ncol(taxon.bins[[1]]))
 
-# How many genera to sample per interval? (Use 29 for echinoderm-wide)
-std.g <- 29
+# How many genera to sample per interval? (Use 50 for echinoderm-wide; allows
+# all 50 trees to be used for all but early Furongian [Paibian], Terreneuvian
+# [Fortunian and Stage 2], and Ediacaran. Mid Furongian [Jiangshanian] can be
+# included if wish to use 92% of the trees. And technically, disparity for Stage
+# 2 and Paibian are calculated, but using only 4% and 26% of trees.)
+std.g <- 50
 
 # Use TRUE if want to first check sample sizes to obtain std.g
 check.std.g <- FALSE
@@ -1217,8 +1220,9 @@ if (check.std.g) {
     sq <- seq.int(tree.seq)
     bin.richness <- 
       unlist(lapply(sq, function(sq) length(which(taxon.bins[[tree.seq[sq]]][, b]))))
-    cat("richness in bin", b, "across all trees: min = ", min(bin.richness), 
-        ", median = ", median(bin.richness), ", max = ", max(bin.richness), "\n")
+    cat("bin richness", b, "across trees: min = ", min(bin.richness), 
+        ", median = ", median(bin.richness), ", max = ", max(bin.richness), 
+        ", using", length(bin.richness[bin.richness >= std.g]) / 60, "trees\n")
   }
 }
 # 29 is lowest median richness across time bins (excl. Ediacaran)
@@ -1304,29 +1308,25 @@ for(t in 1:nc) {
   metrics[t, mean.cols] <- apply(par.bin.metrics, 2, mean, na.rm = TRUE)
   metrics[t, sd.cols] <- apply(par.bin.metrics[, -1], 2, sd, na.rm = TRUE)
 }
-(Sys.time() - start)
-# 26 min for 8 cores, 3000 replicates using mode treatment
-# 27 min for 8 cores, 3000 replicates using constant treatment
-# 28 min for 8 cores, 3000 replicates using raw treatment (b/c no FRic & FDiv)
-# 39 min for 8 cores, 3000 replicates using morph treatment
+(Sys.time() - start) # 40-41 minutes using 8 core laptop, 3000 replicates
 
-## Save / reload metrics
-# morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
-mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
-# constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
-# raw.metrics <- metrics; save(raw.metrics, file = "raw.metrics")
-# write.csv(metrics, file = "metrics_StdG29_morph.csv", row.names = FALSE)
-write.csv(metrics, file = "metrics_StdG29_LH_mode.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_StdG29_LH_constant.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_StdG29_LH_raw.csv", row.names = FALSE)
-# metrics <- read.csv(file = "metrics_StdG29_morph.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_StdG29_LH_mode.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_StdG29_LH_constant.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_StdG29_LH_raw.csv", header = TRUE)
-# load("morph.metrics"); metrics <- morph.metrics
-# load("mode.metrics"); metrics <- mode.metrics
-# load("constant.metrics"); metrics <- constant.metrics
-# load("raw.metrics"); metrics <- raw.metrics
+## Save / reload metrics:
+morph.stdG.metrics <- metrics; save(morph.stdG.metrics, file = "morph.stdG.metrics")
+# mode.stdG.metrics <- metrics; save(mode.stdG.metrics, file = "mode.stdG.metrics")
+# constant.stdG.metrics <- metrics; save(constant.stdG.metrics, file = "constant.stdG.metrics")
+# raw.stdG.metrics <- metrics; save(raw.stdG.metrics, file = "raw.stdG.metrics")
+write.csv(metrics, file = "metrics_StdG50_morph.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_StdG50_LH_mode.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_StdG50_LH_constant.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_StdG50_LH_raw.csv", row.names = FALSE)
+# metrics <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
+# metrics <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
+# load("morph.stdG.metrics"); metrics <- morph.stdG.metrics
+# load("mode.stdG.metrics"); metrics <- mode.stdG.metrics
+# load("constant.stdG.metrics"); metrics <- constant.stdG.metrics
+# load("raw.stdG.metrics"); metrics <- raw.stdG.metrics
 
 beep(3)
 
@@ -1370,10 +1370,10 @@ par(op)
 
 
 ## How correlated are the standardized metrics?
-morph <- read.csv(file = "metrics_StdG29_morph.csv", header = TRUE)
-mode <- read.csv(file = "metrics_StdG29_LH_mode.csv", header = TRUE)
-constant <- read.csv(file = "metrics_StdG29_LH_constant.csv", header = TRUE)
-raw <- read.csv(file = "metrics_StdG29_LH_raw.csv", header = TRUE)
+morph <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
+mode <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
+constant <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
+raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
 
 # Which columns have statistical means?
 means <- c(3, 5, 7, 9, 11, 13, 15, 17, 19)
@@ -1455,9 +1455,9 @@ for (c in c(2:10)) {
 
 
 # Compare three algorithms (%-standardized)
-metrics_mode <- read.csv(file = "metrics_StdG29_LH_mode.csv", header = TRUE)
-metrics_constant <- read.csv(file = "metrics_StdG29_LH_constant.csv", header = TRUE)
-metrics_raw <- read.csv(file = "metrics_StdG29_LH_raw.csv", header = TRUE)
+metrics_mode <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
+metrics_constant <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
+metrics_raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
 
 # Plot trends
 # pdf(file = "3EcoTrends_StdG.pdf"); 
@@ -1555,11 +1555,11 @@ par(op)
 
 
 # Compare three algorithms (sample-standardized) (% transformed)
-metrics_mode <- read.csv(file = "metrics_StdG29_LH_mode.csv", header = TRUE)
-metrics_constant <- read.csv(file = "metrics_StdG29_LH_constant.csv", header = TRUE)
-metrics_raw <- read.csv(file = "metrics_StdG29_LH_raw.csv", header = TRUE)
-metrics_morph <- read.csv(file = "metrics_StdG29_morph.csv", header = TRUE)
-std.g <- 29
+metrics_mode <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
+metrics_constant <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
+metrics_raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
+metrics_morph <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
+std.g <- 50
 
 # Plot trends
 # pdf(file = "Morph&3EcoTrends_StdG.pdf")
