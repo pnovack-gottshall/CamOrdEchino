@@ -994,7 +994,7 @@ metrics <- foreach(i = 1:ntrees, .options.snow = opts, .inorder = TRUE,
   return(t.metrics)
 }
 stopCluster(cl)
-(Sys.time() - start) # 5.8 minutes on 8-core laptop
+(Sys.time() - start) # 6-8 minutes on 8-core laptop
 
 ## Save / reload metrics
 morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
@@ -1193,6 +1193,10 @@ pcoa.results[[50]]$vectors[1:4, 1:4]
 nreps <- 60
 cat("There will be", nreps * length(anc), 
     "total replicates for each time bin, sampling equally across", length(anc), "trees\n")
+
+# Based on sensitivity tests: Higher 'std.g' more important than increasing
+# 'nreps.' 60, 90, 100, and 120 nreps all ~ same (= minimally increased
+# precision above 60).
 
 # Create index for pre-allocating position in trees and replicate number)
 tree.seq <- rep(seq.int(anc), nreps)
@@ -1555,10 +1559,10 @@ par(op)
 
 
 # Compare three algorithms (sample-standardized) (% transformed)
-metrics_mode <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
-metrics_constant <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
-metrics_raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
-metrics_morph <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
+load("morph.stdG.metrics"); metrics_morph <- morph.stdG.metrics
+load("mode.stdG.metrics"); metrics_mode <- mode.stdG.metrics
+load("constant.stdG.metrics"); metrics_constant <- constant.stdG.metrics
+load("raw.stdG.metrics"); metrics_raw <- raw.stdG.metrics
 std.g <- 50
 
 # Plot trends
