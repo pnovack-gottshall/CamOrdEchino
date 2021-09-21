@@ -589,10 +589,10 @@ mean(sapply(sq, function(sq) cor(raw.branch.changes[[sq]]$Branch.dist,
 # trees)
 # pdf(file = "PerBranchChanges.pdf")
 par(mfrow = c(2, 2))
-hist(morph.br.dist, 20, prob = TRUE, main = "Morphology", xlab = "Branching distance")
-hist(mode.br.dist, 20, prob = TRUE, main = "Ecology", xlab = "Branching distance")
-hist(100 * morph.char.ch / 413, 20, prob = TRUE, main = "Morphology", xlab = "% character changes")
-hist(100 * mode.char.ch / 40, 20, prob = TRUE, main = "Ecology", xlab = "% character changes")
+hist(morph.br.dist, 20, prob = TRUE, main = "Morphology", xlab = "Mean branching distance")
+hist(mode.br.dist, 20, prob = TRUE, main = "Ecology", xlab = "Mean branching distance")
+hist(100 * morph.char.ch / 413, 20, prob = TRUE, main = "Morphology", xlab = "Mean % character changes")
+hist(100 * mode.char.ch / 40, 20, prob = TRUE, main = "Ecology", xlab = "Mean % character changes")
 # dev.off()
 par(op)
 
@@ -612,12 +612,12 @@ h.bc.mode$counts <- h.bc.mode$counts / 50
 h.bc.morph$counts <- h.bc.morph$counts / 50
 # Plot histograms
 plot(h.bd.mode, main = "Distance moved / branching event", 
-     xlab = "Distance moved", ylab = "Mean # branching events", 
+     xlab = "Mean distance moved", ylab = "Mean # branching events", 
      border = "white", col = "darkgray", cex.lab = 1, cex.main = 0.8)
 plot(h.bd.morph, add = TRUE, border = "black", col = "transparent")
 plot(h.bc.mode, xlab = "Mean # character changes", 
      main = "# character changes / branching event", 
-     ylab = "# branching events", col = "darkgray", border = "white", 
+     ylab = "Mean # branching events", col = "darkgray", border = "white", 
      cex.lab = 1, cex.main = 0.8)
 plot(h.bc.morph, add = TRUE, border = "black", col = "transparent")
 legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
