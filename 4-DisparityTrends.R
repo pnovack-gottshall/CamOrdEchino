@@ -29,7 +29,9 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 # Load packages
 library(beepr)      # v. 1.3
 library(paleotree)  # v. 3.3.25
-library(ape)        # v. 5.5
+library(ape)        # v. 5.5.2
+if(packageVersion("ape") < "5.5.2")
+  stop("outdated version of 'ape'. Get updated version from GitHub or CRAN.\n")
 library(geoscale)   # v. 2.0
 library(ade4)       # v. 1.7-17
 library(geometry)   # v. 0.4.5
@@ -41,7 +43,7 @@ library(plotrix)    # v. 3.8-1
 library(viridisLite)# v. 0.4.0
 library(Claddis)    # v. 0.6.3 - Check SI for Lloyd 2018 for walk-through on code functions
 if(packageVersion("Claddis") < "0.4.1")
-  stop("wrong version of 'Claddis' Get updated version from GitHub or CRAN.\n")
+  stop("outdated version of 'Claddis'. Get updated version from GitHub or CRAN.\n")
 
 # Modification of geoscale::geoscalePlot to allow ICS 2020 timescale 
 source("~/Manuscripts/CamOrdEchinos/geoscalePlot2.R")
