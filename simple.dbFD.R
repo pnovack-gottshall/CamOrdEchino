@@ -58,7 +58,7 @@ simple.dbFD <- function(pcoa = NULL, dist.matrix = NULL, m = NA,
       eigenvalues <- pcoa$values$Eigenvalues
     } else {
       vectors <- pcoa$vectors.cor
-      eigenvalues <- pcoa$values$Corr.eig
+      eigenvalues <- pcoa$values$Corr_eig
     }
       
     # Standardize the eigenvectors according to magnitude of eigenvalues (if desired)
