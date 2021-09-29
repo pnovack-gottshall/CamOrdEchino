@@ -66,9 +66,18 @@ calc_metrics2 <- function(sample = NA,
     
     # Move on to functional diversity metrics
     if (s > m | H > m) {
-      FD <- simple.dbFD(pcoa = pcoa, dist.matrix = dist.sam, m = m, 
+      
+      # Try first
+      FD <- try(simple.dbFD(pcoa = pcoa, dist.matrix = dist.sam, m = m, 
                         stand.pcoa = stand.pcoa, 
-                        calc.FRic.and.FDiv = calc.FRic.and.FDiv)
+                        calc.FRic.and.FDiv = calc.FRic.and.FDiv), silent = TRUE)
+      
+      # If errors, then re-do without FRic and FDiv
+      if (inherits(FD, "try-error"))
+        FD <- try(simple.dbFD(pcoa = pcoa, dist.matrix = dist.sam, m = m,
+                              stand.pcoa = stand.pcoa,
+                              calc.FRic.and.FDiv = FALSE), silent = TRUE)
+      
       sam.out$FRic <- FD$FRic
       sam.out$FEve <- FD$FEve
       sam.out$FDiv <- FD$FDiv
