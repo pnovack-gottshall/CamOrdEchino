@@ -60,43 +60,6 @@ source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 # Corrected resampling function
 sample2 <- function(x, ...) x[sample.int(length(x), ...)]
 
-## Function to append the numbered index of removed tip and node numbers when
-## running Claddis::trim_matrix().
-# Claddis::trim_matrix() alters the names [= numbers] of nodes in a tree when
-# pruning out tips and nodes with missing data. This version wraps around 
-# trim_matrix() and appends the original node numbers, so that the trimmed 
-# output better matches the other same-named objects in the workflow.
-#
-#    distance_matrix = A distance matrix in the format created by 
-#                      Claddis::calculate_morphological_distances(), or the code 
-#                      used previously in the workflow.
-#    tree            = a tree. Used to match tip labels and node numbers to 
-#                      trimmed taxa, so must be included, unlike behavior in 
-#                      trim_matrix().
-trim_to_numbers <- function(distance_matrix, tree = NULL) {
-  if (is.null(tree))
-    stop("'tree' MUST be included.")
-  trimmed <- Claddis::trim_matrix(distance_matrix, tree)
-  # Get list of tips
-  tips.removed <- trimmed$removed_taxa[-grep("%%", trimmed$removed_taxa)]
-  tip.numbers.removed <- sort(match(tips.removed, tree$tip.label))
-  # Get list of nodes removed (in original 'named' output)
-  nodes.removed <- trimmed$removed_taxa[grep("%%", trimmed$removed_taxa)]
-  sq <- 1:length(nodes.removed)
-  # ... and convert to original node numbers
-  node.numbers.removed <- sort(unique(unlist(lapply(sq, function(sq)
-      Claddis::find_mrca(unlist(strsplit(trimmed$removed_taxa[which(trimmed$removed_taxa == nodes.removed[sq])], "%%")), tree)))))
-  # Confirm index is logical (tip numbers <= no. of tree times, and nodes >)
-  if (max(tip.numbers.removed) > ape::Ntip(tree))
-    stop("returns tip numbers greater than allowed by 'tree'")
-  if (min(node.numbers.removed) <= ape::Ntip(tree))
-    stop("returns node numbers less than allowed by 'tree'")
-  if (any(node.numbers.removed %in% tip.numbers.removed))
-    stop("node numbers can not match tip numbers")
-  # Append to trim_matrix output
-  trimmed$removed_taxa_index <- unique(c(tip.numbers.removed, node.numbers.removed))
-}
-
 
 
 
@@ -531,8 +494,83 @@ par(op)
 
 
 
+## TRIM MISSING TAXA FROM RAW DATA SET FOR SUBSEQUENT PROCESSING ###############
 
+## Want to remove missing taxa? (Only used for 'raw' data treatment)
 
+## Function to append the numbered index and original names of removed tip and
+## node numbers when running Claddis::trim_matrix().
+#
+# Claddis::trim_matrix() alters the names [= numbers] of nodes in a tree when
+# pruning out tips and nodes with missing data. This version wraps around
+# trim_matrix() and appends the original node numbers, so that the trimmed
+# output better matches the other same-named objects in the workflow. Note that
+# the index order of tip names corresponds to the order of 'tip.label' in the
+# provided tree, and not necessarily the same order as in other objects used in
+# the workflow later. Note also that the length of $removed_taxa_index may be
+# shorter than the length of $removed_taxa because of the iterative and
+# multi-step manner that trim_matrix identifies problematic taxa, which can
+# remove tip taxa multiple times.
+#
+#      distance_matrix = A distance matrix in the format created by
+#                        Claddis::calculate_morphological_distances(), or the 
+#                        code used previously in the workflow.
+#      tree            = a tree. Used to match tip labels and node numbers to 
+#                        trimmed taxa, so must be included, unlike behavior in
+#                        trim_matrix().
+trim_to_numbers <- function(distance_matrix, tree = NULL) {
+  if (is.null(tree))
+    stop("'tree' MUST be included.")
+  trimmed <- Claddis::trim_matrix(distance_matrix, tree)
+  # Get list of tips
+  tips.removed <- trimmed$removed_taxa[-grep("%%", trimmed$removed_taxa)]
+  tip.numbers.removed <- match(tips.removed, tree$tip.label)
+  # Get list of nodes removed (in original 'named' output)
+  nodes.removed <- trimmed$removed_taxa[grep("%%", trimmed$removed_taxa)]
+  sq <- 1:length(nodes.removed)
+  # ... and convert to original node numbers
+  node.numbers.removed <- sort(unique(unlist(lapply(sq, function(sq)
+    Claddis::find_mrca(unlist(strsplit(trimmed$removed_taxa[which(trimmed$removed_taxa == nodes.removed[sq])], "%%")), tree)))))
+  # Confirm index is logical (tip numbers <= no. of tree times, and nodes >)
+  if (max(tip.numbers.removed) > ape::Ntip(tree))
+    stop("returns tip numbers greater than allowed by 'tree'")
+  if (min(node.numbers.removed) <= ape::Ntip(tree))
+    stop("returns node numbers less than allowed by 'tree'")
+  if (any(node.numbers.removed %in% tip.numbers.removed))
+    stop("node numbers can not match tip numbers")
+  # Append to trim_matrix output
+  trimmed$removed_taxa_index <- unique(c(tip.numbers.removed, node.numbers.removed))
+  trimmed$removed_taxa_by_name <-
+    c(sort(unique(tree$tip.label[tip.numbers.removed])),
+      as.character(sort(unique(node.numbers.removed))))
+  return(trimmed)
+}
+
+# Make sure to use the original time-scaled tree instead of the trimmed tree for
+# subsequent steps. In subsequent steps, make sure to match the original names
+# with saved objects in case the order has changed at some point.
+load("raw.anc")
+load("raw.distances.GED.5")
+ntrees <- length(raw.anc)
+raw.trimmed <- vector("list", ntrees)
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+raw.trimmed <- foreach(i = 1:ntrees, .inorder = TRUE) %dopar% { 
+  tree.trimmed <-
+    trim_to_numbers(distance_matrix = raw.distances.GED.5[[i]]$distance_matrix,
+                    tree = raw.anc[[i]]$topper$tree)
+}
+stopCluster(cl)
+(Sys.time() - start) # 2.6 minutes on 8-core laptop
+# Save (and reload)
+# save(raw.trimmed, file = "raw.trimmed")
+beep(3)
+
+# Compare how many taxa removed from the trees?
+sq <- 1:ntrees
+table(unlist(lapply(sq, function(sq) raw.trimmed[[sq]]$removed_taxa_by_name)))
+table(unlist(lapply(sq, function(sq) length(raw.trimmed[[sq]]$removed_taxa_index))))
 
 
 ## CALCULATE PCoA ORDINATIONS AND MORPHO/ECOSPACES #############################
@@ -547,9 +585,9 @@ par(op)
 
 ## Pick desired distance matrix (and corresponding ancestral state
 ## reconstruction objects, for the data-specific tree object)
-dist.matrix <- mode.distances.GED.5; anc <- mode.anc
+# dist.matrix <- mode.distances.GED.5; anc <- mode.anc
 # dist.matrix <- constant.distances.GED.5; anc <- constant.anc
-# dist.matrix <- raw.distances.GED.5; anc <- raw.anc
+dist.matrix <- raw.distances.GED.5; anc <- raw.anc
 # dist.matrix <- morph.distances.GED.5; anc <- morph.anc
 
 # View sample
@@ -606,17 +644,26 @@ table(sapply(sq, function(sq)
 # on the distance matrix or on a reduced-dimensional PCoA eigenvalue space, and
 # so there is negigible impact on the choise of correction used.
 
-# Want to remove missing taxa? (Only used for 'raw' data treatment, as not
-# relevant for other data sets)
-# anc <- raw.anc
-# for(t in 1:length(anc)) {
-#   tree <- anc[[t]]$topper$tree
-#   trim.matrix <- trim_matrix(dist.matrix[[t]]$distance_matrix, tree = tree)
-#   dist.matrix[[t]]$distance_matrix <- trim.matrix$distance_matrix
-#   dist.matrix[[t]]$tree <- trim.matrix$tree
-#   dist.matrix[[t]]$removed_taxa <- trim.matrix$removed_taxa
-# }
-# beep() # May take a few minutes to process
+# For 'raw' data treatment, need to use previously built 'raw.trimmed' to remove
+# incalculable taxa. Recall the list of names was drawn from
+# raw.anc[[x]]$topper$tree$tip.label instead of raw.trimmed[[x]]$tree because
+# goal is to identify original, trimmed tips and nodes present in other
+# objects.)
+load("raw.trimmed")
+load("raw.anc")
+for (t in 1:length(raw.trimmed)) {
+  taxa.to.cut <- raw.trimmed[[t]]$removed_taxa_by_name
+  wh.to.cut.dist <-
+    match(taxa.to.cut, rownames(dist.matrix[[t]]$distance_matrix))
+  dist.matrix[[t]]$distance_matrix <-
+    dist.matrix[[t]]$distance_matrix[-wh.to.cut.dist, -wh.to.cut.dist]
+  dist.matrix[[t]]$tree <- raw.trimmed[[t]]$tree
+  dist.matrix[[t]]$removed_taxa <- raw.trimmed[[t]]$removed_taxa
+}
+# View sample (note NAs now mostly trimmed out)
+dist.matrix[[50]]$distance_matrix[1:10, 1:4]
+
+
 
 # Running as a loop to enhance diagnostic abilities because of the idiosyncratic
 # nature of pcoa calculations (usually involving presence of negative
@@ -639,12 +686,12 @@ for(t in 1:length(pcoa.results)) {
   # if (is.null(t.pcoa.results$tree)) t.pcoa.results$tree <- dist.matrix[[t]]$tree
   pcoa.results[[t]] <- t.pcoa.results
 }
-(Sys.time() - start) #~ 3-10 minutes using 1 core
+(Sys.time() - start) #~ 1-10 minutes using 1 core
 
 # Save (and re-load) PCoA output:
-mode.pcoa <- pcoa.results; save(mode.pcoa, file = "mode.pcoa")
+# mode.pcoa <- pcoa.results; save(mode.pcoa, file = "mode.pcoa")
 # constant.pcoa <- pcoa.results; save(constant.pcoa, file = "constant.pcoa")
-# raw.pcoa <- pcoa.results; save(raw.pcoa, file = "raw.pcoa")
+raw.pcoa <- pcoa.results; save(raw.pcoa, file = "raw.pcoa")
 # morph.pcoa <- pcoa.results; save(morph.pcoa, file = "morph.pcoa")
 # load("morph.pcoa"); pcoa.results <- morph.pcoa
 # load("mode.pcoa"); pcoa.results <- mode.pcoa
@@ -656,16 +703,8 @@ beep(3)
 # morph (except trees 31-35)! but Cailliez errors for raw. Seems to be avoided
 # when using Lingoes correction.
 
-# No errors (and much faster!, <6 minutes) in raw and morph when using the Lingoes correction!!!
-
-# Errors using Cailliez: "Error in min(toto.cor$values)"; testing confirms
-# because of presence of imaginary values produced
-# Morph errors: #3-4, 6-7, 10, 12-13, 15, etc.
-#    With Lingoes: 4-5, 11
-#    Morph also errors with no correction for #31-35 ("Error in eigen(delta1) : infinite or missing values in 'x'")
-# Mode errors: #5, 9, 11-12, 15, etc. (Lingoes errors: 1-5, etc. None: )
-# Rec: Use the non-corrected FOR ALL (but try using the 'raw' treatment to prune to see if a work-around)
-
+# No errors (and much faster!, <<6 minutes) in raw and morph when using the
+# Lingoes correction!!!
 
 # Plot sample scree plot and biplot
 barplot(100 * pcoa.results[[50]]$values$Rel_corr_eig[1:15], main = "first 10 axes", names.arg = 1:15,
@@ -680,35 +719,35 @@ round(100 * pcoa.results[[50]]$values$Rel_corr_eig[1:10], 2)
 round(100 * cumsum(pcoa.results[[50]]$values$Rel_corr_eig)[1:30], 1)
 
 
-# RESULTS (% explained; cumulative % explained):
+# RESULTS FOR TREE 50 (% explained; cumulative % explained):
 
-# Morph:    1- 1.50%, 2-0.94% (2.4%), 3-0.66% (3.1%), 4-0.42% (3.5%), 
-#                     5-0.32% (3.8%), 6-0.27% (4.1%),   
-# Mode:     1- 1.54%, 2-0.62% (2.2%), 3-0.47% (2.6%), 4-0.37% (3.0%), 
-#                     5-0.32% (3.3%), 6-0.27% (3.6%),   
-# Constant: 1- 0.81%, 2-0.29% (1.1%), 3-0.29% (1.3%), 4-0.24% (1.5%), 
+# Morph:    1- 1.68%, 2-1.02% (2.7%), 3-0.51% (3.2%), 4-0.42% (3.7%), 
+#                     5-0.28% (3.9%), 6-0.23% (4.2%),   
+# Mode:     1- 1.42%, 2-0.38% (1.8%), 3-0.33% (2.1%), 4-0.26% (2.4%), 
+#                     5-0.22% (2.6%), 6-0.20% (2.8%),   
+# Constant: 1- 0.81%, 2-0.29% (1.1%), 3-0.25% (1.3%), 4-0.20% (1.6%), 
 #                     5-0.19% (1.7%), 6-0.17% (1.9%),   
-# Raw:      1- 0.63%, 2-0.43% (1.1%), 3-0.33% (1.4%), 4-0.30% (1.7%), 
-#                     5-0.26% (1.9%), 6-0.25% (2.2%),   
+# Raw:      1- 0.66%, 2-0.39% (1.1%), 3-0.30% (1.4%), 4-0.27% (1.6%), 
+#                     5-0.23% (1.9%), 6-0.23% (2.1%),   
 
 # Plot all scree plots on one figure
 # pdf(file = "PCoAScreePlots.pdf")
-par(mfrow = c(2,2), mar = c(4, 4, 2, .1))
 load("morph.pcoa")
-barplot(100 * morph.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+load("mode.pcoa")
+load("constant.pcoa")
+load("raw.pcoa")
+par(mfrow = c(2,2), mar = c(4, 4, 2, .1))
+barplot(100 * morph.pcoa[[50]]$values$Rel_corr_eig[1:10], names.arg = 1:10, 
         main = "morphology", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
-load("mode.pcoa")
-barplot(100 * mode.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * mode.pcoa[[50]]$values$Rel_corr_eig[1:10], names.arg = 1:10, 
         main = "ecology (mode)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
-load("constant.pcoa")
 # note no correction used, but pcoa() still calculates 'corrected' eigenvalues
-barplot(100 * constant.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * constant.pcoa[[50]]$values$Rel_corr_eig[1:10], names.arg = 1:10, 
         main = "ecology (constant)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
-load("raw.pcoa")
-barplot(100 * raw.pcoa$values$Rel_corr_eig[1:10], names.arg = 1:10, 
+barplot(100 * raw.pcoa[[50]]$values$Rel_corr_eig[1:10], names.arg = 1:10, 
         main = "ecology (raw)", xlab = "PCoA eigenvalues", 
         ylab = "relative % explained", cex.names = 1)
 par(op)
@@ -716,7 +755,7 @@ par(op)
 
 
 
-## Calculate (mock) "factor loadings"
+## Calculate (mock) "factor loadings" (for tree #50)
 # Because PCoA uses the distance matrix instead of observed variables, it is not
 # possible to relate the original variables to the PCoA axes. However, the basic
 # premise of a correlation between PCoA space and original variables can be
@@ -746,34 +785,33 @@ mock.loadings <- function(orig.vars = NULL, ord.coord = NULL, vars = 6,
   return(out)
 }
 
-loadings.morph <- mock.loadings(orig.vars = morph.anc$matrix_1$matrix,
-                                ord.coord = morph.pcoa$vectors.cor, vars = 6,
+loadings.morph <- mock.loadings(orig.vars = morph.anc[[50]]$matrix_1$matrix,
+                                ord.coord = morph.pcoa[[50]]$vectors.cor, vars = 6,
                                 cutoff = 0.8)
 na.omit(loadings.morph)
 
-loadings.mode <- mock.loadings(orig.vars = mode.anc$matrix_1$matrix, 
-                               ord.coord = mode.pcoa$vectors.cor, vars = 6, 
+loadings.mode <- mock.loadings(orig.vars = mode.anc[[50]]$matrix_1$matrix, 
+                               ord.coord = mode.pcoa[[50]]$vectors.cor, vars = 6, 
                                cutoff = 0.4)
 na.omit(loadings.mode)
 
-# Note using uncorrected eigenvectors for 'constant' treatment:
-loadings.constant <- mock.loadings(orig.vars = constant.anc$matrix_1$matrix,
-                                   ord.coord = constant.pcoa$vectors.cor, vars = 6,
+loadings.constant <- mock.loadings(orig.vars = constant.anc[[50]]$matrix_1$matrix,
+                                   ord.coord = constant.pcoa[[50]]$vectors.cor, vars = 6,
                                    cutoff = 0.4)
 na.omit(loadings.constant)
 
-# For the raw treatment, need to remove genera with missing data excluded from
-# PCoA (and just focusing on tips to keep things simpler because nodes were
-# renumbered when making distance matrix)
-nt <- Ntip(raw.pcoa$tree)
-wh.to.keep <- na.omit(match(rownames(raw.pcoa$vectors.cor[1:nt, ]),
-                            rownames(raw.anc$matrix_1$matrix)[1:nt]))
-loadings.raw <- mock.loadings(orig.vars = raw.anc$matrix_1$matrix[wh.to.keep, ],
-                              ord.coord = raw.pcoa$vectors.cor[1:length(wh.to.keep), ], vars = 6, 
+# For the raw treatment, need to remove genera with missing data excluded when
+# trimmed
+load("raw.trimmed")
+taxa.to.cut <- raw.trimmed[[50]]$removed_taxa_by_name
+wh.to.cut.anc <- match(taxa.to.cut, rownames(raw.anc[[50]]$matrix_1$matrix))
+raw.anc[[50]]$matrix_1$matrix <- raw.anc[[50]]$matrix_1$matrix[-wh.to.cut.anc, ]
+loadings.raw <- mock.loadings(orig.vars = raw.anc[[50]]$matrix_1$matrix,
+                              ord.coord = raw.pcoa[[50]]$vectors.cor, vars = 6, 
                               cutoff = 0.3)
 na.omit(loadings.raw)
 
-# RESULTS:
+# RESULTS (*** NOTE NOT UPDATED USING NEW MULTI-TREE CODE ***):
 # MORPHOLOGY DATA SET:     -                               +
 #  PCO 1:     32, 135, 210, 227, 325, 411               4, 134, 141, 409
 #  PCO 2:    160                                       14, 46, 126, 132
@@ -839,13 +877,13 @@ stand.pcoa <- function(vectors = NULL, eigenvalues = NULL) {
   return(vectors)
 }
 
-# Compare before and after standardizing
-new <- pcoa.results
-new$vectors.cor <- stand.pcoa(vectors = pcoa.results$vectors.cor,
-                          eigenvalues = pcoa.results$values$Corr_eig)
-pcoa.results$vectors.cor[1:5, 1:5]
+# Compare before and after standardizing (for tree #50)
+new <- pcoa.results[[50]]
+new$vectors.cor <- stand.pcoa(vectors = pcoa.results[[50]]$vectors.cor,
+                          eigenvalues = pcoa.results[[50]]$values$Corr_eig)
+pcoa.results[[50]]$vectors.cor[1:5, 1:5]
 new$vectors.cor[1:5, 1:5]
-plot(pcoa.results$vectors.cor[, 1], pcoa.results$vectors.cor[, 2])
+plot(pcoa.results[[50]]$vectors.cor[, 1], pcoa.results[[50]]$vectors.cor[, 2])
 plot(new$vectors.cor[, 1], new$vectors.cor[, 2])
 
 # CONCLUSION: The axes are rescaled correctly. (Note that doing so affects
@@ -907,57 +945,34 @@ load("raw.pcoa")
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
 # anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
 # anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
-anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
-# anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
+# anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
+anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
+
+
+
+# Use 'raw.trimmed' output to override the raw objects. (Not needed for pcoa.results
+# because used earlier trimmed version when building the PCoA object.)
+load("raw.trimmed")
+for (i in 1:length(raw.trimmed)) {
+  wh.to.cut <- raw.trimmed[[i]]$removed_taxa_index
+  anc[[i]]$matrix_1$matrix <- raw.anc[[i]]$matrix_1$matrix[-wh.to.cut, ]
+  dist.matrix[[i]]$distance_matrix <- raw.distances.GED.5[[i]]$distance_matrix[-wh.to.cut, -wh.to.cut]
+  taxon.bins[[i]] <- taxon.bins[[i]][-wh.to.cut, ]
+}
+
+# Confirm all these 4 objects have the same number of rows
+dim(anc[[50]]$matrix_1$matrix)
+dim(taxon.bins[[50]])
+dim(dist.matrix[[50]]$distance_matrix)
+dim(pcoa.results[[50]]$vectors.cor)
+
+
+
 
 # Load taxon.bins (built above)
 load("taxon.bins")
 if(nrow(taxon.bins[[1]]) != nrow(dist.matrix[[1]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
-
-## Want to remove missing taxa? (Only used for 'raw' data treatment)
-# Note the 'tree' is not included to prevent renumbering! For some reason I
-# can't figure out, there is a discrepancy in which taxa are removed when the
-# tree is present, with 515 taxa with tree and 511 without. In order for the
-# trends code to work, the following is required to get all associated disparity
-# objects with same taxa.
-# trim.matrix <- trim_matrix(dist.matrix[[i]]$distance_matrix)
-# trim.matrix.for.pcoa <- trim_matrix(dist.matrix[[i]]$distance_matrix, tree = anc[[i]]$topper$tree)
-# dim(trim.matrix.for.pcoa$distance_matrix)
-# dim(trim.matrix$distance_matrix)
-
-# first pass:
-# wh.to.keep <- match(rownames(trim.matrix$distance_matrix), rownames(anc[[i]]$matrix_1$matrix))
-# anc.kept <- anc[[i]]$matrix_1$matrix[wh.to.keep, ]
-# taxon.bins.kept <- taxon.bins[[i]][wh.to.keep, ]
-# dist.matrix.kept <- trim.matrix$distance_matrix
-# Note still wrong dims:
-# nrow(anc.kept); nrow(taxon.bins.kept); nrow(dist.matrix.kept); nrow(pcoa.results[[i]]$vectors.cor)
-
-# Easy to fix with named tips:
-# (But first manually confirm and set the number of kept tips)
-# rownames(dist.matrix.kept)[1:275]
-# ntips.kept <- 258
-# (wh.to.cut <- which(!rownames(dist.matrix.kept)[1:ntips.kept] %in% rownames(pcoa.results[[i]]$vectors.cor)))
-# rownames(dist.matrix.kept)[wh.to.cut] # row 202: Protocrinites & row 228: Sphaeronites
-
-# Not so easy with re-named ancestors, so need a work-around: Go through and
-# manually find the non-kept row based on dissimilarities :(
-# (Ignore error for now b/c they both have different dimensions. Instead, look
-# for where the mismatches in the same rows occur. The tips should match.)
-# cbind(dist.matrix.kept[-wh.to.cut, 1], trim.matrix.for.pcoa$distance_matrix[, 1])
-
-# Turns out two additional ancestors were removed (row 388: ancestor 530 and
-# row: 394: ancestor 536). (Technically, ancestor 530 or 531 was cut, as they
-# have identical distances to all other taxa, but keeping 531 as it has the
-# longer stratigraphic range.)
-# wh.to.cut <- c(202, 228, 388, 394)
-# anc <- anc[-wh.to.cut, ]
-# taxon.bins <- taxon.bins[-wh.to.cut, ]
-# dist.matrix <- dist.matrix[-wh.to.cut, -wh.to.cut]
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors.cor)
-# Yay, all now match! Use these for disparity analyses.
-
 
 # View to confirm 
 taxon.bins[[50]][1:5, 1:5]
