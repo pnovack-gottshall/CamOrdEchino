@@ -1237,31 +1237,37 @@ load("raw.distances.GED.5")
 # anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
 # anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
 
-# Load taxon.bins and taxon.list (built above)
+# Load taxon.bins (built above)
 load("taxon.bins")
-load("taxon.list")
 if(nrow(taxon.bins[[50]]) != nrow(dist.matrix[[50]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
-if(nrow(taxon.bins[[50]]) != nrow(taxon.list[[50]]))
-  stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
 
-## Want to remove missing taxa? (Only used for 'raw' data treatment)
-# Note the 'tree' is not included to prevent renumbering! See above for more
-# explanation.
-# trim.matrix <- trim_matrix(dist.matrix)
-# wh.to.keep <- match(rownames(trim.matrix$distance_matrix), rownames(anc))
-# anc <- anc[wh.to.keep, ]
-# taxon.bins <- taxon.bins[wh.to.keep, ]
-# dist.matrix <- trim.matrix$distance_matrix
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors.cor)
-# wh.to.cut <- c(202, 228, 388, 394)
-# anc <- anc[-wh.to.cut, ]
-# taxon.bins <- taxon.bins[-wh.to.cut, ]
-# dist.matrix <- dist.matrix[-wh.to.cut, -wh.to.cut]
-# Confirm all these 4 objects have the same number of rows!
-# dim(anc); dim(taxon.bins); dim(dist.matrix); dim(pcoa.results$vectors.cor)
+## For 'raw' treatment (ONLY!), need to remove the taxa trimmed out for the PCOA
+## because of high denisty of missing states.
+# Use 'raw.trimmed' output to override the raw objects. (Not needed for
+# pcoa.results because used earlier trimmed version when building the PCoA
+# object.) Because the tip names are based on the raw.anc[[x]]$topper$tree, need
+# to match names for rows to correctly identify the trimmed-out tips and nodes
+load("raw.trimmed")
+for (t in 1:length(raw.trimmed)) {
+  taxa.to.cut <- raw.trimmed[[t]]$removed_taxa_by_name
+  # Because rownames are identical across 'dist.matrix', 'raw.anc', and
+  # 'taxon.bins', using 'taxon.bins' matches here
+  wh.to.cut <- match(taxa.to.cut, rownames(taxon.bins[[50]]))
+  anc[[t]]$matrix_1$matrix <- raw.anc[[t]]$matrix_1$matrix[-wh.to.cut, ]
+  dist.matrix[[t]]$distance_matrix <-
+    raw.distances.GED.5[[t]]$distance_matrix[-wh.to.cut, -wh.to.cut]
+  taxon.bins[[t]] <- taxon.bins[[t]][-wh.to.cut, ]
+}
 
-# View to confirm
+# Confirm all these 4 objects have the same number of rows
+dim(anc[[50]]$matrix_1$matrix)
+dim(dist.matrix[[50]]$distance_matrix)
+dim(pcoa.results[[50]]$vectors.cor)
+dim(taxon.bins[[50]])
+
+# View to confirm (and in case of 'raw', that taxa with numerous NAs are trimmed
+# out)
 taxon.bins[[50]][1:5, 1:5]
 anc[[50]]$matrix_1$matrix[1:10, 1:10]
 dist.matrix[[50]]$distance_matrix[1:4, 1:4]
@@ -1285,7 +1291,7 @@ m <- 6
 
 # How many time bins? (Make sure taxon.bin[[1]] returns 18 bins! If 17, choose
 # different taxon.bin tree)
-(nc <- ncol(taxon.bins[[1]]))
+cat((nc <- ncol(taxon.bins[[1]])), "time bins used (if sample sizes allow)\n")
 
 # How many genera to sample per interval? (Use 50 for echinoderm-wide; allows
 # all 50 trees to be used for all but early Furongian [Paibian], Terreneuvian
@@ -1308,7 +1314,9 @@ if (check.std.g) {
         ", using", length(bin.richness[bin.richness >= std.g]) / 60, "trees\n")
   }
 }
-# 29 is lowest median richness across time bins (excl. Ediacaran)
+# 29 is lowest median richness across time bins (excl. Ediacaran, and excl. the
+# 'raw' treatment, which also excludes bins 17-Fortunian, 16-Stage 2, and
+# 10-Paibian)
 
 
 ## Loop through each time interval, running the sample-standardization
@@ -1397,11 +1405,11 @@ for(t in 1:nc) {
 # morph.stdG.metrics <- metrics; save(morph.stdG.metrics, file = "morph.stdG.metrics")
 # mode.stdG.metrics <- metrics; save(mode.stdG.metrics, file = "mode.stdG.metrics")
 # constant.stdG.metrics <- metrics; save(constant.stdG.metrics, file = "constant.stdG.metrics")
-raw.stdG.metrics <- metrics; save(raw.stdG.metrics, file = "raw.stdG.metrics")
+# raw.stdG.metrics <- metrics; save(raw.stdG.metrics, file = "raw.stdG.metrics")
 # write.csv(metrics, file = "metrics_StdG50_morph.csv", row.names = FALSE)
 # write.csv(metrics, file = "metrics_StdG50_LH_mode.csv", row.names = FALSE)
 # write.csv(metrics, file = "metrics_StdG50_LH_constant.csv", row.names = FALSE)
-write.csv(metrics, file = "metrics_StdG50_LH_raw.csv", row.names = FALSE)
+# write.csv(metrics, file = "metrics_StdG50_LH_raw.csv", row.names = FALSE)
 # metrics <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
 # metrics <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
 # metrics <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
@@ -1419,8 +1427,8 @@ head(metrics, 3)
 # the variability is explained in different time bins? (I.e., how much reduction
 # has occurred by the ordination?)
 summary(metrics$qual.FRic)
-# Morphology: 57.8% used, on average
-# Ecology: mode: 66.4% used, constant: 52.4% used, raw: 2.2% used (but irrelevant)
+# Morphology: 4.2% used, on average
+# Ecology: mode: 2.8% used, constant: 1.9% used, raw: 2.1% used (but irrelevant)
 
 # Plot trends
 means <- c(3, 5, 7, 9, 11, 13, 15, 17, 19) # Columns with mean values
@@ -1478,7 +1486,7 @@ diff.raw <- diff.raw / diff.raw$Age
 # Because there are no duplicated morphotypes, H = 50 for all intervals. Ignore
 # "H" (and warning) in comparisons with the morphological data set.
 
-# morphological vs. LH-mode: not very correlated (D highest)
+# morphological vs. LH-mode: not very correlated (R highest)
 round(diag(cor(diff.morph[, means], diff.mode[, means], 
                use = "pairwise.complete.obs")), 4)
 
