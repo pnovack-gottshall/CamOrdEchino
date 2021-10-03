@@ -573,6 +573,8 @@ table(unlist(lapply(sq, function(sq) raw.trimmed[[sq]]$removed_taxa_by_name)))
 table(unlist(lapply(sq, function(sq) length(raw.trimmed[[sq]]$removed_taxa_index))))
 
 
+
+
 ## CALCULATE PCoA ORDINATIONS AND MORPHO/ECOSPACES #############################
 
 # Given high correlations among distance matrices, using GED.5 as the distance
@@ -691,7 +693,7 @@ for(t in 1:length(pcoa.results)) {
 # Save (and re-load) PCoA output:
 # mode.pcoa <- pcoa.results; save(mode.pcoa, file = "mode.pcoa")
 # constant.pcoa <- pcoa.results; save(constant.pcoa, file = "constant.pcoa")
-raw.pcoa <- pcoa.results; save(raw.pcoa, file = "raw.pcoa")
+# raw.pcoa <- pcoa.results; save(raw.pcoa, file = "raw.pcoa")
 # morph.pcoa <- pcoa.results; save(morph.pcoa, file = "morph.pcoa")
 # load("morph.pcoa"); pcoa.results <- morph.pcoa
 # load("mode.pcoa"); pcoa.results <- mode.pcoa
@@ -946,18 +948,28 @@ load("raw.pcoa")
 # anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
 # anc <- mode.anc; dist.matrix <- mode.distances.GED.5; pcoa.results <- mode.pcoa
 # anc <- constant.anc; dist.matrix <- constant.distances.GED.5; pcoa.results <- constant.pcoa
-anc <- raw.anc; dist.matrix <- raw.distances.GED.5; pcoa.results <- raw.pcoa
 
+# Load taxon.bins (built above)
+load("taxon.bins")
+if(nrow(taxon.bins[[1]]) != nrow(dist.matrix[[1]]$distance_matrix))
+  stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
 
-
-# Use 'raw.trimmed' output to override the raw objects. (Not needed for pcoa.results
-# because used earlier trimmed version when building the PCoA object.)
+## For 'raw' treatment (ONLY!), need to remove the taxa trimmed out for the PCOA
+## because of high denisty of missing states.
+# Use 'raw.trimmed' output to override the raw objects. (Not needed for
+# pcoa.results because used earlier trimmed version when building the PCoA
+# object.) Because the tip names are based on the raw.anc[[x]]$topper$tree, need
+# to match names for rows to correctly identify the trimmed-out tips and nodes
 load("raw.trimmed")
-for (i in 1:length(raw.trimmed)) {
-  wh.to.cut <- raw.trimmed[[i]]$removed_taxa_index
-  anc[[i]]$matrix_1$matrix <- raw.anc[[i]]$matrix_1$matrix[-wh.to.cut, ]
-  dist.matrix[[i]]$distance_matrix <- raw.distances.GED.5[[i]]$distance_matrix[-wh.to.cut, -wh.to.cut]
-  taxon.bins[[i]] <- taxon.bins[[i]][-wh.to.cut, ]
+for (t in 1:length(raw.trimmed)) {
+  taxa.to.cut <- raw.trimmed[[t]]$removed_taxa_by_name
+  # Because rownames are identical across 'dist.matrix', 'raw.anc', and
+  # 'taxon.bins', using 'taxon.bins' matches here
+  wh.to.cut <- match(taxa.to.cut, rownames(taxon.bins[[50]]))
+  anc[[t]]$matrix_1$matrix <- raw.anc[[t]]$matrix_1$matrix[-wh.to.cut, ]
+  dist.matrix[[t]]$distance_matrix <-
+    raw.distances.GED.5[[t]]$distance_matrix[-wh.to.cut, -wh.to.cut]
+  taxon.bins[[t]] <- taxon.bins[[t]][-wh.to.cut, ]
 }
 
 # Confirm all these 4 objects have the same number of rows
@@ -966,15 +978,8 @@ dim(taxon.bins[[50]])
 dim(dist.matrix[[50]]$distance_matrix)
 dim(pcoa.results[[50]]$vectors.cor)
 
-
-
-
-# Load taxon.bins (built above)
-load("taxon.bins")
-if(nrow(taxon.bins[[1]]) != nrow(dist.matrix[[1]]$distance_matrix))
-  stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
-
-# View to confirm 
+# View to confirm (and in case of 'raw', that taxa with numerous NAs are trimmed
+# out)
 taxon.bins[[50]][1:5, 1:5]
 anc[[50]]$matrix_1$matrix[1:10, 1:10]
 dist.matrix[[50]]$distance_matrix[1:4, 1:4]
@@ -1053,28 +1058,25 @@ metrics <- foreach(i = 1:ntrees, .options.snow = opts, .inorder = TRUE,
   return(t.metrics)
 }
 stopCluster(cl)
-(Sys.time() - start) # 5.7-6.8 minutes on 8-core laptop
+(Sys.time() - start) # 4.9-6.8 minutes on 8-core laptop
 
 ## Save / reload metrics
 # morph.metrics <- metrics; save(morph.metrics, file = "morph.metrics")
 # mode.metrics <- metrics; save(mode.metrics, file = "mode.metrics")
-constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
+# constant.metrics <- metrics; save(constant.metrics, file = "constant.metrics")
 # raw.metrics <- metrics; save(raw.metrics, file = "raw.metrics")
-# load("morph.metrics")
-# load("mode.metrics")
-# load("constant.metrics")
-# load("raw.metrics")
 beep(3)
+# load("morph.metrics"); metrics <- morph.metrics
+# load("mode.metrics"); metrics <- mode.metrics
+# load("constant.metrics"); metrics <- constant.metrics
+# load("raw.metrics"); metrics <- raw.metrics
 
-# Save tree 50 to .csv
+# Save tree # 50 to .csv
 # write.csv(metrics[[50]], file = "metrics_morph.csv", row.names = FALSE)
 # write.csv(metrics[[50]], file = "metrics_LH_mode.csv", row.names = FALSE)
-write.csv(metrics[[50]], file = "metrics_LH_constant.csv", row.names = FALSE)
+# write.csv(metrics[[50]], file = "metrics_LH_constant.csv", row.names = FALSE)
 # write.csv(metrics[[50]], file = "metrics_LH_raw.csv", row.names = FALSE)
-# metrics <- read.csv(file = "metrics_morph.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_mode.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_constant.csv", header = TRUE)
-# metrics <- read.csv(file = "metrics_LH_raw.csv", header = TRUE)
+
 
 # Check for any tree intervals skipped to avert error (ignore t = 18 = Ediacaran
 # b/c generally skipped due to too low S or H):
@@ -1083,12 +1085,14 @@ sapply(sq, function(sq) which(is.na(metrics[[sq]]$FRic)))
 
 ## Error log (usually qhull errors for FRic and FDiv). Following trees unable to
 ## calculate Terreneuvian FRic/FDiv:
-# Morph: No errors!
-# Mode: Trees 12, 21, 26, and 29 for Terreneuvian
+# Morph:    No errors!
+# Mode:     Trees 12, 21, 26, and 29 for Terreneuvian
 # Constant: Trees 1-3, 5-6, 8-10, 12-13, 18, 23-24, 28-31, 33, 41, 47, and 50 for 
 #           varying intervals, usually only 1-2 per tree (2-Katian, 3-Sandbian, 
 #           4-Darriwilian, 5-Dapingian, 6-Floian, 7-Tremadocian, 8-Stage 10, 
 #           12-Drumian, 13-Stage 5, 14-Stage 4, 15-Stage 3, and 16-Stage 2)
+# Raw:      All trees, except #22, 26, 30, and 47, yield FRic/FDiv errors for 
+#           several time intervals.
 
 # What proportion of PCoA eigenvalues included in ordination-based metrics?
 # (Note that because calculated on the entire PCoA eigenvectors, will not change
@@ -1097,36 +1101,40 @@ summary(unlist(lapply(sq, function(sq) metrics[[sq]]$qual.FRic)))
 
 head(metrics[[50]])
 
-
+# Sample relationships between metrics and species richness (for tree #50); see
+# Novack-Gottshall (2016b) for why informative
 par(mfrow = c(2, 4), mar = c(4, 4, 1, 0.2))
-for (c in 3:10) {
-  if (sum(is.na(metrics[, c])) == length(metrics[, c]))
+for (c in c(3:6, 8:11)) {
+  if (sum(is.na(metrics[[50]][, c])) == length(metrics[[50]][, c]))
     plot( 1, type = "n", axes = FALSE, xlab = "", ylab = "")
   else
-    plot(metrics$S, metrics[, c], main = colnames(metrics)[c], 
-         ylab = colnames(metrics)[c], xlab = "S")
+    plot(metrics[[50]]$S, metrics[[50]][, c], main = colnames(metrics[[50]])[c], 
+         ylab = colnames(metrics[[50]])[c], xlab = "S")
 }
 par(op)
 
 
-# Plot trends
+# Plot trends (using tree #50 as an example)
 par(mar = c(0, 4, 2, 2))
-for (c in 2:10) {
-  var <- metrics[, c]
+for (c in 2:11) {
+  var <- metrics[[50]][, c]
   if (sum(is.na(var)) == length(var))
     next
   lim <- range(var, na.rm = TRUE)
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
                tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
                cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
-               ts.col = TRUE, label = colnames(metrics)[c], timescale = ICS2020, 
+               ts.col = TRUE, label = colnames(metrics[[50]])[c], timescale = ICS2020, 
                type = "n", abbrev = "Period")
-  mtext(text = colnames(metrics)[c], side = 3, cex = 1.25)
+  mtext(text = colnames(metrics[[50]])[c], side = 3, cex = 1.25)
   lines(mids, var, lwd = 3)
 }
 par(op)
 
 
+
+
+# (*** BELOW COMPARISONS NOTE NOT UPDATED USING NEW MULTI-TREE CODE ***)
 
 ## How correlated are the metrics?
 morph <- read.csv(file = "metrics_morph.csv", header = TRUE)
