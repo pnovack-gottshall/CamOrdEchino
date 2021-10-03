@@ -60,6 +60,43 @@ source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 # Corrected resampling function
 sample2 <- function(x, ...) x[sample.int(length(x), ...)]
 
+## Function to append the numbered index of removed tip and node numbers when
+## running Claddis::trim_matrix().
+# Claddis::trim_matrix() alters the names [= numbers] of nodes in a tree when
+# pruning out tips and nodes with missing data. This version wraps around 
+# trim_matrix() and appends the original node numbers, so that the trimmed 
+# output better matches the other same-named objects in the workflow.
+#
+#    distance_matrix = A distance matrix in the format created by 
+#                      Claddis::calculate_morphological_distances(), or the code 
+#                      used previously in the workflow.
+#    tree            = a tree. Used to match tip labels and node numbers to 
+#                      trimmed taxa, so must be included, unlike behavior in 
+#                      trim_matrix().
+trim_to_numbers <- function(distance_matrix, tree = NULL) {
+  if (is.null(tree))
+    stop("'tree' MUST be included.")
+  trimmed <- Claddis::trim_matrix(distance_matrix, tree)
+  # Get list of tips
+  tips.removed <- trimmed$removed_taxa[-grep("%%", trimmed$removed_taxa)]
+  tip.numbers.removed <- sort(match(tips.removed, tree$tip.label))
+  # Get list of nodes removed (in original 'named' output)
+  nodes.removed <- trimmed$removed_taxa[grep("%%", trimmed$removed_taxa)]
+  sq <- 1:length(nodes.removed)
+  # ... and convert to original node numbers
+  node.numbers.removed <- sort(unique(unlist(lapply(sq, function(sq)
+      Claddis::find_mrca(unlist(strsplit(trimmed$removed_taxa[which(trimmed$removed_taxa == nodes.removed[sq])], "%%")), tree)))))
+  # Confirm index is logical (tip numbers <= no. of tree times, and nodes >)
+  if (max(tip.numbers.removed) > ape::Ntip(tree))
+    stop("returns tip numbers greater than allowed by 'tree'")
+  if (min(node.numbers.removed) <= ape::Ntip(tree))
+    stop("returns node numbers less than allowed by 'tree'")
+  if (any(node.numbers.removed %in% tip.numbers.removed))
+    stop("node numbers can not match tip numbers")
+  # Append to trim_matrix output
+  trimmed$removed_taxa_index <- unique(c(tip.numbers.removed, node.numbers.removed))
+}
+
 
 
 
@@ -1331,17 +1368,17 @@ for(t in 1:nc) {
   metrics[t, mean.cols] <- apply(par.bin.metrics, 2, mean, na.rm = TRUE)
   metrics[t, sd.cols] <- apply(par.bin.metrics[, -1], 2, sd, na.rm = TRUE)
 }
-(Sys.time() - start) # 40-41 minutes using 8 core laptop, 3000 replicates
+(Sys.time() - start) # 40-46 minutes using 8 core laptop, 3000 replicates
 
 ## Save / reload metrics:
-morph.stdG.metrics <- metrics; save(morph.stdG.metrics, file = "morph.stdG.metrics")
+# morph.stdG.metrics <- metrics; save(morph.stdG.metrics, file = "morph.stdG.metrics")
 # mode.stdG.metrics <- metrics; save(mode.stdG.metrics, file = "mode.stdG.metrics")
 # constant.stdG.metrics <- metrics; save(constant.stdG.metrics, file = "constant.stdG.metrics")
-# raw.stdG.metrics <- metrics; save(raw.stdG.metrics, file = "raw.stdG.metrics")
-write.csv(metrics, file = "metrics_StdG50_morph.csv", row.names = FALSE)
+raw.stdG.metrics <- metrics; save(raw.stdG.metrics, file = "raw.stdG.metrics")
+# write.csv(metrics, file = "metrics_StdG50_morph.csv", row.names = FALSE)
 # write.csv(metrics, file = "metrics_StdG50_LH_mode.csv", row.names = FALSE)
 # write.csv(metrics, file = "metrics_StdG50_LH_constant.csv", row.names = FALSE)
-# write.csv(metrics, file = "metrics_StdG50_LH_raw.csv", row.names = FALSE)
+write.csv(metrics, file = "metrics_StdG50_LH_raw.csv", row.names = FALSE)
 # metrics <- read.csv(file = "metrics_StdG50_morph.csv", header = TRUE)
 # metrics <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
 # metrics <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
