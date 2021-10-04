@@ -4,7 +4,7 @@
 ## update R scripts folder to download and update stratigraphic ages for the
 ## genera from the PBDB. Once downloaded, manually change first Anatifopsis to
 ## its subgenus Anatiferocystis and the second one to the subgenus
-## Guichenocarpus so tip names match those used in the NEXUS tree files.
+## Guichenocarpos so tip names match those used in the NEXUS tree files.
 
 ## PREPARATIONS ################################################################
 rm(list = ls())
