@@ -31,7 +31,7 @@ library(parallel)   # v. 4.1.0
 
 ### FUNCTIONS ##################################################################
 
-# Prepare snowfall cluster. A impler way to run the initialization code. Make
+# Prepare snowfall cluster. A simpler way to run the initialization code. Make
 # sure to Stop with sfStop().
 #    CPUs = no. CPUs to use. Default is all available.
 #    oufile = file to store parallel output status
