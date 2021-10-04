@@ -208,7 +208,6 @@ load("taxon.pairs")
 # approximately equal in duration.
 
 ntrees <- length(morph.distances.GED.5)
-t.sq <- 1:nrow(taxon.pairs)
 morph.conv <- mode.conv <- constant.conv <- raw.conv <- vector("list", ntrees)
 CPUs <- detectCores(logical = TRUE)
 cl <- makeCluster(CPUs)
@@ -244,7 +243,7 @@ raw.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
 }
 
 stopCluster(cl)
-Sys.time() - start
+Sys.time() - start     # 3.9 hrs (~ 1 hour per data set), on 8-core laptop
 save(morph.conv, file = "morph.conv")
 save(mode.conv, file = "mode.conv")
 save(constant.conv, file = "constant.conv")
@@ -252,64 +251,85 @@ save(raw.conv, file = "raw.conv")
 beep(3)
 
 
-# Calculate branch distances (used for C3) for these pairs of taxa (in parallel)
+
+## Calculate branch distances (used for C3) for these pairs of taxa (running
+## each tree as a loop, and processing each tree's 'taxon.pairs' in parallel
+## because that's the fastest way.)
 (start <- Sys.time())
+ntrees <- length(morph.distances.GED.5)
 sq <- 1:nrow(taxon.pairs)
-morph.BD <- mode.BD <- constant.BD <- raw.BD <- rep(NA, nrow(taxon.pairs))
 CPUs <- detectCores(logical = TRUE)
-cl <- makeCluster(CPUs)
-registerDoParallel(cl)
+for(t in 1:ntrees){
+  # To monitor progress
+  cat("processing all data sets for tree", t, "at", 
+      format(Sys.time(), "%H:%M:%S"), "\n")
+  
+  # Store results for each individual tree's taxon.pair statistics
+  morph.BD <- mode.BD <- constant.BD <- raw.BD <- rep(NA, nrow(taxon.pairs))
 
-# Morphology
-morph.BD <- foreach(i = sq, .combine = c) %dopar% {
-              BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
-                                       t2 = taxon.pairs[i, 2])
-              morph.BD.pair <- branch.distance(BH, morph.distances.GED.5$distance_matrix)
+  # Morphology
+  cl <- makeCluster(CPUs)
+  registerDoParallel(cl)
+  morph.BD <- foreach(i = sq, .combine = c) %dopar% {
+    BH <- ancestral.lineages(tree = raw.anc[[t]]$topper$tree,
+                             t1 = taxon.pairs[i, 1], t2 = taxon.pairs[i, 2])
+    morph.BD.pair <- 
+      branch.distance(BH, morph.distances.GED.5[[t]]$distance_matrix)
+  }
+  stopCluster(cl)
+  # Calculate C3 ( = C2 / branch distance) and append as new column
+  # Append branch-length distances as new column
+  morph.conv[[t]]$C3 <- morph.conv[[t]]$C2 / morph.BD
+  morph.conv[[t]]$branch.dist <- morph.BD
+  
+  # Mode
+  cl <- makeCluster(CPUs)
+  registerDoParallel(cl)
+  mode.BD <- foreach(i = sq, .combine = c) %dopar% {
+    BH <- ancestral.lineages(tree = raw.anc[[t]]$topper$tree, 
+                             t1 = taxon.pairs[i, 1], t2 = taxon.pairs[i, 2])
+    mode.BD.pair <- 
+      branch.distance(BH, mode.distances.GED.5[[t]]$distance_matrix)
+  }
+  stopCluster(cl)
+  mode.conv[[t]]$C3 <- mode.conv[[t]]$C2 / mode.BD
+  mode.conv[[t]]$branch.dist <- mode.BD
+  
+  # Constant
+  cl <- makeCluster(CPUs)
+  registerDoParallel(cl)
+  constant.BD <- foreach(i = sq, .combine = c) %dopar% {
+    BH <- ancestral.lineages(tree = raw.anc[[t]]$topper$tree, 
+                             t1 = taxon.pairs[i, 1], t2 = taxon.pairs[i, 2])
+    constant.BD.pair <- 
+      branch.distance(BH, constant.distances.GED.5[[t]]$distance_matrix)
+  }
+  stopCluster(cl)
+  constant.conv[[t]]$C3 <- constant.conv[[t]]$C2 / constant.BD
+  constant.conv[[t]]$branch.dist <- constant.BD
+  
+  # Raw
+  cl <- makeCluster(CPUs)
+  registerDoParallel(cl)
+  raw.BD <- foreach(i = sq, .combine = c) %dopar% {
+    BH <- ancestral.lineages(tree = raw.anc[[t]]$topper$tree, 
+                             t1 = taxon.pairs[i, 1], t2 = taxon.pairs[i, 2])
+    raw.BD.pair <- 
+      branch.distance(BH, raw.distances.GED.5[[t]]$distance_matrix)
+  }
+  stopCluster(cl)
+  raw.conv[[t]]$C3 <- raw.conv[[t]]$C2 / raw.BD
+  raw.conv[[t]]$branch.dist <- raw.BD
 }
-stopCluster(cl)
-Sys.time() - start
-beep(3)
-
-# Mode
-mode.BD <- foreach(i = sq, .combine = c) %dopar% {
-              BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
-                                       t2 = taxon.pairs[i, 2])
-              mode.BD.pair <- branch.distance(BH, mode.distances.GED.5$distance_matrix)
-}
-
-# Constant
-constant.BD <- foreach(i = sq, .combine = c) %dopar% {
-                BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
-                                         t2 = taxon.pairs[i, 2])
-                constant.BD.pair <- branch.distance(BH, constant.distances.GED.5$distance_matrix)
-}
-
-# Raw
-raw.BD <- foreach(i = sq, .combine = c) %dopar% {
-            BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
-                                     t2 = taxon.pairs[i, 2])
-            raw.BD.pair <- branch.distance(BH, raw.distances.GED.5$distance_matrix)
-}
-stopCluster(cl)
-beep(3)
-
-# Calculate C3 ( = C2 / branch distance) and append as new column
-morph.conv$C3 <- morph.conv$C2 / morph.BD
-mode.conv$C3 <- mode.conv$C2 / mode.BD
-constant.conv$C3 <- constant.conv$C2 / constant.BD
-raw.conv$C3 <- raw.conv$C2 / raw.BD
-
-# Append branch-length distances as new column
-morph.conv$branch.dist <- morph.BD
-mode.conv$branch.dist <- mode.BD
-constant.conv$branch.dist <- constant.BD
-raw.conv$branch.dist <- raw.BD
+Sys.time() - start     # hrs on 8-core laptop
 
 # Save output
-# save(mode.conv, file = "mode.conv")
-# save(constant.conv, file = "constant.conv")
-# save(raw.conv, file = "raw.conv")
-# save(morph.conv, file = "morph.conv")
+save(mode.conv, file = "mode.conv")
+save(constant.conv, file = "constant.conv")
+save(raw.conv, file = "raw.conv")
+save(morph.conv, file = "morph.conv")
+
+beep(3)
 
 
 
