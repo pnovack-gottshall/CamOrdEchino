@@ -2262,9 +2262,9 @@ par(op)
 # No need to sample standardize here, as the sample size is the same for
 # ecological and morphological subsets. Simply need to observe the differences
 # in convex hull hypervolume (FRic), using 'm' PCoA axes like above. And this
-# analysis is not observing the trends through time. May need to standardize
-# each space to the overall FRic of all echinoderms, as the length of
-# eigenvalues may be different in each space.
+# analysis is not observing the trends through time. Standardizing each space to
+# the overall FRic of all echinoderms because the length of eigenvalues may be
+# different in each space.
 
 # Select 'm' (number of PCoA axes to use when calculating convex hull volume)
 m <- 2
