@@ -93,7 +93,7 @@ StaytonConvergence <- function(dist.matrix, tree, taxon.pairs) {
   LineageDistances <- matrix(nrow = 0, ncol = 2)
 
   for (i in 1:nrow(taxon.pairs)) {
-    CurrentMRCA <- FindAncestor(descs = taxon.pairs[i, ], tree = tree)
+    CurrentMRCA <- Claddis::find_mrca(descendant_names = taxon.pairs[i, ], tree = tree)
     LineageNodes <- CurrentNodes <- c(which(tree$tip.label == taxon.pairs[i, 1]), 
                                       which(tree$tip.label == taxon.pairs[i, 2]))
     AncestorNodes <- c(tree$edge[which(tree$edge[, 2] == CurrentNodes[1]), 1], 
@@ -193,27 +193,67 @@ for (i in 1:(Ntip(tree) - 1)) {
 }
 beep()
 # save(taxon.pairs, file = "taxon.pairs")
-# load("taxon.pairs")
+load("taxon.pairs")
 
 
 
-# Calculate C1 & C2 convergence statistics for these pairs of taxa
-morph.conv <-
-  StaytonConvergence(dist.matrix = morph.distances.GED.5$DistanceMatrix,
-                     tree = tree, taxon.pairs = taxon.pairs)
-mode.conv <-
-  StaytonConvergence(dist.matrix = mode.distances.GED.5$DistanceMatrix, 
-                     tree = tree, taxon.pairs = taxon.pairs)
-constant.conv <- 
-  StaytonConvergence(dist.matrix = constant.distances.GED.5$DistanceMatrix,
-                     tree = tree, taxon.pairs = taxon.pairs)
-raw.conv <-
-  StaytonConvergence(dist.matrix = raw.distances.GED.5$DistanceMatrix, 
-                     tree = tree, taxon.pairs = taxon.pairs)
+## Calculate C1 & C2 convergence statistics for these pairs of taxa.
+
+# Running in parallel with load-balancing because different tree structures may
+# have differences in calculation time for statistics. Note that, because the
+# same tip character states are used across trees, resulting $Dtip will be
+# identical across trees. The convergence statistics will vary based on Dmax and
+# branching lengths, which depend on the ancestral states and varying branching
+# edge.lengths and toplogies. Not using load-balancing because run times are
+# approximately equal in duration.
+
+ntrees <- length(morph.distances.GED.5)
+t.sq <- 1:nrow(taxon.pairs)
+morph.conv <- mode.conv <- constant.conv <- raw.conv <- vector("list", ntrees)
+CPUs <- detectCores(logical = TRUE)
+cl <- makeCluster(CPUs)
+registerDoParallel(cl)
+
+# Morphology
+(start <- Sys.time())
+cat("starting 'morphology' at", format(start, "%H:%M:%S"), "\n")
+morph.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
+  StaytonConvergence(dist.matrix = morph.distances.GED.5[[i]]$distance_matrix,
+                     tree = raw.anc[[i]]$topper$tree, taxon.pairs = taxon.pairs)
+  }
+
+# Mode
+cat("starting 'mode' at", format(Sys.time(), "%H:%M:%S"), "\n")
+mode.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
+  StaytonConvergence(dist.matrix = mode.distances.GED.5[[i]]$distance_matrix,
+                     tree = raw.anc[[i]]$topper$tree, taxon.pairs = taxon.pairs)
+}
+
+# Constant
+cat("starting 'constant' at", format(Sys.time(), "%H:%M:%S"), "\n")
+constant.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
+  StaytonConvergence(dist.matrix = constant.distances.GED.5[[i]]$distance_matrix,
+                     tree = raw.anc[[i]]$topper$tree, taxon.pairs = taxon.pairs)
+}
+
+# Raw
+cat("starting 'raw' at", format(Sys.time(), "%H:%M:%S"), "\n")
+raw.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
+  StaytonConvergence(dist.matrix = raw.distances.GED.5[[i]]$distance_matrix,
+                     tree = raw.anc[[i]]$topper$tree, taxon.pairs = taxon.pairs)
+}
+
+stopCluster(cl)
+Sys.time() - start
+save(morph.conv, file = "morph.conv")
+save(mode.conv, file = "mode.conv")
+save(constant.conv, file = "constant.conv")
+save(raw.conv, file = "raw.conv")
 beep(3)
 
 
 # Calculate branch distances (used for C3) for these pairs of taxa (in parallel)
+(start <- Sys.time())
 sq <- 1:nrow(taxon.pairs)
 morph.BD <- mode.BD <- constant.BD <- raw.BD <- rep(NA, nrow(taxon.pairs))
 CPUs <- detectCores(logical = TRUE)
@@ -222,30 +262,33 @@ registerDoParallel(cl)
 
 # Morphology
 morph.BD <- foreach(i = sq, .combine = c) %dopar% {
-              BH <- ancestral.lineages(tree = tree, t1 = taxon.pairs[i, 1],
+              BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
                                        t2 = taxon.pairs[i, 2])
-              morph.BD.pair <- branch.distance(BH, morph.distances.GED.5$DistanceMatrix)
+              morph.BD.pair <- branch.distance(BH, morph.distances.GED.5$distance_matrix)
 }
+stopCluster(cl)
+Sys.time() - start
+beep(3)
 
 # Mode
 mode.BD <- foreach(i = sq, .combine = c) %dopar% {
-              BH <- ancestral.lineages(tree = tree, t1 = taxon.pairs[i, 1],
+              BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
                                        t2 = taxon.pairs[i, 2])
-              mode.BD.pair <- branch.distance(BH, mode.distances.GED.5$DistanceMatrix)
+              mode.BD.pair <- branch.distance(BH, mode.distances.GED.5$distance_matrix)
 }
 
 # Constant
 constant.BD <- foreach(i = sq, .combine = c) %dopar% {
-                BH <- ancestral.lineages(tree = tree, t1 = taxon.pairs[i, 1],
+                BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
                                          t2 = taxon.pairs[i, 2])
-                constant.BD.pair <- branch.distance(BH, constant.distances.GED.5$DistanceMatrix)
+                constant.BD.pair <- branch.distance(BH, constant.distances.GED.5$distance_matrix)
 }
 
 # Raw
 raw.BD <- foreach(i = sq, .combine = c) %dopar% {
-            BH <- ancestral.lineages(tree = tree, t1 = taxon.pairs[i, 1],
+            BH <- ancestral.lineages(tree = raw.anc[[i]]$topper$tree, t1 = taxon.pairs[i, 1],
                                      t2 = taxon.pairs[i, 2])
-            raw.BD.pair <- branch.distance(BH, raw.distances.GED.5$DistanceMatrix)
+            raw.BD.pair <- branch.distance(BH, raw.distances.GED.5$distance_matrix)
 }
 stopCluster(cl)
 beep(3)
@@ -643,8 +686,8 @@ summary(morph.conv[wh.morph.no.Eop, "branch.dist"])
 # Use Mantel test to confirm there is not a bias caused by differences in the
 # two distance matrices
 set.seed(314)  # Set RNG seed to allow replication
-d1 <- morph.distances.GED.5$DistanceMatrix
-d2 <- mode.distances.GED.5$DistanceMatrix
+d1 <- morph.distances.GED.5$distance_matrix
+d2 <- mode.distances.GED.5$distance_matrix
 diag(d1) <- diag(d2) <- NA
 d1 <- as.dist(d1)
 d2 <- as.dist(d2)
