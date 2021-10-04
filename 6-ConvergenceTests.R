@@ -1,10 +1,10 @@
 ## CONVERGENCE ANALYSES (STAYTON 2015) #########################################
 
 # Prior to running, run 2-InferAncestralStates.R to infer ancestral states using
-# 'Claddis' package. 'convevol' assumes Brownian motion ancestral
+# 'Claddis' package. The package 'convevol' assumes Brownian motion ancestral
 # reconstructions, which are not appropriate for the discrete characters we are
-# using. Instead, we will use Claddis::AncStateEstMatrix, which wraps around
-# phytools::rerootingMethod, to reconstruct ancestral states using the
+# using. Instead, we will use Claddis::AncStateEstMatrix(), which wraps around
+# phytools::rerootingMethod(), to reconstruct ancestral states using the
 # continuous-time Markov chain (Mk) model of discrete state changes. 'convevol'
 # also measures distances between tips and nodes using raw Euclidean distance.
 # Here (and like in Lloyd, 2018), we use the Wills generalized Euclidean
@@ -23,10 +23,10 @@
 # supplementary information. Thanks, Graeme! ***
 
 # Note that substantial coding changes accompanied the update to Claddis v.
-# 0.6.0 in August 2020. The code here uses the functions as of 7/2/2020, v.
-# 0.4.1. Future users will need to either download the archived version of the
-# package from GitHub or alter the code accordingly to use the current argument
-# and function names.
+# 0.6.0 in August 2020. The code here uses the functions as of 7/29/2021, v.
+# 0.6.3. Users accustomed with earlier versions will need to either download the
+# archived version of the package from GitHub or alter the code accordingly to
+# use appropriate argument and function names.
 
 
 ## PREPARATIONS ################################################################
@@ -40,9 +40,9 @@ setwd("~/Manuscripts/CamOrdEchinos/Data files/NA Reformatted")
 
 # Load packages
 library(beepr)      # v. 1.3
-library(doParallel) # v. 1.0.15
-library(Claddis)    # v. 0.4.1
-library(ade4)       # v. 1.7-15
+library(doParallel) # v. 1.0.16
+library(Claddis)    # v. 0.6.3
+library(ade4)       # v. 1.7-17
 if(packageVersion("Claddis") < "0.4.1")
   stop("wrong version of 'Claddis' Get updated version from GitHub\n")
 
@@ -52,14 +52,17 @@ if(packageVersion("Claddis") < "0.4.1")
 ## IMPORT FILES ################################################################
 
 # Import output from 3-DisparityDistances.R
+load("morph.distances.GED.5")
 load("mode.distances.GED.5")
 load("constant.distances.GED.5")
 load("raw.distances.GED.5")
-load("morph.distances.GED.5")
 
-# Import time trees saved from 1-MakeTimeTrees.R
-load("~/Manuscripts/CamOrdEchinos/equal.tree")
-tree <- equal.tree
+# Import time trees saved from 2-InferAncestralStates.R (because the original
+# cal3 trees from 1-MakeTimeTrees.R contains zero-length branches but they were
+# removed from those appended to ancestral states.) Using the trees from raw.anc
+# because the trees are identical across x.anc, and this one is the smallest
+# object.
+load("raw.anc")
 
 
 
@@ -177,12 +180,16 @@ branch.distance <- function(branching.history, dist.matrix) {
 
 ## CALCULATE CONVERGENCE STATISTICS C1, C2, and C3 OF STAYTON (2015) ###########
 
-# Get names for all pairs of tips (surprisingly slow)
+# Get names for all pairs of tips for each tree. Although the order of
+# $tip.label is different in each time tree, no need to build separately for
+# each tree because the tip taxa (i.e., the rownames of $ranges.used) are
+# identical across trees.
+tree <- raw.anc[[1]]$topper$tree
+taxa <- rownames(tree$ranges.used)
 taxon.pairs <- matrix(nrow = 0, ncol = 2)
 for (i in 1:(Ntip(tree) - 1)) {
-  for (j in (i + 1):Ntip(tree)) {
-    taxon.pairs <- rbind(taxon.pairs, c(tree$tip.label[i], tree$tip.label[j]))
-  }
+  taxon.pairs <- rbind(taxon.pairs, cbind(rep(taxa[i], (Ntip(tree) - 1)), 
+                                          taxa[taxa != taxa[i]]))
 }
 beep()
 # save(taxon.pairs, file = "taxon.pairs")
