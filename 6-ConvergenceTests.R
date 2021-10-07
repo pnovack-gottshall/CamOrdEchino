@@ -244,10 +244,10 @@ raw.conv <- foreach(i = 1:ntrees, .inorder = TRUE, .packages = "FD") %dopar% {
 
 stopCluster(cl)
 Sys.time() - start     # 3.9 hrs (~ 1 hour per data set), on 8-core laptop
-save(morph.conv, file = "morph.conv")
-save(mode.conv, file = "mode.conv")
-save(constant.conv, file = "constant.conv")
-save(raw.conv, file = "raw.conv")
+# save(morph.conv, file = "morph.conv")
+# save(mode.conv, file = "mode.conv")
+# save(constant.conv, file = "constant.conv")
+# save(raw.conv, file = "raw.conv")
 beep(3)
 
 
@@ -321,13 +321,13 @@ for(t in 1:ntrees){
   raw.conv[[t]]$C3 <- raw.conv[[t]]$C2 / raw.BD
   raw.conv[[t]]$branch.dist <- raw.BD
 }
-Sys.time() - start     # hrs on 8-core laptop
+Sys.time() - start     # 120.8 hrs on 8-core laptop
 
 # Save output
-save(mode.conv, file = "mode.conv")
-save(constant.conv, file = "constant.conv")
-save(raw.conv, file = "raw.conv")
-save(morph.conv, file = "morph.conv")
+# save(mode.conv, file = "mode.conv")
+# save(constant.conv, file = "constant.conv")
+# save(raw.conv, file = "raw.conv")
+# save(morph.conv, file = "morph.conv")
 
 beep(3)
 
@@ -335,7 +335,12 @@ beep(3)
 
 
 ## WHAT TAXONOMIC RANK ARE THE PAIRINGS? #######################################
-# In other words, what is the taxonomic distance among convergent pairs?
+
+# In other words, what is the taxonomic distance among convergent pairs? Because
+# based on taxonomy and not phylogeny, the taxonomic distance will be identical
+# across trees and data sets. Will use the morphological data set to identify
+# matches, then append to the prior convergence output for all trees and data
+# sets.
 
 # Import ecological data set, which has all taxonomic assignments:
 data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
@@ -346,9 +351,9 @@ data$Genus[which(data$Genus == "Anatifopsis")] <-
   c("Anatiferocystis", "Guichenocarpos")
 
 # Assign rank for morphological data set (which is same for all data sets)
-rank <- rep(NA, nrow(morph.conv))
+rank <- rep(NA, nrow(morph.conv[[1]]))
 for (r in 1:length(rank)) {
-  pair <- morph.conv[r, 1:2]
+  pair <- morph.conv[[1]][r, 1:2]
   taxa <- data[which(data$Genus %in% pair), 1:9]
   shared <- which(apply(taxa, 2, duplicated)[2, ])
   matches <- length(shared)
@@ -372,10 +377,12 @@ sort(table(rank))
 
 
 # Append to earlier output and save
-morph.conv$PairRank <- rank
-mode.conv$PairRank <- rank
-constant.conv$PairRank <- rank
-raw.conv$PairRank <- rank
+for (t in 1:length(morph.conv)) {
+  morph.conv[[t]]$PairRank <- rank
+  mode.conv[[t]]$PairRank <- rank
+  constant.conv[[t]]$PairRank <- rank
+  raw.conv[[t]]$PairRank <- rank
+}
 
 # save(mode.conv, file = "mode.conv")
 # save(constant.conv, file = "constant.conv")
