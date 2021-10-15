@@ -388,10 +388,55 @@ for (t in 1:length(morph.conv)) {
 # save(constant.conv, file = "constant.conv")
 # save(raw.conv, file = "raw.conv")
 # save(morph.conv, file = "morph.conv")
+
+
+
+
+## CALCULATE THE MOST FREQUENT CONVERGENCE STATISTICS ACROSS ALL 50 TREES ######
 load("mode.conv")
 load("constant.conv")
 load("raw.conv")
 load("morph.conv")
+beep()
+
+## FUNCTION TO CALCULATE THE MODE AMONG OBSERVED STATISTICS
+# NAs (and missing "" data) can be omitted (with default to include them, to
+# match behavior of mean() and median(). The standard 'mode' solution in case of
+# ties (an intermediate value) is nonsensical when dealing with discrete states.
+# Here, ties are won based on which state is listed first in the input data,
+# which is a pseudorandom way to 'flip a coin' to break a tie.
+Mode <- function(x, na.rm = FALSE) {
+  if (na.rm)
+    ux <- unique(x[!is.na(x) & x != ""])
+  else
+    ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# Calculate median convergence statistics (using median because not normally
+# distributed). Because x.conv is a data frame, less easy than using 
+# 'apply(simplify2array(x.conv), 1:2, Mode)' directly.
+
+# Remember that the first two and the last one columns are constant across trees
+# (and data sets), so only need to calculate colums 3-8.
+Mode.mode.conv <- Mode.constant.conv <- Mode.raw.conv <- Mode.morph.conv <- 
+  mode.conv[[1]]
+sq <- 1:length(mode.conv)
+
+# Convert numeric columns to matrix and calculate Mode
+tmp.conv <- lapply(sq, function(sq) as.matrix(mode.conv[[sq]][, 3:8]))
+Mode.mode.conv[, 3:8] <- apply(simplify2array(tmp.conv), 1:2, Mode, na.rm = TRUE)
+
+tmp.conv <- lapply(sq, function(sq) as.matrix(constant.conv[[sq]][, 3:8]))
+Mode.constant.conv[, 3:8] <- apply(simplify2array(tmp.conv), 1:2, Mode, na.rm = TRUE)
+
+tmp.conv <- lapply(sq, function(sq) as.matrix(raw.conv[[sq]][, 3:8]))
+Mode.raw.conv[, 3:8] <- apply(simplify2array(tmp.conv), 1:2, Mode, na.rm = TRUE)
+
+tmp.conv <- lapply(sq, function(sq) as.matrix(morph.conv[[sq]][, 3:8]))
+Mode.morph.conv[, 3:8] <- apply(simplify2array(tmp.conv), 1:2, Mode, na.rm = TRUE)
+beep(3)
+
 
 
 ## A curious outcome explained:
@@ -409,7 +454,7 @@ load("morph.conv")
 # the morphology, 825 in constant, and 70 in the raw, accounting for < 0.1% of
 # the cases, and these can be ignored. The higher proportion in the constant is
 # additional confirmation these are caused by missing character states.
-rounders <- which(mode.conv$C3 > 1 & mode.conv$C3 < 1.001)
+rounders <- which(Mode.mode.conv$C3 > 1 & Mode.mode.conv$C3 < 1.001)
 (mode.conv$C3[rounders] - 1)
 
 oddballs <- which(mode.conv$C3 > 1.001 & is.finite(mode.conv$C3))
