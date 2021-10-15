@@ -437,6 +437,13 @@ tmp.conv <- lapply(sq, function(sq) as.matrix(morph.conv[[sq]][, 3:8]))
 Mode.morph.conv[, 3:8] <- apply(simplify2array(tmp.conv), 1:2, Mode, na.rm = TRUE)
 beep(3)
 
+# Save
+# save(Mode.morph.conv, file = "Mode.morph.conv")
+# save(Mode.mode.conv, file = "Mode.mode.conv")
+# save(Mode.constant.conv, file = "Mode.constant.conv")
+# save(Mode.raw.conv, file = "Mode.raw.conv")
+rm("tmp.conv")
+gc()
 
 
 ## A curious outcome explained:
@@ -444,28 +451,32 @@ beep(3)
 # Stayton (2015) claims C3 should have a maximum value of 1 because it is the
 # proportion of C2 convergence accounted for in branch evolution. But 82 taxon
 # pairs return C3 values greater than 1. A few are easily explained as rounding
-# errors (e.g., C3 = 1 + 3.5e-15). Most of the remaining "impossible" values
-# here occur as a result of a few taxa, especially pairings with Apektocrinus,
-# Haplosphaeronis, and Cryptocrinites. Infinite and "> 1" C3 values occur
-# when the tips, MRCA, and intervening lineages all have zero distances. In some
-# of these cases, they may not be exactly identical (and may have different
-# coordinates in PCoA space) because of pairwise distance handling for missing
-# character states. Overall, there 71 such pairings in the mode treatment, 9 in
-# the morphology, 825 in constant, and 70 in the raw, accounting for < 0.1% of
-# the cases, and these can be ignored. The higher proportion in the constant is
-# additional confirmation these are caused by missing character states.
+# errors (e.g., C3 = 1.11e-15). Most of the remaining "impossible" values here
+# occur as a result of a few taxa, especially pairings with Wellerocystis,
+# Canadocystis, Implicaticystis, Apektocrinus, Holocystites, Oklahomacystis,
+# Petalocystites, Titanocrinus, and Cryptocrinites. Infinite and "> 1" C3 values
+# occur when the tips, MRCA, and intervening lineages all have zero distances.
+# In some of these cases, they may not be exactly identical (and may have
+# different coordinates in PCoA space) because of pairwise distance handling for
+# missing character states. Overall, there 96 such pairings in the mode
+# treatment, 480 in constant, and 146 in the raw, accounting for 0.07 - 0.36% of
+# the cases, and these can be ignored. There are 0 cases in the morphological
+# data set. The higher proportion in the constant is additional confirmation
+# these are caused by missing character states.
 rounders <- which(Mode.mode.conv$C3 > 1 & Mode.mode.conv$C3 < 1.001)
-(mode.conv$C3[rounders] - 1)
+(Mode.mode.conv$C3[rounders] - 1)
 
-oddballs <- which(mode.conv$C3 > 1.001 & is.finite(mode.conv$C3))
+oddballs <- which(Mode.mode.conv$C3 > 1.001 & is.finite(Mode.mode.conv$C3))
 length(oddballs)
-sort(table(c(mode.conv$Taxon1[oddballs], mode.conv$Taxon2[oddballs])))
-mode.conv[oddballs, ]
+sort(table(c(Mode.mode.conv$Taxon1[oddballs], Mode.mode.conv$Taxon2[oddballs])))
+Mode.mode.conv[oddballs, ]
 
-odder.oddballs <- which(is.infinite(mode.conv$C3))
-sort(table(c(mode.conv$Taxon1[odder.oddballs], mode.conv$Taxon2[odder.oddballs])))
-mode.conv[odder.oddballs, ]
+odder.oddballs <- which(is.infinite(Mode.mode.conv$C3))
+sort(table(c(Mode.mode.conv$Taxon1[odder.oddballs], Mode.mode.conv$Taxon2[odder.oddballs])))
+Mode.mode.conv[odder.oddballs, ]
 
+length(unique(c(oddballs, odder.oddballs)))
+100 * round(length(unique(c(oddballs, odder.oddballs))) / nrow(Mode.mode.conv), 4)
 
 
 
@@ -475,87 +486,91 @@ mode.conv[odder.oddballs, ]
 # Plot C1 histograms:
 par(mfrow = c(2,2))
 breaks <- seq(from = 0, to = 1, by = 0.05)
-h.morph1 <- hist(morph.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "morphology")
-h.mode1 <- hist(mode.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (mode treatment)")
-h.constant1 <- hist(constant.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (constant treatment)")
-h.raw1 <- hist(raw.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (raw treatment)")
+h.morph1 <- hist(Mode.morph.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "morphology")
+h.mode1 <- hist(Mode.mode.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (mode treatment)")
+h.constant1 <- hist(Mode.constant.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (constant treatment)")
+h.raw1 <- hist(Mode.raw.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (raw treatment)")
 
 # Plot C2 histograms:
-breaks2 <- seq(from = 0, to = 5, by = 0.25)
-h.morph2 <- hist(morph.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "morphology")
-h.mode2 <- hist(mode.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (mode treatment)")
-h.constant2 <- hist(constant.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (constant treatment)")
-h.raw2 <- hist(raw.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (raw treatment)")
+breaks2 <- seq(from = 0, to = 6.25, by = 0.25)
+h.morph2 <- hist(Mode.morph.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "morphology")
+h.mode2 <- hist(Mode.mode.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (mode treatment)")
+h.constant2 <- hist(Mode.constant.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (constant treatment)")
+h.raw2 <- hist(Mode.raw.conv$C2, breaks = breaks2, prob = TRUE, xlab = "C2", main = "ecology (raw treatment)")
 
 # Plot C3 histograms (truncated for errors caused by missing data when
 # calculating pairwise distance measures):
 breaks3 <- seq(from = 0, to = 1, by = 0.05)
-# Remove errors caused by rounding and missing data problems (see below)
-h.morph3 <- hist(morph.conv$C3[morph.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "morphology")
-h.mode3 <- hist(mode.conv$C3[mode.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (mode treatment)")
-h.constant3 <- hist(constant.conv$C3[constant.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (constant treatment)")
-h.raw3 <- hist(raw.conv$C3[raw.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (raw treatment)")
+# Remove errors caused by rounding and missing data problems (see above)
+h.morph3 <- hist(Mode.morph.conv$C3[Mode.morph.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "morphology")
+h.mode3 <- hist(Mode.mode.conv$C3[Mode.mode.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (mode treatment)")
+h.constant3 <- hist(Mode.constant.conv$C3[Mode.constant.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (constant treatment)")
+h.raw3 <- hist(Mode.raw.conv$C3[Mode.raw.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (raw treatment)")
 
 # Plot branch-length-distance histograms:
-breaks4 <- seq(from = 0, to = 30, by = 1.5)
-h.morph4 <- hist(morph.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "morphology")
-h.mode4 <- hist(mode.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (mode treatment)")
-h.constant4 <- hist(constant.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (constant treatment)")
-h.raw4 <- hist(na.omit(raw.conv$branch.dist), breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (raw treatment)")
+breaks4 <- seq(from = 0, to = 40, by = 2)
+h.morph4 <- hist(Mode.morph.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "morphology")
+h.mode4 <- hist(Mode.mode.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (mode treatment)")
+h.constant4 <- hist(Mode.constant.conv$branch.dist, breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (constant treatment)")
+h.raw4 <- hist(na.omit(Mode.raw.conv$branch.dist), breaks = breaks4, prob = TRUE, xlab = "branch-length distance", main = "ecology (raw treatment)")
 
 # Are the convergence statistics correlated between ecological and morphological
 # data sets?
-cor(morph.conv$C1, mode.conv$C1, use = "complete.obs") # r = 0.0588
-cor(morph.conv$C2, mode.conv$C2)                       # r = 0.0582
-wh.inf <- which(is.infinite(mode.conv$C3))
-cor(morph.conv$C3[-wh.inf], mode.conv$C3[-wh.inf], use = "complete.obs") # r = 0.029
-cor(morph.conv$branch.dist, mode.conv$branch.dist)     # r = 0.526
-plot(morph.conv$branch.dist, mode.conv$branch.dist)    # but lots of noise
+cor(Mode.morph.conv$C1, Mode.mode.conv$C1, use = "complete.obs") # r = 0.0413
+cor(Mode.morph.conv$C2, Mode.mode.conv$C2)                       # r = 0.0467
+wh.inf <- which(is.infinite(Mode.mode.conv$C3))
+cor(Mode.morph.conv$C3[-wh.inf], Mode.mode.conv$C3[-wh.inf], use = "complete.obs") # r = 0.031
+cor(Mode.morph.conv$branch.dist, Mode.mode.conv$branch.dist)     # r = 0.578
+par(mfrow = c(1,1))
+plot(Mode.morph.conv$branch.dist, Mode.mode.conv$branch.dist)    # but lots of noise
 
 
 
 # pdf(file = "convergence_statistics.pdf")
 par(mfrow = c(2,2))
 breaks <- seq(from = 0, to = 1, by = 0.05)
-h.morph1 <- hist(morph.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "morphology")
-h.mode1 <- hist(mode.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (mode treatment)")
+h.morph1 <- hist(Mode.morph.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "morphology")
+h.mode1 <- hist(Mode.mode.conv$C1, breaks = breaks, prob = TRUE, xlab = "C1", main = "ecology (mode treatment)")
 breaks3 <- seq(from = 0, to = 1, by = 0.05)
-h.morph3 <- hist(morph.conv$C3[morph.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "morphology")
-h.mode3 <- hist(mode.conv$C3[mode.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (mode treatment)")
+h.morph3 <- hist(Mode.morph.conv$C3[Mode.morph.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "morphology")
+h.mode3 <- hist(Mode.mode.conv$C3[Mode.mode.conv$C3 <= 1.00001], breaks = breaks3, prob = TRUE, xlab = "C3", main = "ecology (mode treatment)")
 # dev.off()
 
 # Median pairwise convergence:
-round(apply(morph.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(mode.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(constant.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(raw.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-# Morphology: median C1 = 0.01, C3 = 0.03, branch.distance = 13.7
-# Eco.(mode): median C1 = 0.10, C3 = 0.03, branch.distance =  7.06
+round(apply(Mode.morph.conv[, 5:8], 2, median, na.rm = TRUE), 2)
+round(apply(Mode.mode.conv[, 5:8], 2, median, na.rm = TRUE), 2)
+round(apply(Mode.constant.conv[, 5:8], 2, median, na.rm = TRUE), 2)
+round(apply(Mode.raw.conv[, 5:8], 2, median, na.rm = TRUE), 2)
+# Morphology: median C1 = 0.09, C3 = 0.03, branch.distance = 19.79
+# Eco.(mode): median C1 = 0.11, C3 = 0.03, branch.distance = 11.18
+# Eco.(con.): median C1 = 0.21, C3 = 0.06, branch.distance =  9.46
+# Eco.(raw):  median C1 = 0.14, C3 = 0.04, branch.distance =  7.58
 
 # Are the distributions different?
-ks.test(morph.conv$C1, mode.conv$C1)     # D = 0.141, p < 2.2e-16
-ks.test(morph.conv$C1, constant.conv$C1) # D = 0.240, p < 2.2e-16
-ks.test(morph.conv$C1, raw.conv$C1)      # D = 0.167, p < 2.2e-16
+ks.test(Mode.morph.conv$C1, Mode.mode.conv$C1)     # D = 0.082, p < 2.2e-16
+ks.test(Mode.morph.conv$C1, Mode.constant.conv$C1) # D = 0.237, p < 2.2e-16
+ks.test(Mode.morph.conv$C1, Mode.raw.conv$C1)      # D = 0.153, p < 2.2e-16
 
-ks.test(morph.conv$C3, mode.conv$C3)     # D = 0.141, p < 2.2e-16
-ks.test(morph.conv$C3, constant.conv$C3) # D = 0.306, p < 2.2e-16
-ks.test(morph.conv$C3, raw.conv$C3)      # D = 0.202, p < 2.2e-16
+ks.test(Mode.morph.conv$C3, Mode.mode.conv$C3)     # D = 0.098, p < 2.2e-16
+ks.test(Mode.morph.conv$C3, Mode.constant.conv$C3) # D = 0.269, p < 2.2e-16
+ks.test(Mode.morph.conv$C3, Mode.raw.conv$C3)      # D = 0.203, p < 2.2e-16
 
-ks.test(morph.conv$branch.dist, mode.conv$branch.dist)     # D = 0.439, p < 2.2e-16
-ks.test(morph.conv$branch.dist, constant.conv$branch.dist) # D = 0.475, p < 2.2e-16
-ks.test(morph.conv$branch.dist, raw.conv$branch.dist)      # D = 0.679, p < 2.2e-16
+ks.test(Mode.morph.conv$branch.dist, Mode.mode.conv$branch.dist)     # D = 0.513, p < 2.2e-16
+ks.test(Mode.morph.conv$branch.dist, Mode.constant.conv$branch.dist) # D = 0.614, p < 2.2e-16
+ks.test(Mode.morph.conv$branch.dist, Mode.raw.conv$branch.dist)      # D = 0.784, p < 2.2e-16
 
 
 # Histogram of branch distances for convergent pairings
 # pdf(file = "branch_distances.pdf")
 par(mfrow = c(1,1))
 breaks <-
-  pretty(c(morph.conv$branch.dist, mode.conv$branch.dist), 10)
-hist(c(morph.conv$branch.dist, mode.conv$branch.dist),
-     main = "Phylogenetic distances", xlab = "branch distance among taxon pairs", ylab = "Density", breaks = breaks, 
-     col = "transparent", border = "transparent", prob = TRUE, cex.main = 1)
-hist(mode.conv$branch.dist, add = T, border = "white", col = "darkgray", breaks = breaks, prob = TRUE)
-hist(morph.conv$branch.dist, add = T, border = "black", col = "transparent", breaks = breaks, prob = TRUE)
+  pretty(c(Mode.morph.conv$branch.dist, Mode.mode.conv$branch.dist), 10)
+hist(Mode.mode.conv$branch.dist, main = "Phylogenetic distances", 
+     xlab = "branch distance among taxon pairs", ylab = "Density", 
+     breaks = breaks, col = "transparent", border = "transparent", prob = TRUE, 
+     cex.main = 1)
+hist(Mode.mode.conv$branch.dist, add = T, border = "white", col = "darkgray", breaks = breaks, prob = TRUE)
+hist(Mode.morph.conv$branch.dist, add = T, border = "black", col = "transparent", breaks = breaks, prob = TRUE)
 legend("topright", inset = 0, c("ecology", "morphology"), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 1, pt.cex = 2, bty = "n")
@@ -564,63 +579,71 @@ legend("topright", inset = 0, c("ecology", "morphology"), pch = c(22, 22),
 
 
 # What proportion of taxon pairs are more than 90% convergent?
-round(100 * length(which(morph.conv$C1 >= 0.9)) / nrow(morph.conv), 2)
-round(100 * length(which(mode.conv$C1 >= 0.9)) / nrow(mode.conv), 2)
-round(100 * length(which(constant.conv$C1 >= 0.9)) / nrow(constant.conv), 2)
-round(100 * length(which(raw.conv$C1 >= 0.9)) / nrow(raw.conv), 2)
-# morphology: 0.79% 
-#    ecology: 1.33% (mode), 5.96% (constant), 0.60% (raw)
+round(100 * length(which(Mode.morph.conv$C1 >= 0.9)) / nrow(Mode.morph.conv), 2)
+round(100 * length(which(Mode.mode.conv$C1 >= 0.9)) / nrow(Mode.mode.conv), 2)
+round(100 * length(which(Mode.constant.conv$C1 >= 0.9)) / nrow(Mode.constant.conv), 2)
+round(100 * length(which(Mode.raw.conv$C1 >= 0.9)) / nrow(Mode.raw.conv), 2)
+# morphology: 0.52% (696 pairs)
+#    ecology: 1.74% (mode), 6.60% (constant), 1.92% (raw)
 
 # What proportion of taxon pairs are 100% convergent?
-round(100 * length(which(morph.conv$C1 == 1)) / nrow(morph.conv), 3)
-round(100 * length(which(mode.conv$C1 == 1)) / nrow(mode.conv), 3)
-round(100 * length(which(constant.conv$C1 == 1)) / nrow(constant.conv), 3)
-round(100 * length(which(raw.conv$C1 == 1)) / nrow(raw.conv), 3)
-# morphology: 0.004% (3 pairs)
-#    ecology: 1.33% (mode), 5.96% (constant), 0.60% (raw)
+round(100 * length(which(Mode.morph.conv$C1 == 1)) / nrow(Mode.morph.conv), 3)
+round(100 * length(which(Mode.mode.conv$C1 == 1)) / nrow(Mode.mode.conv), 3)
+round(100 * length(which(Mode.constant.conv$C1 == 1)) / nrow(Mode.constant.conv), 3)
+round(100 * length(which(Mode.raw.conv$C1 == 1)) / nrow(Mode.raw.conv), 3)
+# morphology: 0.005% (6 pairs)
+#    ecology: 1.74% (mode), 6.60% (constant), 1.92% (raw)
 
 # Among highly convergent taxa, are they convergent both anatomically and
 # ecologically?
-cor(morph.conv$C1[which(morph.conv$C1 >= 0.9)],
-    mode.conv$C1[which(morph.conv$C1 >= 0.9)], use = "complete.obs") # r = 0.1309
+cor(Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.9)],
+    Mode.mode.conv$C1[which(Mode.morph.conv$C1 >= 0.9)], use = "complete.obs")
+# r = 0.0766
 
 lm.C1 <-
-  lm(mode.conv$C1[which(morph.conv$C1 >= 0.9)] ~ morph.conv$C1[which(morph.conv$C1 >= 0.9)])
-plot(morph.conv$C1[which(morph.conv$C1 >= 0.9)], 
-    mode.conv$C1[which(morph.conv$C1 >= 0.9)])
-summary(lm.C1) # p = 0.00274, r2 = 0.017
+  lm(Mode.mode.conv$C1[which(Mode.morph.conv$C1 >= 0.9)] ~ Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.9)])
+plot(Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.9)], 
+    Mode.mode.conv$C1[which(Mode.morph.conv$C1 >= 0.9)])
+summary(lm.C1) # p = 0.0435, r2 = 0.004
 abline(lm.C1, col = "red")
 # Although statistically correlated, the low r and r2 mean essentially
 # independent.
 
 # Which taxa are 100% convergent?
-wh <- which(mode.conv$C1 == 1)
-(convs <- unique(unlist(c(mode.conv[wh , 1:2]))))    # 278 genera in mode
+wh <- which(Mode.mode.conv$C1 == 1)
+(convs <- unique(unlist(c(Mode.mode.conv[wh , 1:2]))))    # 295 genera in mode
 # for examples, only include those coded at sp/gen-level
+data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
+                 header = TRUE, stringsAsFactors = FALSE)
 gen.sps <- data$Genus[which(data$EcologyScale == "Genus" | data$EcologyScale ==
                               "Subgenus" | data$EcologyScale == "Species")]
-examples <- mode.conv[wh, 1:2]
+examples <- Mode.mode.conv[wh, 1:2]
 examples[,1] <- examples[,1] %in% gen.sps
 examples[,2] <- examples[,2] %in% gen.sps
 good.ones <- which(apply(examples, 1, sum) == 2L)
-(examples <- mode.conv[names(good.ones), ])
+(examples <- Mode.mode.conv[names(good.ones), ])
 
-wh <- which(constant.conv$C1 == 1)
-unique(unlist(c(constant.conv[wh , 1:2]))) # 342 genera in constant
+wh <- which(Mode.constant.conv$C1 == 1)
+unique(unlist(c(Mode.constant.conv[wh , 1:2]))) # 349 genera in constant
 
-wh <- which(raw.conv$C1 == 1)
-unique(unlist(c(raw.conv[wh , 1:2])))      # 167 genera in raw treatment
+wh <- which(Mode.raw.conv$C1 == 1)
+unique(unlist(c(Mode.raw.conv[wh , 1:2])))      # 209 genera in raw treatment
 
+# Confirm some examples (showing role of some missing states):
 gens <- c("Cincinnaticrinus", "Doliocrinus", "Ramseyocrinus", "Serendipocrinus")
 data[match(gens, data$Genus), c(10, 21:60)]
 
 # 42 major clusters of functionally identical (or nearly so, depending on
-# missing states) but phylogenetically unrelated convergences (mode treatment):
+# missing states) but phylogenetically unrelated convergences (mode treatment).
+# Note that these results have not been updated since original version, using a
+# single 'equal'-method time-scale tree. However, the matchings are essentially
+# unchanged using the 50 cal3 trees used below.
+
 # Phylum: Aristocystites = Bizarroglobus = Bockia = Cigara = Edrioaster = Kailidiscus = Kinzercystis = Vyscystis = Walcottidiscus
 # Phylum: Cardiocystites = Columbicrinus = Merocrinus
 # Phylum: Cheirocystis = Chirocrinus = Streptaster      *** Large phylogenetic branch distance ***
-# Phylum: Paradiabolocrinus = Rhopalocystis
-# Phylum: Eknomocrinus = Lyracystis
+# Phylum: Paradiabolocrinus = Cotyacrinus = Rhopalocystis
+# Phylum: Eknomocrinus = Cnemecrinus = Lyracystis
 # Phylum: Felbabkacystis = Titanocrinus
 # Phylum: Myeinocystites = Vizcainocarpus
 # Phylum: Ponticulocarpus = Syringocrinus
@@ -651,7 +674,7 @@ data[match(gens, data$Genus), c(10, 21:60)]
 # Order: Delgadocrinus = Periglyptocrinus
 # Order: Nevadaecystis = Reticulocarpos
 # Order: Archaepyrgus = Chatsworthia = Coleicarpus = Hadrodiscus = Macurdablastus = Picassocrinus
-# Suborder: Anatiferocystis = Ateleocystites = Guichenocarpos = Mitrocystella
+# Suborder: Ateleocystites = Guichenocarpos = Mitrocystella
 # Suborder: Eodimerocrinites = Gaurocrinus = Goyacrinus
 # Superfamily: Dalicrinus = Rhaphanocrinus = Visocrinus
 # Family: Cotylacrinna = Paradiabolocrinus
@@ -659,18 +682,17 @@ data[match(gens, data$Genus), c(10, 21:60)]
 # Family: Ambonacrinus = Diabolocrinus = Fombuenacrinus = Proexenocrinus = Pycnocrinus = Ursucrinus
 
 # Genera that are more than 98% morphologically identical
-wh <- which(morph.conv$C1 >= 0.98)
-unique(unlist(c(morph.conv[wh , 1:2])))      #  45 genera in morphological data set
-morph.conv[wh[order(morph.conv$C1[wh], decreasing = TRUE)], ]
+wh <- which(Mode.morph.conv$C1 >= 0.98)
+unique(unlist(c(Mode.morph.conv[wh , 1:2])))      #  31 genera in morphological data set
+Mode.morph.conv[wh[order(Mode.morph.conv$C1[wh], decreasing = TRUE)], ]
 # Class: Eopetalocrinus & Grammocrinus & Pentamerocrinus & Putilovocrinus *** = 1 ***
 #        *** NOTE THESE ARE FALSE POSITIVES, CAUSED BY PAIRINGS WITH
 #        EOPETALOCRINUS, WHICH HAS 27 MISSING STATES, WHICH THE WILLS GED
 #        DISTANCE METRIC FILLS IN WITH THE PAIRED KNOWN STATE! ***
 # Class: ... also cluster near Alphacrinus & Cataraquicrinus & Cefnocrinus & Cincinnaticrinus & Coralcrinus & Daedalocrinus & Delgadocrinus & Haptocrinus & Heviacrinus & Inyocrinus & Iocrinus & Maennilicrinus & Morenacrinus & Ohiocrinus & Peltacrinus & Penicillicrinus & Peniculocrinus & Pogonipocrinus & Ristnacrinus & Tunguskocrinus
 # Class: Alisocrinus & Anisocrinus & Canistrocrinus & Compsocrinus & Dalicrinus & Neoarchaeocrinus & Visocrinus
-# Class: Cnemecrinus & Isotomocrinus & Picassocrinus & Tornatilicrinus
+# Class: Euspirocrinus & Heviacrinus & Hoplocrinus (& Picassocrinus at Subclass)
 # Class: Palaeaster & Schuchertia
-# Subclass:  Caleidocrinus & Glaucocrinus
 # Subclass: Cluster of Euspirocrinus & Heviacrinus & Hoplocrinus & Hybocrinus & Isotomocrinus & Picassocrinus & Praecursoricrinus & Tornatilicrinus
 # Suborder: Ambonacrinus & Eodimerocrinites 
 
@@ -685,14 +707,14 @@ rank.order <- c("Subfamily", "Family", "Superfamily", "Suborder", "Order",
 abbr.ranks <- c("Subf", "Fam", "Supf", "Subor", "Or", "Subcl", "Cl", "Subph", 
                 "Phy")
 min.conv <- 0.90
-wh.morph <- which(morph.conv$C1 >= min.conv)
-tab.morph <- table(factor(morph.conv$PairRank[wh.morph], levels = rank.order))
-wh.mode <- which(mode.conv$C1 >= min.conv)
-tab.mode <- table(factor(mode.conv$PairRank[wh.mode], levels = rank.order))
-wh.constant <- which(constant.conv$C1 >= min.conv)
-tab.constant <- table(factor(constant.conv$PairRank[wh.constant], levels = rank.order))
-wh.raw <- which(raw.conv$C1 >= min.conv)
-tab.raw <- table(factor(raw.conv$PairRank[wh.raw], levels = rank.order))
+wh.morph <- which(Mode.morph.conv$C1 >= min.conv)
+tab.morph <- table(factor(Mode.morph.conv$PairRank[wh.morph], levels = rank.order))
+wh.mode <- which(Mode.mode.conv$C1 >= min.conv)
+tab.mode <- table(factor(Mode.mode.conv$PairRank[wh.mode], levels = rank.order))
+wh.constant <- which(Mode.constant.conv$C1 >= min.conv)
+tab.constant <- table(factor(Mode.constant.conv$PairRank[wh.constant], levels = rank.order))
+wh.raw <- which(Mode.raw.conv$C1 >= min.conv)
+tab.raw <- table(factor(Mode.raw.conv$PairRank[wh.raw], levels = rank.order))
 
 # Summary statistics
 tab.morph
@@ -725,50 +747,73 @@ par(op)
 # pdf(file = "convergence_phylo_distances.pdf")
 par(mfrow = c(1,1))
 breaks <-
-  pretty(c(morph.conv[wh.morph, "branch.dist"], mode.conv[wh.mode, "branch.dist"]), 10)
+  pretty(c(Mode.morph.conv[wh.morph, "branch.dist"], Mode.mode.conv[wh.mode, "branch.dist"]), 10)
 leg.eco <- paste0("ecology (n = ", length(wh.mode), " pairs)")
 leg.morph <- paste0("morphology (n = ", length(wh.morph), " pairs)")
-hist(c(morph.conv[wh.morph, "branch.dist"], mode.conv[wh.mode, "branch.dist"]),
+hist(c(Mode.morph.conv[wh.morph, "branch.dist"], Mode.mode.conv[wh.mode, "branch.dist"]),
      main = "Phylogenetic distance among highly convergent taxon pairs", 
      xlab = "branch distance", ylab = "Density", breaks = breaks, 
      col = "transparent", border = "transparent", prob = TRUE, cex.main = 1)
-hist(mode.conv[wh.mode, "branch.dist"], add = T, border = "white", col = "darkgray", breaks = breaks, prob = TRUE)
-hist(morph.conv[wh.morph, "branch.dist"], add = T, border = "black", col = "transparent", breaks = breaks, prob = TRUE)
+hist(Mode.mode.conv[wh.mode, "branch.dist"], add = T, border = "white", col = "darkgray", breaks = breaks, prob = TRUE)
+hist(Mode.morph.conv[wh.morph, "branch.dist"], add = T, border = "black", col = "transparent", breaks = breaks, prob = TRUE)
 legend("topright", inset = 0, c(leg.eco, leg.morph), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 0.9, pt.cex = 2, bty = "n")
 # dev.off()
 
 # Are these distributions different?
-summary(morph.conv[wh.morph, "branch.dist"]) # Median = 7.3
-summary(mode.conv[wh.mode, "branch.dist"])   # Median = 3.0
-summary(constant.conv[wh.constant, "branch.dist"]) # Median = 3.5
-summary(raw.conv[wh.raw, "branch.dist"])   # Median = 2.0
+summary(Mode.morph.conv[wh.morph, "branch.dist"])       # Median = 11.96
+summary(Mode.mode.conv[wh.mode, "branch.dist"])         # Median =  5.89
+summary(Mode.constant.conv[wh.constant, "branch.dist"]) # Median =  5.49
+summary(Mode.raw.conv[wh.raw, "branch.dist"])           # Median =  5.92
 
-ks.test(morph.conv[wh.morph, "branch.dist"], mode.conv[wh.mode, "branch.dist"])
-# Very much so: D = 0.425, p-value < 2.2e-16 ***
+ks.test(Mode.morph.conv[wh.morph, "branch.dist"], 
+        Mode.mode.conv[wh.mode, "branch.dist"])
+# Very much so: D = 0.578, p-value < 2.2e-16 ***
 
 # Remove known problematic false-positive pairings with Eopetalocrinus
-wh.morph.no.Eop <- which((morph.conv$Taxon1 != "Eopetalocrinus" & 
-                            morph.conv$Taxon2 != "Eopetalocrinus")
-                         & morph.conv$C1 >= min.con)
-summary(morph.conv[wh.morph.no.Eop, "branch.dist"])
-# Median = 7.4 (this genus has negligible effect)
+wh.morph.no.Eop <- which((Mode.morph.conv$Taxon1 != "Eopetalocrinus" & 
+                            Mode.morph.conv$Taxon2 != "Eopetalocrinus")
+                         & Mode.morph.conv$C1 >= min.conv)
+summary(Mode.morph.conv[wh.morph.no.Eop, "branch.dist"])
+# Median = 12.14 (this genus has negligible effect overall on results)
 
 # Use Mantel test to confirm there is not a bias caused by differences in the
 # two distance matrices
-set.seed(314)  # Set RNG seed to allow replication
-d1 <- morph.distances.GED.5$distance_matrix
-d2 <- mode.distances.GED.5$distance_matrix
-diag(d1) <- diag(d2) <- NA
-d1 <- as.dist(d1)
-d2 <- as.dist(d2)
-ade4::mantel.rtest(d1, d2, nrepet = 999)
-# r = 0.5595, p-value = 0.001, therefore significantly positively correlated
-summary(as.vector(d1))
-summary(as.vector(d2))
-# and they span similar ranges (0 - 7.9 for both)
+load("morph.distances.GED.5")
+load("mode.distances.GED.5")
 
+ntrees <- length(mode.distances.GED.5)
+mantel.results <- vector("list", ntrees)
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+mantel.results <- foreach(t = 1:ntrees, .inorder = TRUE, .packages = "ade4") %dopar% { 
+  out <- rep(NA, 4)
+  set.seed(314)  # Set RNG seed to allow replication
+  d1 <- morph.distances.GED.5[[t]]$distance_matrix
+  d2 <- mode.distances.GED.5[[t]]$distance_matrix
+  diag(d1) <- diag(d2) <- NA
+  d1 <- as.dist(d1)
+  d2 <- as.dist(d2)
+  # In case of incalculable errors (which occur for trees 31-35)
+  results <- try(ade4::mantel.rtest(d1, d2, nrepet = 999))
+  if (!inherits(results, "try-error"))
+    out <- c(results$obs, results$pvalue, max(as.vector(d1)), max(as.vector(d2)))
+  return(out)
+}
+stopCluster(cl)
+(Sys.time() - start) # 6.3 minutes on 8-core laptop
+beep(3)
+# save(mantel.results, file = "mantel.results")
+
+# Summarize using mean values
+mean.mantel <- matrix(apply(simplify2array(mantel.results), 1, mean, na.rm = TRUE), nrow = 1)
+colnames(mean.mantel) <- c("Mantel.r", "p-val", "morph.max", "mode.max")
+mean.mantel
+
+# r = 0.5529, p-value = 0.001, therefore significantly positively correlated ***
+# and they span similar ranges (0 - 8.1 for morph and 0 - 7.9 for mode)
 
 
 
@@ -796,10 +841,9 @@ multi.all.equal <- function(a = NULL, data = NULL) {
                 dimnames = list(row.names.data, nc[which(wh.diff)])))
 }
 
-# Load character matrix (with ancestral state infernces) to compare how changed
-# since MRCA
-load("morph.anc")
-load("mode.anc")
+# Load necessary objects:
+load("mode.pcoa"); load("Mode.mode.conv"); load("morph.anc")
+load("morph.pcoa"); load("Mode.morph.conv"); load("mode.anc")
 
 # The order here needs to be in alphabetical order to work
 tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
@@ -838,21 +882,22 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # Confirm visually on phylomorphospace & phyloecospace:
 # pdf(file = "ConvPair2.pdf")
 par(mar = c(5, 4, 2, 2))
-load("~/Manuscripts/CamOrdEchinos/equal.tree"); tree <- equal.tree
-load("mode.pcoa"); load("mode.conv")
-load("morph.pcoa"); load("morph.conv")
+
+# Use tree #50 (which is the most similar to the consensus tree)
+tree <- mode.pcoa[[50]]$tree
 # Stayton statistics
-morph.conv[which(morph.conv$Taxon1 == tp[1] & morph.conv$Taxon2 == tp[2]), ]
-mode.conv[which(mode.conv$Taxon1 == tp[1] & mode.conv$Taxon2 == tp[2]), ]
+Mode.morph.conv[which(Mode.morph.conv$Taxon1 == tp[1] & Mode.morph.conv$Taxon2 == tp[2]), ]
+Mode.mode.conv[which(Mode.mode.conv$Taxon1 == tp[1] & Mode.mode.conv$Taxon2 == tp[2]), ]
 
 # Plotting settings
 wh.tip <- which(tree$tip.label == tp[1] | tree$tip.label == tp[2])
-root <- Ntip(morph.pcoa$Tree) + 1
-tip.seq <- 1:Ntip(morph.pcoa$Tree)
-node.seq <- root:(Ntip(morph.pcoa$Tree) + Nnode(morph.pcoa$Tree))
-con <- list(col.edge = setNames(rep("lightgray", nrow(morph.pcoa$Tree$edge)), 
-                                as.character(morph.pcoa$Tree$edge[, 2])))
-# Find ancestral edges for pair of taxa until united in MRCA
+root <- Ntip(tree) + 1
+tip.seq <- 1:Ntip(tree)
+node.seq <- root:(Ntip(tree) + Nnode(tree))
+con <- list(col.edge = setNames(rep("lightgray", nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
+# Find ancestral edges for pair of taxa until united in MRCA (function defined
+# above)
 branching.history <- ancestral.lineages(tree, t1 = tp[1], t2 = tp[2])
 # Confirm works as intended
 branching.history
@@ -872,63 +917,66 @@ if (hist.first[nrow(hist.first), 2] == wh.tip[1]) {
 cols <- c("black", "red")[order(wh.tip)]
 # Plot
 par(mfrow = c(2, 1), mar = c(4, 4, 1, .5))
-phytools::phylomorphospace(tree = morph.pcoa$Tree, 
-                           X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
-                           A = morph.pcoa$vectors.cor[node.seq, 1:2], 
+phytools::phylomorphospace(tree = tree, 
+                           X = morph.pcoa[[50]]$vectors.cor[tip.seq, 1:2], 
+                           A = morph.pcoa[[50]]$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = "PCoA 1", 
                            ylab = "PCoA 2", pch = NA)
 mtext("Phylomorphospace", 3)
-text(-32, 13, tp[1], pos = 4, col = cols[1])
-text(20, 13, tp[2], pos = 2, col = cols[2])
-points(x = morph.pcoa$vectors.cor[branching.history[1], 1], 
-       y = morph.pcoa$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
+text(-3, 4, tp[1], pos = 4, col = cols[1])
+text(5, 4, tp[2], pos = 2, col = cols[2])
+points(x = morph.pcoa[[50]]$vectors.cor[branching.history[1], 1], 
+       y = morph.pcoa[[50]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
        cex = 1.5) # MRCA
-points(x = morph.pcoa$vectors.cor[wh.tip, 1], y = morph.pcoa$vectors.cor[wh.tip, 2], 
+points(x = morph.pcoa[[50]]$vectors.cor[wh.tip, 1], 
+       y = morph.pcoa[[50]]$vectors.cor[wh.tip, 2], 
        col = cols, pch = c(16, 17), cex = 1.25)
 for(r in 1:nrow(hist1)) {
   anc.pt <- hist1[r, 1]
   desc.pt <- hist1[r, 2]
-  lines(x = morph.pcoa$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = morph.pcoa$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
+  lines(x = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
 }
 for(r in 1:nrow(hist2)) {
   anc.pt <- hist2[r, 1]
   desc.pt <- hist2[r, 2]
-  lines(x = morph.pcoa$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = morph.pcoa$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
+  lines(x = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
 }
 # Same for phyloecospace
-phytools::phylomorphospace(tree = mode.pcoa$Tree, 
-                           X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
-                           A = mode.pcoa$vectors.cor[node.seq, 1:2], 
+phytools::phylomorphospace(tree = tree, 
+                           X = mode.pcoa[[50]]$vectors.cor[tip.seq, 1:2], 
+                           A = mode.pcoa[[50]]$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = "PCoA 1", 
                            ylab = "PCoA 2", pch = NA)
 mtext("Phyloecospace", 3)
-points(x = mode.pcoa$vectors.cor[branching.history[1], 1], 
-       y = mode.pcoa$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
+points(x = mode.pcoa[[50]]$vectors.cor[branching.history[1], 1], 
+       y = mode.pcoa[[50]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
        cex = 1.5) # MRCA
-points(x = mode.pcoa$vectors.cor[wh.tip, 1], y = mode.pcoa$vectors.cor[wh.tip, 2], 
+points(x = mode.pcoa[[50]]$vectors.cor[wh.tip, 1], 
+       y = mode.pcoa[[50]]$vectors.cor[wh.tip, 2], 
        col = cols, pch = c(16, 17), cex = 1.25)
 for(r in 1:nrow(hist1)) {
   anc.pt <- hist1[r, 1]
   desc.pt <- hist1[r, 2]
-  lines(x = mode.pcoa$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = mode.pcoa$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
+  lines(x = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
 }
 for(r in 1:nrow(hist2)) {
   anc.pt <- hist2[r, 1]
   desc.pt <- hist2[r, 2]
-  lines(x = mode.pcoa$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = mode.pcoa$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
+  lines(x = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
 }
 par(op)
 # dev.off()
 
+
 # Show tip and MRCA states for comparison of how changed
 (morph.MRCA <- 
-    multi.all.equal(a = c(wh.tip, MRCA), data = morph.anc$Matrix_1$Matrix))
+    multi.all.equal(a = c(wh.tip, MRCA), data = morph.anc[[50]]$matrix_1$matrix))
 (eco.MRCA <- 
-    multi.all.equal(a = c(wh.tip, MRCA), data = mode.anc$Matrix_1$Matrix))
+    multi.all.equal(a = c(wh.tip, MRCA), data = mode.anc[[50]]$matrix_1$matrix))
 
 # Only show characters where converged
 morph.MRCA[, which(morph.MRCA[1, ] == morph.MRCA[2, ])]
