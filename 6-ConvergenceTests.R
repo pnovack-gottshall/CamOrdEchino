@@ -863,7 +863,7 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # Edrioasteroid Anedriophus & eocrinoid Gogia
 #     100% ecologically & 4% morphologically convergent
 # Rhombiferan Amecystis & solute Belemnocystites
-#     100% ecologically & 45% morphologically convergent with long branch distances
+#     100% ecologically & 47% morphologically convergent with long branch distances
 # Edrioasteroid Cambroblastus & 'diploporitan' Estonocystis
 #     0% ecologically & 28% morphologically convergent
 # Edrioasteroids Carneyella & Isorophus
@@ -883,24 +883,30 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 # pdf(file = "ConvPair2.pdf")
 par(mar = c(5, 4, 2, 2))
 
-# Use tree #50 (which is the most similar to the consensus tree)
-tree <- mode.pcoa[[50]]$tree
+# Use tree #50 (which is the most similar to the consensus tree). Make sure that
+# the same tree is used for the same corresponding distance matrix, as the
+# identity of ancestral nodes (e.g., anc367, anc 453) matches for the same list
+# item, but may not match across list items. (The tips match across all, but the
+# order of tree$tip.label may not match.)
+t <- 50
+tree <- mode.pcoa[[t]]$tree
 # Stayton statistics
 Mode.morph.conv[which(Mode.morph.conv$Taxon1 == tp[1] & Mode.morph.conv$Taxon2 == tp[2]), ]
 Mode.mode.conv[which(Mode.mode.conv$Taxon1 == tp[1] & Mode.mode.conv$Taxon2 == tp[2]), ]
 
-# Plotting settings
-wh.tip <- which(tree$tip.label == tp[1] | tree$tip.label == tp[2])
+# Plotting settings (needing to match tree tip names with pcoa rownames b/c
+# different order for tips)
+wh.tip <- which(rownames(morph.pcoa[[t]]$vectors.cor) == tp[1] | 
+                  rownames(morph.pcoa[[t]]$vectors.cor) == tp[2])
 root <- Ntip(tree) + 1
 tip.seq <- 1:Ntip(tree)
 node.seq <- root:(Ntip(tree) + Nnode(tree))
 con <- list(col.edge = setNames(rep("lightgray", nrow(tree$edge)), 
                                 as.character(tree$edge[, 2])))
 # Find ancestral edges for pair of taxa until united in MRCA (function defined
-# above)
-branching.history <- ancestral.lineages(tree, t1 = tp[1], t2 = tp[2])
-# Confirm works as intended
-branching.history
+# above). The MRCA should be the first [1,1] and then be repeated for second
+# lineage.
+(branching.history <- ancestral.lineages(tree, t1 = tp[1], t2 = tp[2]))
 # Identify edges since MRCA
 MRCA <- branching.history[1]
 break.point <- which(branching.history[, 1] == MRCA)
@@ -918,55 +924,60 @@ cols <- c("black", "red")[order(wh.tip)]
 # Plot
 par(mfrow = c(2, 1), mar = c(4, 4, 1, .5))
 phytools::phylomorphospace(tree = tree, 
-                           X = morph.pcoa[[50]]$vectors.cor[tip.seq, 1:2], 
-                           A = morph.pcoa[[50]]$vectors.cor[node.seq, 1:2], 
+                           X = morph.pcoa[[t]]$vectors.cor[tip.seq, 1:2], 
+                           A = morph.pcoa[[t]]$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = "PCoA 1", 
                            ylab = "PCoA 2", pch = NA)
 mtext("Phylomorphospace", 3)
 text(-3, 4, tp[1], pos = 4, col = cols[1])
 text(5, 4, tp[2], pos = 2, col = cols[2])
-points(x = morph.pcoa[[50]]$vectors.cor[branching.history[1], 1], 
-       y = morph.pcoa[[50]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
+points(x = morph.pcoa[[t]]$vectors.cor[branching.history[1], 1], 
+       y = morph.pcoa[[t]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
        cex = 1.5) # MRCA
-points(x = morph.pcoa[[50]]$vectors.cor[wh.tip, 1], 
-       y = morph.pcoa[[50]]$vectors.cor[wh.tip, 2], 
+points(x = morph.pcoa[[t]]$vectors.cor[wh.tip, 1], 
+       y = morph.pcoa[[t]]$vectors.cor[wh.tip, 2], 
        col = cols, pch = c(16, 17), cex = 1.25)
 for(r in 1:nrow(hist1)) {
   anc.pt <- hist1[r, 1]
   desc.pt <- hist1[r, 2]
-  lines(x = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
+  # Switch needed for tips b/c order of tree$tip.label doesn't match order in pcoa
+  if (desc.pt <= Ntip(tree)) desc.pt <- wh.tip[1]
+  lines(x = morph.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = morph.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
 }
 for(r in 1:nrow(hist2)) {
   anc.pt <- hist2[r, 1]
   desc.pt <- hist2[r, 2]
-  lines(x = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = morph.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
+  if (desc.pt <= Ntip(tree)) desc.pt <- wh.tip[2]
+  lines(x = morph.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = morph.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
 }
 # Same for phyloecospace
 phytools::phylomorphospace(tree = tree, 
-                           X = mode.pcoa[[50]]$vectors.cor[tip.seq, 1:2], 
-                           A = mode.pcoa[[50]]$vectors.cor[node.seq, 1:2], 
+                           X = mode.pcoa[[t]]$vectors.cor[tip.seq, 1:2], 
+                           A = mode.pcoa[[t]]$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = "PCoA 1", 
                            ylab = "PCoA 2", pch = NA)
 mtext("Phyloecospace", 3)
-points(x = mode.pcoa[[50]]$vectors.cor[branching.history[1], 1], 
-       y = mode.pcoa[[50]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
+points(x = mode.pcoa[[t]]$vectors.cor[branching.history[1], 1], 
+       y = mode.pcoa[[t]]$vectors.cor[branching.history[1], 2], col = "indianred1", pch = 15, 
        cex = 1.5) # MRCA
-points(x = mode.pcoa[[50]]$vectors.cor[wh.tip, 1], 
-       y = mode.pcoa[[50]]$vectors.cor[wh.tip, 2], 
+points(x = mode.pcoa[[t]]$vectors.cor[wh.tip, 1], 
+       y = mode.pcoa[[t]]$vectors.cor[wh.tip, 2], 
        col = cols, pch = c(16, 17), cex = 1.25)
 for(r in 1:nrow(hist1)) {
   anc.pt <- hist1[r, 1]
   desc.pt <- hist1[r, 2]
-  lines(x = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
+  if (desc.pt <= Ntip(tree)) desc.pt <- wh.tip[1]
+  lines(x = mode.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = mode.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[1], lwd = 1)
 }
 for(r in 1:nrow(hist2)) {
   anc.pt <- hist2[r, 1]
   desc.pt <- hist2[r, 2]
-  lines(x = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 1], 
-        y = mode.pcoa[[50]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
+  if (desc.pt <= Ntip(tree)) desc.pt <- wh.tip[2]
+  lines(x = mode.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 1], 
+        y = mode.pcoa[[t]]$vectors.cor[c(anc.pt, desc.pt), 2], col = cols[2], lwd = 1)
 }
 par(op)
 # dev.off()
@@ -974,9 +985,9 @@ par(op)
 
 # Show tip and MRCA states for comparison of how changed
 (morph.MRCA <- 
-    multi.all.equal(a = c(wh.tip, MRCA), data = morph.anc[[50]]$matrix_1$matrix))
+    multi.all.equal(a = c(wh.tip, MRCA), data = morph.anc[[t]]$matrix_1$matrix))
 (eco.MRCA <- 
-    multi.all.equal(a = c(wh.tip, MRCA), data = mode.anc[[50]]$matrix_1$matrix))
+    multi.all.equal(a = c(wh.tip, MRCA), data = mode.anc[[t]]$matrix_1$matrix))
 
 # Only show characters where converged
 morph.MRCA[, which(morph.MRCA[1, ] == morph.MRCA[2, ])]
