@@ -1134,9 +1134,7 @@ par(op)
 
 
 
-# (*** BELOW COMPARISONS NOTE NOT UPDATED USING NEW MULTI-TREE CODE ***)
-
-## How correlated are the metrics?
+## How correlated are the metrics? (Using just results from tree #50)
 morph <- read.csv(file = "metrics_morph.csv", header = TRUE)
 mode <- read.csv(file = "metrics_LH_mode.csv", header = TRUE)
 constant <- read.csv(file = "metrics_LH_constant.csv", header = TRUE)
@@ -1156,24 +1154,25 @@ diff.raw <- as.data.frame(apply(raw, 2, diff))
 diff.raw <- diff.raw / diff.raw$Age
 
 # morphological vs. LH-mode
-round(diag(cor(diff.morph[, 3:10], diff.mode[, 3:10], use = "pairwise.complete.obs")), 4)
-summary(lm(diff.morph$H ~ diff.mode$H))
+round(diag(cor(diff.morph[, 3:11], diff.mode[, 3:11], use = "pairwise.complete.obs")), 4)
+summary(lm(diff.morph$H ~ diff.mode$H)) # r2 = 0.89 ***
 
 # morphological vs. LH-constant
-round(diag(cor(diff.morph[, 3:10], diff.constant[, 3:10], use = "pairwise.complete.obs")), 4)
-summary(lm(diff.morph$H ~ diff.constant$H))
+round(diag(cor(diff.morph[, 3:11], diff.constant[, 3:11], use = "pairwise.complete.obs")), 4)
+summary(lm(diff.morph$H ~ diff.constant$H)) # r2 = 0.92 ***
 
 # morphological vs. LH-raw
-round(diag(cor(diff.morph[, 3:10], diff.raw[, 3:10], use = "pairwise.complete.obs")), 4)
+round(diag(cor(diff.morph[, 3:11], diff.raw[, 3:11], use = "pairwise.complete.obs")), 4)
+summary(lm(diff.morph$H ~ diff.raw$H)) # r2 = 0.93 ***
 
 # LH-mode vs. LH-constant
-round(diag(cor(diff.mode[, 3:10], diff.constant[, 3:10], use = "pairwise.complete.obs")), 4)
+round(diag(cor(diff.mode[, 3:11], diff.constant[, 3:11], use = "pairwise.complete.obs")), 4)
 
 # LH-mode vs. LH-raw
-round(diag(cor(diff.mode[, 3:10], diff.raw[, 3:10], use = "pairwise.complete.obs")), 4)
+round(diag(cor(diff.mode[, 3:11], diff.raw[, 3:11], use = "pairwise.complete.obs")), 4)
 
 # LH-constant vs. LH-raw
-round(diag(cor(diff.constant[, 3:10], diff.raw[, 3:10], use = "pairwise.complete.obs")), 4)
+round(diag(cor(diff.constant[, 3:11], diff.raw[, 3:11], use = "pairwise.complete.obs")), 4)
 
 
 
