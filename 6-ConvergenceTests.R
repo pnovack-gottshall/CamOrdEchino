@@ -864,20 +864,20 @@ tp <- matrix(c("Anedriophus", "Gogia"), nrow = 1)
 #     100% ecologically & 4% morphologically convergent
 # Rhombiferan Amecystis & solute Belemnocystites
 #     100% ecologically & 47% morphologically convergent with long branch distances
-# Edrioasteroid Cambroblastus & 'diploporitan' Estonocystis
-#     0% ecologically & 28% morphologically convergent
 # Edrioasteroids Carneyella & Isorophus
-#     0% ecologically & 94% morphologically convergent
+#     0% ecologically & 92% morphologically convergent
+# Edrioasteroid Cambroblastus & 'diploporitan' Estonocystis
+#     0% ecologically & 21% morphologically convergent
 # Edrioasteroid Edrioaster & eocrinoid Kinzercystis:
-#     100% ecologically & 22% morphologically convergent
+#     100% ecologically & 12% morphologically convergent
 # Edrioasteroid Streptaster & rhombiferan Cheirocystis
 #     100% ecologically & 0% morphologically convergent with long branch distances
 # Disparid crinoids in different suborders Caleidocrinus & Glaucocrinus
-#     55% ecologically and 98% morphologically convergent
+#     29% ecologically and 98% morphologically convergent
 # Crinoids in different subclasses Cnemecrinus & Picassocrinus
-#     38% ecologically and 99% morphologically convergent
+#     22% ecologically and 92% morphologically convergent
 # Crinoids in different subclasses Isotomocrinus & Picassocrinus
-#     46% ecologically and 98% morphologically convergent
+#     32% ecologically and 98% morphologically convergent
 
 # Confirm visually on phylomorphospace & phyloecospace:
 # pdf(file = "ConvPair2.pdf")
