@@ -813,58 +813,58 @@ loadings.raw <- mock.loadings(orig.vars = raw.anc[[50]]$matrix_1$matrix,
                               cutoff = 0.3)
 na.omit(loadings.raw)
 
-# RESULTS (*** NOTE NOT UPDATED USING NEW MULTI-TREE CODE ***):
+# RESULTS (*** UPDATED USING ONLY TREE #50 ***):
 # MORPHOLOGY DATA SET:     -                               +
-#  PCO 1:     32, 135, 210, 227, 325, 411               4, 134, 141, 409
-#  PCO 2:    160                                       14, 46, 126, 132
-#  PCO 3:     21, 121, 126, 134, 141, 146, 227, 380    46
-#  PCO 4:     46, 111, 121, 172
-#  PCO 5:    131, 135                                 376
-#  PCO 6:     31, 129, 130, 201                        46, 140, 143
+#  PCO 1:     4, 134, 141                             46, 227, 325
+#  PCO 2:     41, 46, 126, 140, 143, 181, 274         31, 129, 160, 173, 339
+#  PCO 3:     126, 134, 141, 172, 227                409
+#  PCO 4:     31, 129                                 41, 46, 126, 140, 143, 
+#  PCO 5:     38, 46, 170, 380                        32, 42, 126, 135, 173
+#  PCO 6:     31, 129                                 41, 46, 121, 140, 143
 
 # MODE DATA SET:      -                                +
-#  PCO 1:     2-5, (12), 15, (28-29)                    6, (13), 16, (31)                 
-#   +: Attached (filter feeders) living far from (hard) substrate
-#   -: Free-living, mobile (and mass-feeders living on soft substrates)
-#  PCO 2:                                              (9, 29)
-#   +: High-density filters on biotic substrates
-#   -: everything else?
-#  PCO 3:     1 (24, 26, 31, 36, 40)                   (9, 23, 25, 28)
-#   +: Smaller? (Epifaunal filter feeders on biotic substrates)
-#   -: Large-bodied (and carnivorous bulk feeders with infaunal food)
-#  PCO 4:     (9, 24, 26, 31, 32, 36, 40)             (23, 25, 28)
-#   +: (Epifaunal filter feeders)
-#   -: (Scavengers on biotic substrates with infaunal food) 
-#  PCO 5:     (10, 24, 26, 36, 40)                    (23, 25)
+#  PCO 1:     6, 13, 16, (24, 26, 31, 36)            2-5, (9), 12, 15, (23, 25, 28-29)
+#   +: Attached (filter feeders) living far from hard (or biotic) substrate
+#   -: Free-living, mobile (mass-feeding deposit/carnivore/scavenging feeders) living on soft substrates)
+#  PCO 2:   (28)                                       1, (24, 26, 31, 36)
+#   +: Large bodied echinoderms (especially mass/deposit/carnivore/scavenging feeders)
+#   -: Filter feeders
+#  PCO 3:    (1)                                     (29)
+#   +: (Smallest with) highest density filter feeders
+#   -: Largest (non-filterers?)
+#  PCO 4:    (3)                                      (9, 12)
+#   +: (Biotic and hard substrates) 
+#   -: (Largest RelStrats)
+#  PCO 5:   (10, 24, 26, 32, 40)                     (23, 25)
 #   +: (Food above substrate)
-#   -: (Carnivorous scavengers on lithic substrates with infaunal food)
-#  PCO 6:                                              10
-#   +: Lithic substrates
-#   -: (Biotic substrates)
+#   -: (Raptorial/bulk feeders [= scavengers] on lithic substrates with infaunal food)
+#  PCO 6:    (5)
+#   +: Small RelFoodStrat (= eating in contact with food)
+#   -: Large RelFoodStrat (= food at a distance)
 
 # CONSTANT DATA SET:  -                                +
-#  PCO 1:        6, (13), 16, (31)                  2-5, 12, 15, (28-29)
+#  PCO 1:        6, 13, 16, (31)                  2-5, 12, 15, (28-29)
 #  PCO 2:      (23, 25, 28, 39)                     1 (24, 26, 31, 36, 40)
-#  PCO 3:      (29)                                        
-#  PCO 4:      (13, 23, 25, 28, 39)               (12, 24, 26, 36, 40)
-#  PCO 5:       (9)
+#  PCO 3:      (12)                               (2-4, 13), 29     
+#  PCO 4:       (5, 13, 23, 25, 28, 34, 39)       (12), 24, 26, (31-32, 36, 40)
+#  PCO 5:       (9, 29)                           (10)
 #  PCO 6:       (6)                               (13, 29)
 
-#    OVERALL: PCOs basically same as for mode, with 1 reversed, 2 = mode's 3, 3
-#    = mode's 2, and 4 reversed. 5 and 6 slightly different, but low loading
-#    scores.
+#    OVERALL: PCOs basically same as for mode, with 4 = mode's #5 reversed. #5
+#    and 6 emphasize slightly different habits (#5 for lithic / biotic & dense
+#    filtering, and #6 for mobile vs. dense filterers on soft-substrate), but
+#    with very low loading scores.
 
 # RAW DATA SET:       -                                +
-#  PCO 1:            1-5, 12, 15                  6, 13, 16
-#  PCO 2:           12, 15                        1, 6, 13, 16
-#  PCO 3:                                        (2-4, 29)
-#  PCO 4:                                        (1)
-#  PCO 5:          (28)                         (31)                      
-#  PCO 6:                                         1
+#  PCO 1:        6, 13, 16, (24, 26, 31)          1-5, 12, 15, (28-29)
+#  PCO 2:      (23, 25, 28, 39)                     1, (6), 24, 26, 31, (32, 36)
+#  PCO 3:     (2-4, 24, 26, 29-32, 36, 40)        (23, 25, 28)
+#  PCO 4:       (6, 13, 16, 29)                    12, (15, 36, 40)
+#  PCO 5:      (10, 31)                            (9, 28-29)                      
+#  PCO 6:      (12)                               (13)
 
-#    OVERALL: PCOs basically same as for mode. 1 identical, 2 = mode's 1, 3 =
-#    mode's 2, 3-6 combination of axes.
-
+#    OVERALL: PCOs basically same as for mode (but more like constant), with #5
+#    reversed from constant.
 
 # Effect of applying the Dineen, et al. (2019, Biology Lettters) standardization
 # for (later) PCoA convex hull volume by re-scaling PCoA coordinates according
@@ -901,24 +901,20 @@ plot(new$vectors.cor[, 1], new$vectors.cor[, 2])
 
 ## PLOT ORDINATIONS USING CLADDIS FUNCTIONS ####################################
 
+## *** ONLY USING TREE #50 ***
+
 # Plot a 2-dimensional morphospace with tips, nodes, and root:
-plot_morphospace(pcoa.results)
-tip.seq <- 1:Ntip(pcoa.results$tree)
+plot_morphospace(pcoa.results[[50]])
+tip.seq <- 1:Ntip(pcoa.results[[50]]$tree)
 node.seq <-
-  (Ntip(pcoa.results$tree) + 1):(Ntip(pcoa.results$tree) + Nnode(pcoa.results$tree))
-points(x = pcoa.results$vectors.cor[node.seq, 1],
-       y = pcoa.results$vectors.cor[node.seq, 2], col = "gray", pch = 16) # nodes
-points(x = pcoa.results$vectors.cor[tip.seq, 1], 
-       y = pcoa.results$vectors.cor[tip.seq, 2])                          # tips
-points(x = pcoa.results$vectors.cor[max(node.seq), 1], 
-       y = pcoa.results$vectors.cor[max(node.seq), 2], col = "red", pch = 16, 
+  (Ntip(pcoa.results[[50]]$tree) + 1):(Ntip(pcoa.results[[50]]$tree) + Nnode(pcoa.results[[50]]$tree))
+points(x = pcoa.results[[50]]$vectors.cor[node.seq, 1],
+       y = pcoa.results[[50]]$vectors.cor[node.seq, 2], col = "gray", pch = 16) # nodes
+points(x = pcoa.results[[50]]$vectors.cor[tip.seq, 1], 
+       y = pcoa.results[[50]]$vectors.cor[tip.seq, 2])                          # tips
+points(x = pcoa.results[[50]]$vectors.cor[max(node.seq), 1], 
+       y = pcoa.results[[50]]$vectors.cor[max(node.seq), 2], col = "red", pch = 16, 
        cex = 1.5)                                                     # root
-
-# Plot additional morphospace axes:
-plot_multi_morphospace(pcoa.results, n_axes = 3)
-
-# Plot a chronophylomorphospace:
-plot_chronophylomorphospace(pcoa.results)
 
 
 
@@ -1485,27 +1481,27 @@ diff.raw <- diff.raw / diff.raw$Age
 # Because there are no duplicated morphotypes, H = 50 for all intervals. Ignore
 # "H" (and warning) in comparisons with the morphological data set.
 
-# morphological vs. LH-mode: not very correlated (R highest)
+# morphological vs. LH-mode: not very correlated (R & FDiv highest)
 round(diag(cor(diff.morph[, means], diff.mode[, means], 
                use = "pairwise.complete.obs")), 4)
 
-# Are the D and FRic statistically correlated?
+# Are the D and FRic statistically correlated? (D no; FRic yes, but low R)
 summary(lm(diff.morph$D ~ diff.mode$D))
 summary(lm(diff.morph$FRic ~ diff.mode$FRic))
 
-# morphological vs. LH-constant: not very correlated (D highest)
+# morphological vs. LH-constant: not very correlated (R & FRic highest)
 round(diag(cor(diff.morph[, means], diff.constant[, means], 
                use = "pairwise.complete.obs")), 4)
 
-# LH-mode vs. LH-constant: Moderately positively, except FRic & FEve; mean r = 0.70
+# LH-mode vs. LH-constant: Moderately positively, except FEve; mean r = 0.71
 round(diag(cor(diff.mode[, means], diff.constant[, means], 
                use = "pairwise.complete.obs")), 4)
 
-# LH-mode vs. LH-raw: Moderately: Moderately positively, except for D and FDis; mean r = 0.55
+# LH-mode vs. LH-raw: Moderately: Moderately positively, except FEve; mean r = 0.43
 round(diag(cor(diff.mode[, means], diff.raw[, means], 
                use = "pairwise.complete.obs")), 4)
 
-# LH-raw vs. LH-constant: Moderately positively: Except for FEve; mean r = 0.49
+# LH-raw vs. LH-constant: Moderately positively: mean r = 0.64
 round(diag(cor(diff.raw[, means], diff.constant[, means], 
                use = "pairwise.complete.obs")), 4)
 
