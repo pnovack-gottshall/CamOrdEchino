@@ -1519,7 +1519,7 @@ metrics_raw <- read.csv(file = "metrics_LH_raw.csv", header = TRUE)
 # Plot trends
 par(mar = c(0, 4, 2, 2))
 mids <- metrics_mode$Age
-for (c in c(2:10)) {
+for (c in c(2:11)) {
   var_m <- metrics_mode[ ,c]
   var_c <- metrics_constant[ ,c]
   var_r <- metrics_raw[ ,c]
@@ -1544,6 +1544,7 @@ for (c in c(2:10)) {
 metrics_mode <- read.csv(file = "metrics_StdG50_LH_mode.csv", header = TRUE)
 metrics_constant <- read.csv(file = "metrics_StdG50_LH_constant.csv", header = TRUE)
 metrics_raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
+std.g <- 50
 
 # Plot trends
 # pdf(file = "3EcoTrends_StdG.pdf"); 
@@ -1580,11 +1581,11 @@ for (c in var.cols) {
   column <- cbind(c(mids, rev(mids)), c(var_m_bottom, rev(var_m_top)))
   column <- na.omit(column)
   polygon(column[ ,1], column[ ,2], col = trans.cols[2], lwd = 2, border = NA)
-  lines(mids, var_r, lwd = 4, lty = 1, col = cols[1])
-  lines(mids, var_m, lwd = 4, lty = 2, col = cols[2])
-  lines(mids, var_c, lwd = 4, lty = 3, col = cols[3])
-  legend("bottomright", legend = c("raw", "mode", "constant"), col = cols, 
-         bty = "n", lty = c(1, 2, 3), lwd = 2, inset = 0.05)
+  lines(mids, var_r, lwd = 5, lty = 1, col = cols[1])
+  lines(mids, var_m, lwd = 5, lty = 2, col = cols[2])
+  lines(mids, var_c, lwd = 5, lty = 3, col = cols[3])
+  legend("topleft", legend = c("raw", "mode", "constant"), col = cols, 
+         bty = "n", lty = c(1, 2, 3), lwd = 4, inset = 0.05)
 }
 par(op)
 # dev.off()
@@ -1602,6 +1603,7 @@ metrics_morph <- read.csv(file="metrics_morph.csv", header=TRUE)
 metrics_mode <- read.csv(file = "metrics_LH_mode.csv", header = TRUE)
 metrics_constant <- read.csv(file = "metrics_LH_constant.csv", header = TRUE)
 metrics_raw <- read.csv(file = "metrics_LH_raw.csv", header = TRUE)
+
 
 # Plot trends (% transformed)
 par(mar = c(0, 4, 2, 2))
@@ -1646,6 +1648,13 @@ load("mode.stdG.metrics"); metrics_mode <- mode.stdG.metrics
 load("constant.stdG.metrics"); metrics_constant <- constant.stdG.metrics
 load("raw.stdG.metrics"); metrics_raw <- raw.stdG.metrics
 std.g <- 50
+
+# Because of rounding errors, several intervals in the morphological data set
+# contain H values that are rounded to 50 life habits, but negligibly different.
+# (E.g., 49.999 instead of 50.) The 100% maximum transformation below causes
+# this to be treated as a true value less than 50. The following code overrides
+# rounded-to-50 values with 50 so that the standardized plots ar sensible.
+metrics_morph$H <- replace(metrics_morph$H, metrics_morph$H > 49.99, 50)
 
 # Plot trends
 # pdf(file = "Morph&3EcoTrends_StdG.pdf")
@@ -1694,7 +1703,7 @@ for (c in var.cols) {
   lines(mids, var_c, lwd = 4, lty = 3, col = cols[3])
   lines(mids, var_r, lwd = 4, lty = 4, col = cols[4])
   legend("bottomright", legend = c("morph", "eco-mode", "eco-constant", "eco-raw"), 
-         col = cols, bty = "n", lty = c(1, 2, 3, 4), lwd = 2, inset = 0.05)
+         col = cols, bty = "n", lty = c(1, 2, 3, 4), lwd = 4, inset = 0.05)
 }
 par(op)
 # dev.off()
@@ -1770,9 +1779,7 @@ par(op)
 ## PLOT PHYLOMORPHOSPACE AND PHYLOECOSPACE #####################################
 ## (code modified from Brad Deline, bdeline@westga.edu)
 
-# Import time-scaled "equal" phylogeny
-load("~/Manuscripts/CamOrdEchinos/equal.tree")
-tree <- equal.tree
+## *** ONLY PLOTS TREE #50 ***
 
 # Load Wills GED-50 distance matrices
 load("mode.distances.GED.5")
