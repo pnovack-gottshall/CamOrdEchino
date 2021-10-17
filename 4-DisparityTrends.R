@@ -951,7 +951,7 @@ if(nrow(taxon.bins[[1]]) != nrow(dist.matrix[[1]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
 
 ## For 'raw' treatment (ONLY!), need to remove the taxa trimmed out for the PCOA
-## because of high denisty of missing states.
+## because of high density of missing states.
 # Use 'raw.trimmed' output to override the raw objects. (Not needed for
 # pcoa.results because used earlier trimmed version when building the PCoA
 # object.) Because the tip names are based on the raw.anc[[x]]$topper$tree, need
@@ -1238,7 +1238,7 @@ if(nrow(taxon.bins[[50]]) != nrow(dist.matrix[[50]]$distance_matrix))
   stop("Need to re-load or re-build taxon.bins because some taxa were removed when running the 'raw' treatment.\n")
 
 ## For 'raw' treatment (ONLY!), need to remove the taxa trimmed out for the PCOA
-## because of high denisty of missing states.
+## because of high density of missing states.
 # Use 'raw.trimmed' output to override the raw objects. (Not needed for
 # pcoa.results because used earlier trimmed version when building the PCoA
 # object.) Because the tip names are based on the raw.anc[[x]]$topper$tree, need
@@ -1779,19 +1779,19 @@ par(op)
 ## PLOT PHYLOMORPHOSPACE AND PHYLOECOSPACE #####################################
 ## (code modified from Brad Deline, bdeline@westga.edu)
 
-## *** ONLY PLOTS TREE #50 ***
+## ONLY PLOTS TREE #50 ***
 
 # Load Wills GED-50 distance matrices
-load("mode.distances.GED.5")
-load("constant.distances.GED.5")
-load("raw.distances.GED.5")
-load("morph.distances.GED.5")
+load("mode.distances.GED.5"); mode.distances.GED.5 <- mode.distances.GED.5[[50]]
+load("constant.distances.GED.5"); constant.distances.GED.5 <- constant.distances.GED.5[[50]]
+load("raw.distances.GED.5"); raw.distances.GED.5 <- raw.distances.GED.5[[50]]
+load("morph.distances.GED.5"); morph.distances.GED.5 <- morph.distances.GED.5[[50]]
 
 # Load PCoA output from ape::pcoa
-load("mode.pcoa")
-load("constant.pcoa")
-load("raw.pcoa")
-load("morph.pcoa")
+load("mode.pcoa"); mode.pcoa <- mode.pcoa[[50]]
+load("constant.pcoa"); constant.pcoa <- constant.pcoa[[50]]
+load("raw.pcoa"); raw.pcoa <- raw.pcoa[[50]]
+load("morph.pcoa"); morph.pcoa <- morph.pcoa[[50]]
 
 # Set phylomorphospace/phyloecospace plotting colors
 par(mar = c(5, 4, 2, 2))
@@ -1801,11 +1801,11 @@ node.col <- "#A020F07F"  # Set purple transparent so overlays as density
 root.col <- "#FDE725FF"  # viridisLite::viridis(3)[3]
 
 # Set phylomorphospace/phyloecospace plotting variables
-Tree <- morph.pcoa$tree
-tip.seq <- 1:Ntip(Tree)
-node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
-con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
-                                as.character(Tree$edge[, 2])))
+tree <- morph.pcoa$tree
+tip.seq <- 1:Ntip(tree)
+node.seq <- (Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))
+con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
 x.lab1 <- paste0("PCO 1 (", round(100 * morph.pcoa$values$Rel_corr_eig[1], 1), 
                  "% of total variance)")
 y.lab2 <- paste0("PCO 2 (", round(100 * morph.pcoa$values$Rel_corr_eig[2], 1), 
@@ -1822,7 +1822,7 @@ y.lab6 <- paste0("PCO 6 (", round(100 * morph.pcoa$values$Rel_corr_eig[6], 1),
 # pdf(file = "morphospace.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
+phytools::phylomorphospace(tree = tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
                            A = morph.pcoa$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = x.lab1, 
                            ylab = y.lab2, pch = NA)
@@ -1835,7 +1835,7 @@ points(x = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 1],
        cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 3:4], 
+phytools::phylomorphospace(tree = tree, X = morph.pcoa$vectors.cor[tip.seq, 3:4], 
                            A = morph.pcoa$vectors.cor[node.seq, 3:4], 
                            control = con, label = "off", xlab = x.lab3, 
                            ylab = y.lab4, pch = NA)
@@ -1848,7 +1848,7 @@ points(x = morph.pcoa$vectors.cor[(max(tip.seq) + 1), 3],
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 5:6], 
+phytools::phylomorphospace(tree = tree, X = morph.pcoa$vectors.cor[tip.seq, 5:6], 
                            A = morph.pcoa$vectors.cor[node.seq, 5:6], 
                            control = con, label = "off", xlab = x.lab5, 
                            ylab = y.lab6, pch = NA)
@@ -1878,11 +1878,11 @@ par(op)
 
 ## Same, with 'mode' ecological data set
 # Set phylomorphospace/phylomorphospace plotting variables
-Tree <- mode.pcoa$tree
-tip.seq <- 1:Ntip(Tree)
-node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
-con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
-                                as.character(Tree$edge[, 2])))
+tree <- mode.pcoa$tree
+tip.seq <- 1:Ntip(tree)
+node.seq <- (Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))
+con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
 x.lab1 <- paste0("PCO 1 (", round(100 * mode.pcoa$values$Rel_corr_eig[1], 1), 
                  "% of total variance)")
 y.lab2 <- paste0("PCO 2 (", round(100 * mode.pcoa$values$Rel_corr_eig[2], 1), 
@@ -1899,7 +1899,7 @@ y.lab6 <- paste0("PCO 6 (", round(100 * mode.pcoa$values$Rel_corr_eig[6], 1),
 # pdf(file = "ecospace_mode.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
+phytools::phylomorphospace(tree = tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
                            A = mode.pcoa$vectors.cor[node.seq, 1:2], 
                            control = con, label = "off", xlab = x.lab1, 
                            ylab = y.lab2, pch = NA)
@@ -1912,7 +1912,7 @@ points(x = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 1],
        cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 3:4], 
+phytools::phylomorphospace(tree = tree, X = mode.pcoa$vectors.cor[tip.seq, 3:4], 
                            A = mode.pcoa$vectors.cor[node.seq, 3:4], 
                            control = con, label = "off", xlab = x.lab3, 
                            ylab = y.lab4, pch = NA)
@@ -1925,7 +1925,7 @@ points(x = mode.pcoa$vectors.cor[(max(tip.seq) + 1), 3],
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 5:6], 
+phytools::phylomorphospace(tree = tree, X = mode.pcoa$vectors.cor[tip.seq, 5:6], 
                            A = mode.pcoa$vectors.cor[node.seq, 5:6], 
                            control = con, label = "off", xlab = x.lab5, 
                            ylab = y.lab6, pch = NA)
@@ -1958,11 +1958,11 @@ par(op)
 ## Same, with 'constant' ecological data set
 # Set phylomorphospace/phylomorphospace plotting variables
 # Plotting uncorrected eigenvectors instead of corrected ones
-Tree <- constant.pcoa$tree
-tip.seq <- 1:Ntip(Tree)
-node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
-con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
-                                as.character(Tree$edge[, 2])))
+tree <- constant.pcoa$tree
+tip.seq <- 1:Ntip(tree)
+node.seq <- (Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))
+con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
 x.lab1 <- paste0("PCO 1 (", round(100 * constant.pcoa$values$Rel_corr_eig[1], 1), 
                  "% of total variance)")
 y.lab2 <- paste0("PCO 2 (", round(100 * constant.pcoa$values$Rel_corr_eig[2], 1), 
@@ -1979,7 +1979,7 @@ y.lab6 <- paste0("PCO 6 (", round(100 * constant.pcoa$values$Rel_corr_eig[6], 1)
 # pdf(file = "ecospace_constant.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = constant.pcoa$vectors.cor[tip.seq, 1:2],
+phytools::phylomorphospace(tree = tree, X = constant.pcoa$vectors.cor[tip.seq, 1:2],
                            A = constant.pcoa$vectors.cor[node.seq, 1:2],
                            control = con, label = "off", xlab = x.lab1,
                            ylab = y.lab2, pch = NA)
@@ -1992,7 +1992,7 @@ points(x = constant.pcoa$vectors.cor[(max(tip.seq) + 1), 1],
        cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = constant.pcoa$vectors.cor[tip.seq, 3:4],
+phytools::phylomorphospace(tree = tree, X = constant.pcoa$vectors.cor[tip.seq, 3:4],
                            A = constant.pcoa$vectors.cor[node.seq, 3:4],
                            control = con, label = "off", xlab = x.lab3,
                            ylab = y.lab4, pch = NA)
@@ -2005,7 +2005,7 @@ points(x = constant.pcoa$vectors.cor[(max(tip.seq) + 1), 3],
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = constant.pcoa$vectors.cor[tip.seq, 5:6],
+phytools::phylomorphospace(tree = tree, X = constant.pcoa$vectors.cor[tip.seq, 5:6],
                            A = constant.pcoa$vectors.cor[node.seq, 5:6],
                            control = con, label = "off", xlab = x.lab5,
                            ylab = y.lab6, pch = NA)
@@ -2038,19 +2038,33 @@ par(op)
 
 ## Same, with 'raw' ecological data set
 
-# Remove missing taxa (Only used for 'raw' data treatment)
-trim.matrix <- trim_matrix(raw.distances.GED.5$distance_matrix, 
-                                   Tree = tree)
-raw.distances.GED.5$distance_matrix <- trim.matrix$distance_matrix
-raw.distances.GED.5$tree <- trim.matrix$tree
-raw.distances.GED.5$removed_taxa <- trim.matrix$removed_taxa
+## For 'raw' treatment (ONLY!), need to remove the taxa trimmed out for the PCOA
+## because of high density of missing states.
+# Use 'raw.trimmed' output to override the raw objects. (Not needed for
+# pcoa.results because used earlier trimmed version when building the PCoA
+# object.) Because the tip names are based on the raw.anc[[x]]$topper$tree, need
+# to match names for rows to correctly identify the trimmed-out tips and nodes
+load("raw.trimmed"); raw.trimmed <- raw.trimmed[[50]]
+load("raw.anc"); raw.anc <- raw.anc[[50]]
+load("raw.distances.GED.5"); raw.distances.GED.5 <- raw.distances.GED.5[[50]]
+load("raw.pcoa"); raw.pcoa <- raw.pcoa[[50]]
+taxa.to.cut <- raw.trimmed$removed_taxa_by_name
+wh.to.cut <- match(taxa.to.cut, rownames(raw.anc$matrix_1$matrix))
+raw.anc$matrix_1$matrix <- raw.anc$matrix_1$matrix[-wh.to.cut, ]
+raw.distances.GED.5$distance_matrix <-
+  raw.distances.GED.5$distance_matrix[-wh.to.cut, -wh.to.cut]
+# Confirm all same number of rows
+nrow(raw.anc$matrix_1$matrix)
+nrow(raw.distances.GED.5$distance_matrix)
+nrow(raw.pcoa$vectors.cor)
+
 
 # Set phylomorphospace/phylomorphospace plotting variables
-Tree <- raw.distances.GED.5$tree  # Note using the trimmed tree here (unlike above)
-tip.seq <- 1:Ntip(Tree)
-node.seq <- (Ntip(Tree) + 1):(Ntip(Tree) + Nnode(Tree))
-con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)), 
-                                as.character(Tree$edge[, 2])))
+tree <- raw.trimmed$tree  # Note using the trimmed tree here (unlike above)
+tip.seq <- 1:Ntip(tree)
+node.seq <- (Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))
+con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
 x.lab1 <- paste0("PCO 1 (", round(100 * raw.pcoa$values$Rel_corr_eig[1], 1), 
                  "% of total variance)")
 y.lab2 <- paste0("PCO 2 (", round(100 * raw.pcoa$values$Rel_corr_eig[2], 1), 
@@ -2067,7 +2081,7 @@ y.lab6 <- paste0("PCO 6 (", round(100 * raw.pcoa$values$Rel_corr_eig[6], 1),
 # pdf(file = "ecospace_raw.pdf")
 par(mfrow = c(2, 2))
 # PCO 1 vs. PCO 2
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 1:2],
+phytools::phylomorphospace(tree = tree, X = raw.pcoa$vectors.cor[tip.seq, 1:2],
                            A = raw.pcoa$vectors.cor[node.seq, 1:2],
                            control = con, label = "off", xlab = x.lab1,
                            ylab = y.lab2, pch = NA)
@@ -2079,7 +2093,7 @@ points(x = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 1],
        y = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 2], col = root.col, pch = 16, cex = 1.25)
 
 # PCO 3 vs. PCO 4
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 3:4], 
+phytools::phylomorphospace(tree = tree, X = raw.pcoa$vectors.cor[tip.seq, 3:4], 
                            A = raw.pcoa$vectors.cor[node.seq, 3:4],
                            control = con, label = "off", xlab = x.lab3,
                            ylab = y.lab4, pch = NA)
@@ -2092,7 +2106,7 @@ points(x = raw.pcoa$vectors.cor[(max(tip.seq) + 1), 3],
        cex = 1.25)
 
 # PCO 5 vs. PCO 6
-phytools::phylomorphospace(tree = Tree, X = raw.pcoa$vectors.cor[tip.seq, 5:6], 
+phytools::phylomorphospace(tree = tree, X = raw.pcoa$vectors.cor[tip.seq, 5:6], 
                            A = raw.pcoa$vectors.cor[node.seq, 5:6],
                            control = con, label = "off", xlab = x.lab5,
                            ylab = y.lab6, pch = NA)
