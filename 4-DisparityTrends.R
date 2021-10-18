@@ -855,7 +855,6 @@ na.omit(loadings.raw)
 #    filtering, and #6 for mobile vs. dense filterers on soft-substrate), but
 #    with very low loading scores.
 
-# RAW DATA SET:       -                                +
 #  PCO 1:        6, 13, 16, (24, 26, 31)          1-5, 12, 15, (28-29)
 #  PCO 2:      (23, 25, 28, 39)                     1, (6), 24, 26, 31, (32, 36)
 #  PCO 3:     (2-4, 24, 26, 29-32, 36, 40)        (23, 25, 28)
@@ -2140,8 +2139,16 @@ par(op)
 
 ## KMEANS CLUSTERING TO INTERPRET SPACES #######################################
 
-load("taxon.list")
-if(nrow(morph.pcoa$vectors.cor) != length(taxon.list))
+## ONLY USING TREE #50 ***
+
+# Load PCoA output from ape::pcoa
+load("mode.pcoa"); mode.pcoa <- mode.pcoa[[50]]
+load("constant.pcoa"); constant.pcoa <- constant.pcoa[[50]]
+load("raw.pcoa"); raw.pcoa <- raw.pcoa[[50]]
+load("morph.pcoa"); morph.pcoa <- morph.pcoa[[50]]
+
+load("taxon.list"); taxon.list <- taxon.list[[50]]
+if(nrow(morph.pcoa$vectors.cor) != nrow(taxon.list))
   stop("Need to re-build taxon.list because some taxa were removed when running the 'raw' treatment.\n")
 
 # Plot within-cluster sum-of-squares vs no. of clusters
@@ -2170,10 +2177,16 @@ pchs <-as.character(km$cluster)
 plot(morph.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(morph.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(morph.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
+# If phylogenetic structure, lots of zeros:
+(cl.table <- table(taxon.list[, "class"], km$cluster))
+sort(cl.table[ ,1])
+sort(cl.table[ ,2])
+sort(cl.table[ ,3])
+sort(cl.table[ ,4])
 legend.groups <- c("edrio, aster, ech, oph & cyclo", 
                    "stylo, homo, solut, cteno, helico",
-                   "crin, eocr, rhomb, diplo, paracr", "more crinoids")
+                   "most crinoids", 
+                   "more crinoids, eocr, rhomb, diplo, paracr")
 par(mar = c(0, 0, 0, 0))
 plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
 legend("left", title = "morphological PCoA", legend = legend.groups, cex = 1.25,
@@ -2207,7 +2220,11 @@ pchs <-as.character(km$cluster)
 plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(mode.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
+(cl.table <- table(taxon.list[, "class"], km$cluster))
+sort(cl.table[ ,1])
+sort(cl.table[ ,2])
+sort(cl.table[ ,3])
+sort(cl.table[ ,4])
 legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
                    "edr, eocr, rh, dipl, paracr, hel & more cri",
                    "stylo, homo, solut, ctenoc, cyclo, some rhomb",
@@ -2223,7 +2240,6 @@ par(op)
 
 # Plot within-cluster sum-of-squares vs no. of clusters
 # pdf(file = "constant.kmeans.choice.pdf")
-# Note using uncorrected eigenvectors
 no.axes <- 6
 ks <- c(1:10, seq(20, 50, by = 10), 75, 100)
 sum.sq <- array(dim = length(ks))
@@ -2239,26 +2255,29 @@ par(op)
 
 # For constant, k = 3 (or 4) provides clean breaks; 9 divides most classes
 # pdf(file = "kmeans_eco_constant.pdf")
-# Note using uncorrected eigenvectors
 k <- 4
 set.seed(3) # To allow replication of order
 km <- kmeans(constant.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 100)
-# Modify so matches 'mode' (switch 2 and 3)
-k.3 <- which(km$cluster == 3)
+# Modify so matches 'mode' (switch 1 and 4)
+k.1 <- which(km$cluster == 1)
 k.4 <- which(km$cluster == 4)
-km$cluster[k.3] <- 4
-km$cluster[k.4] <- 3
+km$cluster[k.1] <- 4
+km$cluster[k.4] <- 1
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
 cols <- plasma(k)[km$cluster]
 pchs <-as.character(km$cluster)
 plot(constant.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
-table(taxon.list, km$cluster) # If phylogenetic structure, lots of zeros
+(cl.table <- table(taxon.list[, "class"], km$cluster))
+sort(cl.table[ ,1])
+sort(cl.table[ ,2])
+sort(cl.table[ ,3])
+sort(cl.table[ ,4])
 legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
-                   "edr, eocr, rh, dipl, paracr, hel & more cri",
+                   "edr, eocr, dipl, paracr, rh, hel & more cri",
                    "stylo, homo, solut, ctenoc, cyclo, some rhomb",
-                   "aster, ech, oph, holo, somas & stenur")
+                   "aster, ech, oph, stenur, somas & holo")
 par(mar = c(0, 0, 0, 0))
 plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
 legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1,
