@@ -60,6 +60,18 @@ source("~/Manuscripts/CamOrdEchinos/calc_metrics2.R")
 # Corrected resampling function
 sample2 <- function(x, ...) x[sample.int(length(x), ...)]
 
+# Effect of applying the Dineen, et al. (2019, Biology Lettters) standardization
+# for (later) PCoA convex hull volume by re-scaling PCoA coordinates according
+# to the magnitude of the first eigenvalue. (Their eq. 1 in Supplementary
+# Information.)
+stand.pcoa <- function(vectors = NULL, eigenvalues = NULL) {
+  nc <- ncol(vectors)
+  first.e <- eigenvalues[1]
+  for (c in 1:nc) {
+    vectors[, c] <- vectors[, c] * eigenvalues[c] / first.e
+  }
+  return(vectors)
+}
 
 
 
@@ -865,18 +877,6 @@ na.omit(loadings.raw)
 #    OVERALL: PCOs basically same as for mode (but more like constant), with #5
 #    reversed from constant.
 
-# Effect of applying the Dineen, et al. (2019, Biology Lettters) standardization
-# for (later) PCoA convex hull volume by re-scaling PCoA coordinates according
-# to the magnitude of the first eigenvalue. (Their eq. 1 in Supplementary
-# Information.)
-stand.pcoa <- function(vectors = NULL, eigenvalues = NULL) {
-  nc <- ncol(vectors)
-  first.e <- eigenvalues[1]
-  for (c in 1:nc) {
-    vectors[, c] <- vectors[, c] * eigenvalues[c] / first.e
-  }
-  return(vectors)
-}
 
 # Compare before and after standardizing (for tree #50)
 new <- pcoa.results[[50]]
@@ -2294,23 +2294,12 @@ par(op)
 # Question: Within taxonomic classes, is the overall occupation of space greater
 # in morphospace or ecospace?
 
-# No need to sample standardize here, as the sample size is the same for
-# ecological and morphological subsets. Simply need to observe the differences
-# in convex hull hypervolume (FRic), using 'm' PCoA axes like above. And this
+# No need to sample standardize here, as the sample size is identical for each
+# ecological and morphological subset. Simply need to observe the differences in
+# convex hull hypervolume (FRic), using 'm' PCoA axes like above. And this
 # analysis is not observing the trends through time. Standardizing each space to
 # the overall FRic of all echinoderms because the length of eigenvalues may be
 # different in each space.
-
-# Select 'm' (number of PCoA axes to use when calculating convex hull volume)
-m <- 2
-
-# Process the classes:
-load("taxon.list")
-class.tab <- sort(table(taxon.list), decreasing = TRUE)
-classes <- names(class.tab)
-# Remove genera with UNCERTAIN class affiliation
-classes <- classes[-which(classes == "UNCERTAIN")]
-class.space <- data.frame(class = classes, morph = NA, eco = NA)
 
 # Process PCoA output
 load("morph.pcoa")
@@ -2318,57 +2307,136 @@ load("mode.pcoa")
 eco.pcoa <- mode.pcoa
 # load("constant.pcoa"); eco.pcoa <- constant.pcoa
 # load("raw.pcoa"); eco.pcoa <- raw.pcoa
-# Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
+load("taxon.list")
 
-for(cl in 1:nrow(class.space)) {
-  wh.cl <- which(taxon.list == classes[cl])
-  eco.coords <- eco.pcoa$vectors.cor[wh.cl, 1:m]
-  morph.coords <- morph.pcoa$vectors.cor[wh.cl, 1:m]
-  if (length(eco.coords) == 2L) next
-  # Can not calculate if there are less than 'm' distinct points
-  H.eco <- nrow(unique(round(eco.coords, 5)))
-  H.morph <- nrow(unique(round(morph.coords, 5)))
-  if (H.eco <= m | H.morph <= m)
-    next
-  class.space$morph[cl] <- geometry::convhulln(morph.coords, "FA")$vol
-  class.space$eco[cl] <- geometry::convhulln(eco.coords, "FA")$vol
+# Select 'm' (number of PCoA axes to use when calculating convex hull volume).
+# Use m = 2:7
+m <- 2
+
+class.space <- vector("list", length(morph.pcoa))
+
+# Identify classes (which are constant across taxon.lists:
+classes <- sort(unique(taxon.list[[1]][, "class"]))
+# Remove genera with UNCERTAIN class affiliation and 'diploporitan' (which will
+# be processed with Diploporita sensu strictu)
+classes <- classes[-which(classes == "UNCERTAIN" | classes == "'diploporitan'")]
+
+(clu <- makeCluster(detectCores()))
+registerDoParallel(clu)
+(start <- Sys.time())
+class.space <- foreach(t = 1:length(morph.pcoa), .inorder = TRUE, 
+                        .packages = "geometry") %dopar% {
+  
+  t.class.space <- matrix(NA, nrow = length(classes), ncol = 4)
+  colnames(t.class.space) <- c("morph", "eco", "diff", "diff.prop")
+  
+  
+  # Only proceed if tree objects exist (as in trees 31-35)
+  if (!is.null(morph.pcoa[[t]])) {
+  
+    # Standardize the PCoA eigenvectors
+    morph.pcoa[[t]]$vectors.cor <- 
+      stand.pcoa(vectors = morph.pcoa[[t]]$vectors.cor,
+                 eigenvalues = morph.pcoa[[t]]$values$Corr_eig)
+    eco.pcoa[[t]]$vectors.cor <- 
+      stand.pcoa(vectors = eco.pcoa[[t]]$vectors.cor,
+                 eigenvalues = eco.pcoa[[t]]$values$Corr_eig)
+    
+    for(cl in 1:nrow(t.class.space)) {
+  
+      # Combine Diploporita with 'diploporitans'
+      if (classes[cl] == "Diploporita") {
+        wh.cl <- which(taxon.list[[t]][, "class"] == classes[cl] |
+                         taxon.list[[t]][, "class"] == "'diploporitan'")
+      } else
+        wh.cl <- which(taxon.list[[t]][, "class"] == classes[cl])
+      # Skip to next class if < 2 genera in class
+      if (length(wh.cl) < 2L)
+        next
+      
+      eco.coords <- eco.pcoa[[t]]$vectors.cor[wh.cl, 1:m]
+      morph.coords <- morph.pcoa[[t]]$vectors.cor[wh.cl, 1:m]
+  
+      # Can not calculate if there are less than 'm' distinct points
+      H.eco <- nrow(unique(round(eco.coords, 5)))
+      H.morph <- nrow(unique(round(morph.coords, 5)))
+      if (H.eco <= m | H.morph <= m) {
+        warning("Convex hull can not be calculated for 'm' = ", m, 
+                " for class ", classes[cl], " in tree ", t, "\n")
+        next
+        }
+        
+      # Standardize by entire morphospace / ecospace
+      morph.total.attempt <-
+        try(geometry::convhulln(morph.pcoa[[t]]$vectors.cor[, 1:m], "FA")$vol)
+      eco.total.attempt <- 
+        try(geometry::convhulln(eco.pcoa[[t]]$vectors.cor[, 1:m], "FA")$vol)
+      morph.cl.attempt <- try(geometry::convhulln(morph.coords, "FA")$vol)
+      eco.cl.attempt <- try(geometry::convhulln(eco.coords, "FA")$vol)
+      if (!inherits(morph.total.attempt, "try-error") &
+          !inherits(eco.total.attempt, "try-error") &
+          !inherits(eco.cl.attempt, "try-error") &
+          !inherits(eco.cl.attempt, "try-error")) {
+        t.class.space[cl, "morph"] <- morph.cl.attempt / morph.total.attempt
+        t.class.space[cl, "eco"] <- eco.cl.attempt / eco.total.attempt
+      }
+    }
+    
+    # Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
+    t.class.space[, "diff"] <- t.class.space[, "morph"] - t.class.space[, "eco"]
+    t.class.space[, "diff.prop"] <- 
+      t.class.space[, "morph"] / t.class.space[, "eco"]
+  }
+  return(t.class.space)
 }
+stopCluster(clu)
+(Sys.time() - start) # 22-68 s, depending on 'm'. 5.6 minutes when m = 7
+beep()
 
-# Standardize by entire morphospace / ecospace
-morph.total <- geometry::convhulln(morph.pcoa$vectors.cor[, 1:m], "FA")$vol
-eco.total <- geometry::convhulln(eco.pcoa$vectors.cor[, 1:m], "FA")$vol
-class.space$morph <- class.space$morph / morph.total
-class.space$eco <- class.space$eco / eco.total
+# Medians across trees. (Most are close to normally distributed, but some
+# classes are definitely not, especially for the proportional difference.)
+class.results <-
+  as.data.frame(apply(simplify2array(class.space), 1:2, median, na.rm = TRUE))
+class.results <- cbind(classes, class.results)
+nrow(na.omit(class.results))
+na.omit(class.results)
 
-# Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
-class.space$diff <- class.space$morph - class.space$eco
+summary(class.results$diff)
+summary(class.results$diff.prop)
 
-class.space
-summary(class.space$diff)
+# Which classes have GREATER morphospace occupation compared to ecological?
 
-# Statistical test
+#   Crinoids (only when m = 2-4), ctenocystoids (only when m = 3 & 4),
+#   diploporitans (m < 7), edrioasteroids (m = 2-3 & 6-7), eocrinoids,
+#   homosteleans (m = 2 & 3), ophiuroids (m = 2-4), parablastoids (m = 2),
+#   paracrinoids (m = 2-5 & 7), rhombiferans (m = 5-7), and solutes (m = 6-7).
+
+# Which classes have LESSER morphospace occupation compared to ecological?
+
+#   Asteroids, crinoids (only when m = 5-7), ctenocyctoids (m = 2),
+#   cyclocystoids (m = 2-5), edrioasteroids (m = 4), holothuroids (m = 2),
+#   ophiocistioids (m = 2), ophiuroids (m = 2), paracrinoids (m = 5),
+#   rhombiferans (m = 2-4), solutes (m = 2-4), stenuroids (m = 2), and
+#   stylophorans (m = 2-4 & 6-7)
+
+# Statistical tests
 par(mfrow = c(2, 1))
-hist(class.space$diff, 15, main = "differences in class convex hull volume", 
+hist(class.results$diff, 15, main = "differences in class convex hull volume", 
      xlab = "morph volume - eco volume, by class")
 abline(v = 0, lwd = 2, lty = 2)
-plot(density(na.omit(class.space$diff)), main = "differences in class convex hull volume", 
+plot(density(na.omit(class.results$diff)), main = "differences in class convex hull volume", 
      xlab = "morph volume - eco volume, by class")
 abline(v = 0, lwd = 2, lty = 2)
 
-# Although visually almost normally distributed, not technically normally
-# distributed (b/c of overly long tails)
-shapiro.test(class.space$diff) # p < 0.05 so non-normally distributed
+# Distribution is normally distributed
+shapiro.test(class.results$diff) # p > 0.05 so normally distributed (except m > 4)
  
-wilcox.test(class.space$diff, mu = 0)
-t.test(class.space$diff, mu = 0)
+t.test(class.results$diff, mu = 0)
+# p = 0.5993 - 0.7871 (depending on 'm'), so not different
 
 # Confirm with paired t-test
-wilcox.test(class.space$morph, class.space$eco, paired = TRUE)
-t.test(class.space$morph, class.space$eco, paired = TRUE)
+t.test(class.results$morph, class.results$eco, paired = TRUE)
+# p = 0.6072 - 0.7884 (depending on 'm'), so not diff
 
 
 
@@ -2378,76 +2446,120 @@ t.test(class.space$morph, class.space$eco, paired = TRUE)
 # Question: Within taxonomic subphyla, is the overall occupation of space
 # greater in morphospace or ecospace?
 
-# Select 'm' (number of PCoA axes to use when calculating convex hull volume)
+# Select 'm' (number of PCoA axes to use when calculating convex hull volume).
+# Use m = 2:7
 m <- 2
 
-# Process the subphyla:
-load("subphylum.list")
-subphylum.tab <- sort(table(subphylum.list), decreasing = TRUE)
-subphyla <- names(subphylum.tab)
+subphylum.space <- vector("list", length(morph.pcoa))
+
+# Identify subphyla (which are constant across taxon.lists:
+subphyla <- sort(unique(taxon.list[[1]][, "subphylum"]))
 # Remove genera with UNCERTAIN subphylum affiliation
 subphyla <- subphyla[-which(subphyla == "UNCERTAIN")]
-subphylum.space <- data.frame(subphylum = subphyla, morph = NA, eco = NA)
 
-# Process PCoA output
-load("morph.pcoa")
-load("mode.pcoa")
-eco.pcoa <- mode.pcoa
-# load("constant.pcoa"); eco.pcoa <- constant.pcoa
-# load("raw.pcoa"); eco.pcoa <- raw.pcoa
-# Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+subphylum.space <- foreach(t = 1:length(morph.pcoa), .inorder = TRUE, 
+                       .packages = "geometry") %dopar% {
+                         
+   t.subphylum.space <- matrix(NA, nrow = length(subphyla), ncol = 4)
+   colnames(t.subphylum.space) <- c("morph", "eco", "diff", "diff.prop")
 
-for(subph in 1:nrow(subphylum.space)) {
-  wh.subph <- which(subphylum.list == subphyla[subph])
-  eco.coords <- eco.pcoa$vectors.cor[wh.subph, 1:m]
-  morph.coords <- morph.pcoa$vectors.cor[wh.subph, 1:m]
-  if (length(eco.coords) == 2L) next
-  # Can not calculate if there are less than 'm' distinct points
-  H.eco <- nrow(unique(round(eco.coords, 5)))
-  H.morph <- nrow(unique(round(morph.coords, 5)))
-  if (H.eco <= m | H.morph <= m)
-    next
-  subphylum.space$morph[subph] <- geometry::convhulln(morph.coords, "FA")$vol
-  subphylum.space$eco[subph] <- geometry::convhulln(eco.coords, "FA")$vol
+   # Only proceed if tree objects exist (as in trees 31-35)
+   if (!is.null(morph.pcoa[[t]])) {
+     
+     # Standardize the PCoA eigenvectors
+     morph.pcoa[[t]]$vectors.cor <- 
+       stand.pcoa(vectors = morph.pcoa[[t]]$vectors.cor,
+                  eigenvalues = morph.pcoa[[t]]$values$Corr_eig)
+     eco.pcoa[[t]]$vectors.cor <- 
+       stand.pcoa(vectors = eco.pcoa[[t]]$vectors.cor,
+                  eigenvalues = eco.pcoa[[t]]$values$Corr_eig)
+     
+     for(sp in 1:nrow(t.subphylum.space)) {
+       wh.sp <- which(taxon.list[[t]][, "subphylum"] == subphyla[sp])
+       
+       # Skip to next subphylum if < 2 genera in subphylum
+       if (length(wh.sp) < 2L)
+         next
+       
+       eco.coords <- eco.pcoa[[t]]$vectors.cor[wh.sp, 1:m]
+       morph.coords <- morph.pcoa[[t]]$vectors.cor[wh.sp, 1:m]
+       
+       # Can not calculate if there are less than 'm' distinct points
+       H.eco <- nrow(unique(round(eco.coords, 5)))
+       H.morph <- nrow(unique(round(morph.coords, 5)))
+       if (H.eco <= m | H.morph <= m) {
+         warning("Convex hull can not be calculated for 'm' = ", m, 
+                 " for subphylum ", subphyla[sp], " in tree ", t, "\n")
+         next
+       }
+       
+       # Standardize by entire morphospace / ecospace
+       morph.total.attempt <-
+         try(geometry::convhulln(morph.pcoa[[t]]$vectors.cor[, 1:m], "FA")$vol)
+       eco.total.attempt <- 
+         try(geometry::convhulln(eco.pcoa[[t]]$vectors.cor[, 1:m], "FA")$vol)
+       morph.cl.attempt <- try(geometry::convhulln(morph.coords, "FA")$vol)
+       eco.cl.attempt <- try(geometry::convhulln(eco.coords, "FA")$vol)
+       if (!inherits(morph.total.attempt, "try-error") &
+           !inherits(eco.total.attempt, "try-error") &
+           !inherits(eco.cl.attempt, "try-error") &
+           !inherits(eco.cl.attempt, "try-error")) {
+         t.subphylum.space[sp, "morph"] <- morph.cl.attempt / morph.total.attempt
+         t.subphylum.space[sp, "eco"] <- eco.cl.attempt / eco.total.attempt
+       }
+     }
+     
+     # Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
+     t.subphylum.space[, "diff"] <- t.subphylum.space[, "morph"] - t.subphylum.space[, "eco"]
+     t.subphylum.space[, "diff.prop"] <- 
+       t.subphylum.space[, "morph"] / t.subphylum.space[, "eco"]
+   }
+   return(t.subphylum.space)
 }
+stopCluster(cl)
+(Sys.time() - start) # 18-26 s, depending on 'm'. 52 s when m = 6, 4.1 minutes when m = 7
+beep()
 
-# Standardize by entire morphospace / ecospace
-morph.total <- geometry::convhulln(morph.pcoa$vectors.cor[, 1:m], "FA")$vol
-eco.total <- geometry::convhulln(eco.pcoa$vectors.cor[, 1:m], "FA")$vol
-subphylum.space$morph <- subphylum.space$morph / morph.total
-subphylum.space$eco <- subphylum.space$eco / eco.total
+# Medians across trees. (Most are close to normally distributed, but some
+# subphyla are definitely not, especially for the proportional difference.)
+subphylum.results <-
+  as.data.frame(apply(simplify2array(subphylum.space), 1:2, median, na.rm = TRUE))
+subphylum.results <- cbind(subphyla, subphylum.results)
+nrow(na.omit(subphylum.results))
+na.omit(subphylum.results)
 
-# Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
-subphylum.space$diff <- subphylum.space$morph - subphylum.space$eco
+summary(subphylum.results$diff)
+summary(subphylum.results$diff.prop)
 
-subphylum.space
-summary(subphylum.space$diff)
+# Which subphyla have GREATER morphospace occupation compared to ecological?
+#   Blastozoa, Crinozoa, and Echinozoa
 
-# Statistical test
+# Which subphyla have LESSER morphospace occupation compared to ecological?
+#   Asterozoa
+
+# Statistical tests
 par(mfrow = c(2, 1))
-breaks <- seq(from = -.35, to = 0.05, by = 0.05)
-hist(subphylum.space$diff, breaks = breaks, 
-     main = "differences in subphylum convex hull volume", 
+hist(subphylum.results$diff, 15, main = "differences in subphylum convex hull volume", 
      xlab = "morph volume - eco volume, by subphylum")
 abline(v = 0, lwd = 2, lty = 2)
-plot(density(na.omit(subphylum.space$diff)), 
-     main = "differences in subphylum convex hull volume", 
+plot(density(na.omit(subphylum.results$diff)), main = "differences in subphylum convex hull volume", 
      xlab = "morph volume - eco volume, by subphylum")
 abline(v = 0, lwd = 2, lty = 2)
 
-# Confirm not normally distributed,
-shapiro.test(subphylum.space$diff) # p < 0.05 so non-normally distributed
+# Distribution is normally distributed
+shapiro.test(subphylum.results$diff) # p > 0.05 so normally distributed (except m > 4)
 
-wilcox.test(subphylum.space$diff, mu = 0)
-t.test(subphylum.space$diff, mu = 0)
+t.test(subphylum.results$diff, mu = 0)
+# p = 0.1914 - 0.5336 (depending on 'm'), so not different
 
 # Confirm with paired t-test
-wilcox.test(subphylum.space$morph, subphylum.space$eco, paired = TRUE)
-t.test(subphylum.space$morph, subphylum.space$eco, paired = TRUE)
+t.test(subphylum.results$morph, subphylum.results$eco, paired = TRUE)
+# p = 0.1914 - 0.5310 (depending on 'm'), so not diff
+
+
 
 
 
@@ -2457,36 +2569,67 @@ t.test(subphylum.space$morph, subphylum.space$eco, paired = TRUE)
 # in morphospace or ecospace?
 
 # Select 'm' (number of PCoA axes to use when calculating convex hull volume)
-m <- 2
+m <- 7 # Use values of 2-7
 
-# Process PCoA output
-load("morph.pcoa")
-load("mode.pcoa")
-eco.pcoa <- mode.pcoa
-# load("constant.pcoa"); eco.pcoa <- constant.pcoa
-# load("raw.pcoa"); eco.pcoa <- raw.pcoa
-# Standardize the PCoA eigenvectors
-morph.pcoa$vectors.cor <- stand.pcoa(vectors = morph.pcoa$vectors.cor, 
-                                     eigenvalues = morph.pcoa$values$Corr_eig)
-eco.pcoa$vectors.cor <- stand.pcoa(vectors = eco.pcoa$vectors.cor, 
-                                   eigenvalues = eco.pcoa$values$Corr_eig)
-phylum.space <- data.frame(morph = NA, eco = NA)
+phylum.space <- vector("list", length(morph.pcoa))
 
-eco.coords <- eco.pcoa$vectors.cor[, 1:m]
-morph.coords <- morph.pcoa$vectors.cor[, 1:m]
-# Can not calculate if there are less than 'm' distinct points
-H.eco <- nrow(unique(round(eco.coords, 5)))
-H.morph <- nrow(unique(round(morph.coords, 5)))
-if (H.eco <= m | H.morph <= m)
-  stop("Convex hull can not be calculated for this 'm'\n")
-phylum.space$morph <- geometry::convhulln(morph.coords, "FA")$vol
-phylum.space$eco <- geometry::convhulln(eco.coords, "FA")$vol
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+phylum.space <- foreach(t = 1:length(morph.pcoa), .inorder = TRUE, 
+                        .packages = "geometry") %dopar% { 
 
-# Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
-phylum.space$diff <- phylum.space$morph - phylum.space$eco
+  # Only proceed if tree objects exist (as in trees 31-35)
+  if (!is.null(morph.pcoa[[t]])) {
+    t.phylum.space <- rep(NA, 4)
+    
+    # Standardize the PCoA eigenvectors
+    morph.pcoa[[t]]$vectors.cor <- 
+      stand.pcoa(vectors = morph.pcoa[[t]]$vectors.cor,
+                 eigenvalues = morph.pcoa[[t]]$values$Corr_eig)
+    eco.pcoa[[t]]$vectors.cor <- 
+      stand.pcoa(vectors = eco.pcoa[[t]]$vectors.cor,
+                 eigenvalues = eco.pcoa[[t]]$values$Corr_eig)
+  
+    eco.coords <- eco.pcoa[[t]]$vectors.cor[, 1:m]
+    morph.coords <- morph.pcoa[[t]]$vectors.cor[, 1:m]
+    
+    # Can not calculate if there are less than 'm' distinct points
+    H.eco <- nrow(unique(round(eco.coords, 5)))
+    H.morph <- nrow(unique(round(morph.coords, 5)))
+    if (H.eco <= m | H.morph <= m) {
+      warning("Convex hull can not be calculated for 'm' = ", m, " for tree ", t, "\n")
+      stop
+    }
+    morph.attempt <- try(geometry::convhulln(morph.coords, "FA")$vol)
+    eco.attempt <- try(geometry::convhulln(eco.coords, "FA")$vol)
+    if (!inherits(morph.attempt, "try-error") & !inherits(eco.attempt, "try-error")) {
+      t.phylum.space[1] <- morph.attempt
+      t.phylum.space[2] <- eco.attempt
+      
+      # Calculate difference. If +, morph > eco. If 0, morph = eco, If -, morph < eco
+      t.phylum.space[3] <- t.phylum.space[1] - t.phylum.space[2]
+      t.phylum.space[4] <- t.phylum.space[1] / t.phylum.space[2]
+    }
+  }
+  return(t.phylum.space)
+}
+stopCluster(cl)
+(Sys.time() - start) # 20-68 s, depending on 'm'
+beep()
 
-phylum.space
+# Averages across trees:
+phylum.results <- matrix(apply(simplify2array(phylum.space), 1, mean, na.rm = TRUE), ncol = 4)
+colnames(phylum.results) <- c("morph", "eco", "diff", "prop.diff")
+phylum.results
+
 # Overall morphospace is 2.95-times greater than ecospace
+# m = 2: morph is 2.28x greater
+# m = 3:  3.87x
+# m = 4:  8.40x
+# m = 5: 13.16x
+# m = 6: 14.57x
+# m = 7: 20.09x
 
 
 
