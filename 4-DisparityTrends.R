@@ -2826,29 +2826,46 @@ par(op)
 
 # Import distance matrices from 3-DisparityDistances.R
 load("mode.distances.GED.5")
-load("constant.distances.GED.5")
-load("raw.distances.GED.5")
 load("morph.distances.GED.5")
+# Load for the $trees
+load("morph.anc")
+load("mode.anc")
 
 # Convert distance matrixes (restricting to tips) to cluster analysis
-morph.hc <-
-  hclust(as.dist(morph.distances.GED.5$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
-tr.morph <- as.phylo(morph.hc)
-tr.morph$tip.label <-  tree$tip.label
-plot(tr.morph)
+nt <- length(morph.distances.GED.5)
+tr.morph <- vector("list", nt)
+for(t in 1:nt) {
+  tree <- morph.anc[[t]]$topper$tree
+  morph.hc <-
+    hclust(as.dist(morph.distances.GED.5[[t]]$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
+  tr.morph[[t]] <- as.phylo(morph.hc)
+  tr.morph[[t]]$tip.label <-  tree$tip.label
+}
+plot(tr.morph[[50]])
 
 # Cophyloplot between phylogeny and morpho-cluster
 # 'association' not needed because strictly matches tip labels by default
-cophylo.morph <- cophylo(tree, tr.morph, rotate = TRUE, rotate.multi = TRUE, 
-                         print = TRUE)
+cophylo.morph <- vector("list", length(tr.morph))
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+cophylo.morph <- foreach(t = 1:nt, .inorder = TRUE, .packages = "phytools") %dopar% {
+  tree <- morph.anc[[t]]$topper$tree
+  t.cophylo.morph <- phytools::cophylo(tree, tr.morph[[t]], rotate = TRUE,
+                                       rotate.multi = TRUE, print = FALSE)
+}
+stopCluster(cl)
+(Sys.time() - start) # 13.1 minutes on 8-core laptop
 beep(3)
 
 # Confirm taxa are paired correctly
-summary(cophylo.morph)
+summary(cophylo.morph[[50]])
 
 # save(cophylo.morph, file = "cophylo.morph")
 # load("cophylo.morph")
-plot(cophylo.morph)
+
+# Plot sample (using tree 50)
+plot(cophylo.morph[[50]])
 # The phylogeny is the left figure
 
 # plot.cophylo() allows following customizable plotting arguments:
@@ -2859,20 +2876,20 @@ plot(cophylo.morph)
 # For font size: fsize
 # For plotting points at tips: pts = T/F
 # pdf(file = "MorphPhylogram.pdf")
-edge.colors <- list(left = rep("darkgray", nrow(cophylo.morph$trees[[1]]$edge)), 
-                    right = rep("black", nrow(cophylo.morph$trees[[2]]$edge)))
-plot(cophylo.morph, edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
+edge.colors <- list(left = rep("darkgray", nrow(cophylo.morph[[50]]$trees[[1]]$edge)), 
+                    right = rep("black", nrow(cophylo.morph[[50]]$trees[[2]]$edge)))
+plot(cophylo.morph[[50]], edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
      fsize = 0.3, pts = FALSE)
 # dev.off()
 
 # How much sum-of-square rank differences between the two "phylogenies"? (same
 # metric used in 'cophylo' to optimize the tip alignments)
-(diffs.morph <- attr(cophylo.morph$trees[[1]], "minRotate"))
-sqrt(diffs.morph / Ntip(tree)) # Average rank difference
+(diffs.morph <- attr(cophylo.morph[[50]]$trees[[1]], "minRotate"))
+sqrt(diffs.morph / Ntip(morph.anc[[50]]$topper$tree)) # Average rank difference
 
 # What is the distribution of rank differences between the two "phylogenies"?
-phylo.order <- cophylo.morph$trees[[1]]$tip.label
-morph.order <- cophylo.morph$trees[[2]]$tip.label
+phylo.order <- cophylo.morph[[50]]$trees[[1]]$tip.label
+morph.order <- cophylo.morph[[50]]$trees[[2]]$tip.label
 match.offset <- match(phylo.order, morph.order)
 
 # Confirm matched correctly:
@@ -2885,53 +2902,80 @@ identical(diffs.morph, sum(morph.offset ^ 2))
 hist(morph.offset, main = "rank mismatch between phylogeny and morphogram", 
      cex.main = .9)
 
-
 # pdf(file = "EchinoMorphPhylogeny.pdf", height = 200)
-# plot(cophylo.morph, edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
+# plot(cophylo.morph[[50]], edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
 #      fsize = 0.65, pts = FALSE)
 # dev.off()
 
+# Calculate offsets across trees
+morph.offset <- vector("list", length(cophylo.morph))
+for(t in 1:length(cophylo.morph)){
+  phylo.order <- cophylo.morph[[t]]$trees[[1]]$tip.label
+  morph.order <- cophylo.morph[[t]]$trees[[2]]$tip.label
+  match.offset <- match(phylo.order, morph.order)
+  if (!identical(phylo.order, morph.order[match.offset]))
+    stop(cat("order does not match for tree", t, "\n"))
+  morph.offset[[t]] <- match.offset - seq(phylo.order)
+  diffs.morph <- attr(cophylo.morph[[t]]$trees[[1]], "minRotate")
+  if (!identical(diffs.morph, sum(morph.offset[[t]] ^ 2)))
+    stop(cat("sum of square offsets did not calculate correctly for tree", t, "\n"))
+}
 
 
 ## Do the same for the ecology tree (using mode data set)
 # Convert distance matrixes (restricting to tips) to cluster analysis
-eco.hc <-
-  hclust(as.dist(mode.distances.GED.5$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
-tr.eco <- as.phylo(eco.hc)
-tr.eco$tip.label <-  tree$tip.label
-plot(tr.eco)
+nt <- length(mode.distances.GED.5)
+tr.eco <- vector("list", nt)
+for(t in 1:nt) {
+  tree <- mode.anc[[t]]$topper$tree
+  eco.hc <-
+    hclust(as.dist(mode.distances.GED.5[[t]]$distance_matrix[1:Ntip(tree), 1:Ntip(tree)]))
+  tr.eco[[t]] <- as.phylo(eco.hc)
+  tr.eco[[t]]$tip.label <-  tree$tip.label
+}
+plot(tr.eco[[50]])
 
 # Cophyloplot between phylogeny and eco-cluster
 # 'association' not needed because strictly matches tip labels by default
-cophylo.eco <- cophylo(tree, tr.eco, rotate = TRUE, rotate.multi = TRUE, 
-                       print = TRUE)
+cophylo.eco <- vector("list", length(tr.eco))
+(cl <- makeCluster(detectCores()))
+registerDoParallel(cl)
+(start <- Sys.time())
+cophylo.eco <- foreach(t = 1:nt, .inorder = TRUE, .packages = "phytools") %dopar% {
+  tree <- mode.anc[[t]]$topper$tree
+  t.cophylo.eco <- phytools::cophylo(tree, tr.eco[[t]], rotate = TRUE,
+                                     rotate.multi = TRUE, print = FALSE)
+}
+stopCluster(cl)
+(Sys.time() - start) # 10.6 minutes on 8-core laptop
 beep(3)
 
 # Confirm taxa are paired correctly
-summary(cophylo.eco)
+summary(cophylo.eco[[50]])
 
 # save(cophylo.eco, file = "cophylo.eco")
 # load("cophylo.eco")
-plot(cophylo.eco)
+
+plot(cophylo.eco[[50]])
 # The phylogeny is the left figure
 par(op)
 
 # pdf(file = "EcoPhylogram.pdf")
-edge.colors <- list(left = rep("darkgray", nrow(cophylo.eco$trees[[1]]$edge)), 
-                    right = rep("blue", nrow(cophylo.eco$trees[[2]]$edge)))
-plot(cophylo.eco, edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
+edge.colors <- list(left = rep("darkgray", nrow(cophylo.eco[[50]]$trees[[1]]$edge)), 
+                    right = rep("blue", nrow(cophylo.eco[[50]]$trees[[2]]$edge)))
+plot(cophylo.eco[[50]], edge.col = edge.colors, link.lwd = 1, link.col = "darkgray", 
      fsize = 0.3, pts = FALSE)
 # dev.off()
 par(op)
 
 # How much sum-of-square rank differences between the two "phylogenies"? (same
 # metric used in 'cophylo' to optimize the tip alignments)
-(diffs.eco <- attr(cophylo.eco$trees[[1]], "minRotate"))
-sqrt(diffs.eco / Ntip(tree)) # Average rank difference
+(diffs.eco <- attr(cophylo.eco[[50]]$trees[[1]], "minRotate"))
+sqrt(diffs.eco / Ntip(mode.anc[[50]]$topper$tree)) # Average rank difference
 
 # What is the distribution of rank differences between the two "phylogenies"?
-phylo.order <- cophylo.eco$trees[[1]]$tip.label
-eco.order <- cophylo.eco$trees[[2]]$tip.label
+phylo.order <- cophylo.eco[[50]]$trees[[1]]$tip.label
+eco.order <- cophylo.eco[[50]]$trees[[2]]$tip.label
 match.offset <- match(phylo.order, eco.order)
 
 # Confirm matched correctly:
@@ -2945,53 +2989,74 @@ hist(eco.offset, main = "rank mismatch between phylogeny and ecogram",
      cex.main = .9)
 
 # pdf(file = "EchinoEcoPhylogeny.pdf", height = 200)
-# plot(cophylo.eco)
+# plot(cophylo.eco[[50]], edge.col = edge.colors, link.lwd = 1, link.col = "darkgray",
+#      fsize = 0.65, pts = FALSE)
 # dev.off()
 
+# Calculate offsets across trees
+eco.offset <- vector("list", length(cophylo.eco))
+for(t in 1:length(cophylo.eco)){
+  phylo.order <- cophylo.eco[[t]]$trees[[1]]$tip.label
+  eco.order <- cophylo.eco[[t]]$trees[[2]]$tip.label
+  match.offset <- match(phylo.order, eco.order)
+  if (!identical(phylo.order, eco.order[match.offset]))
+    stop(cat("order does not match for tree", t, "\n"))
+  eco.offset[[t]] <- match.offset - seq(phylo.order)
+  diffs.eco <- attr(cophylo.eco[[t]]$trees[[1]], "minRotate")
+  if (!identical(diffs.eco, sum(eco.offset[[t]] ^ 2)))
+    stop(cat("sum of square offsets did not calculate correctly for tree", t, "\n"))
+}
 
-## Are the offsets different in the two dendrograms?
-summary(morph.offset)
-sd(morph.offset)
 
-summary(eco.offset)
-sd(eco.offset)
+
+## Statistical comparisons: Are the offsets different in the two dendrograms?
+
+summary(unlist(morph.offset))
+sd(unlist(morph.offset))
+
+summary(unlist(eco.offset))
+sd(unlist(eco.offset))
 
 # Because both distributions sum to zero, a t-test is not appropriate
 
 # Non-parametric Mann-Whitney U-test to test whether different
-wilcox.test(eco.offset, morph.offset)          # Not different in raw offsets
-wilcox.test(eco.offset ^ 2, morph.offset ^ 2)  # But sig. diff in sum of square offsets
+wilcox.test(unlist(eco.offset), unlist(morph.offset))
+# Not different in raw offsets: p = 0.913
+wilcox.test(unlist(eco.offset) ^ 2, unlist(morph.offset) ^ 2)
+# But sig. diff in sum of square offsets: p = 2.479e-12
+
 # CONCLUSION: They overlap significantly, but there are differences in the
 # tails.
 
 # Seems the major difference is the much longer tails of the ecological
 # distribution. Are they different distributional shapes?
-ks.test(eco.offset, morph.offset)
-ks.test(eco.offset ^ 2, morph.offset ^ 2)
+ks.test(unlist(eco.offset), unlist(morph.offset))
+ks.test(unlist(eco.offset) ^ 2, unlist(morph.offset) ^ 2)
 # CONCLUSION: Distributions are different (p < 0.001)
 
 # Let's focus instead on a test of different variances using the two-sided
 # F-test:
-var.test(eco.offset, morph.offset)
-# CONCLUSION: The ecological data set has substantially greater variance than
-# the morphological data set, implying a greater degree of phylogenetic
+var.test(unlist(eco.offset), unlist(morph.offset))
+# F = 1.0925, p = 2.163e-09
+
+# CONCLUSION: The ecological data set has 9.25% substantially greater variance
+# than the morphological data set, implying a greater degree of phylogenetic
 # structure in the morphological data set (and less in the ecological data set).
 
-boxplot(morph.offset, eco.offset, col = "gray", yaxs = "i",
+boxplot(unlist(morph.offset), unlist(eco.offset), col = "gray", yaxs = "i",
         names = c("morphology", "ecology"), 
         main = "paired offsets between phylogeny and dendrogram")
 
 # pdf(file = "cophylogram_offsets.pdf")
-breaks <- seq(-350, 350, 25)
-hist(c(eco.offset, morph.offset), main = "Offsets between phylogeny and dendrogram", 
-     xlab = "paired offsets", ylab = "#", breaks = breaks, col = "transparent", 
-     border = "transparent")
-hist(eco.offset, add = T, border = "white", col = "darkgray", breaks = breaks)
-hist(morph.offset, add = T, border = "black", col = "transparent", breaks = breaks)
+breaks <- seq(-375, 375, 25)
+hist(unlist(morph.offset), main = "Offsets between phylogeny and dendrogram", 
+     xlab = "paired offsets", ylab = "density", breaks = breaks, 
+     col = "transparent", border = "transparent", prob = TRUE)
+hist(unlist(eco.offset), add = T, border = "white", col = "darkgray", 
+     breaks = breaks, prob = TRUE)
+hist(unlist(morph.offset), add = T, border = "black", col = "transparent", 
+     breaks = breaks, prob = TRUE)
 legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
        pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
        cex = 1, pt.cex = 2)
 # dev.off()
-
-
-
