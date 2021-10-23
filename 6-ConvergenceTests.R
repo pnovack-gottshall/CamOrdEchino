@@ -418,7 +418,7 @@ Mode <- function(x, na.rm = FALSE) {
 # 'apply(simplify2array(x.conv), 1:2, Mode)' directly.
 
 # Remember that the first two and the last one columns are constant across trees
-# (and data sets), so only need to calculate colums 3-8.
+# (and data sets), so only need to calculate columns 3-8.
 Mode.mode.conv <- Mode.constant.conv <- Mode.raw.conv <- Mode.morph.conv <- 
   mode.conv[[1]]
 sq <- 1:length(mode.conv)
