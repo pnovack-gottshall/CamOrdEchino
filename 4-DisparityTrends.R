@@ -1772,6 +1772,162 @@ par(op)
 
 
 
+## TRENDS IN MISSING STATES THROUGH TIME ########################################
+
+# Load objects
+load("taxon.bins")
+load("morph.anc")
+load("mode.anc")
+
+ntrees <- length(taxon.bins)
+missing.trend <- vector("list", ntrees)
+for(i in 1:ntrees) {
+  t.missing.trend <- matrix(NA, nrow = 18, ncol = 12)
+  colnames(t.missing.trend) <- 
+    c("morph.NAs", "morph.polymorphisms", "morph.taxa.NAs", "morph.NAs.per",
+      "morph.polymorphisms.per", "morph.taxa.NAs.per", "eco.NAs", 
+      "eco.polymorphisms", "eco.taxa.NAs", "eco.NAs.per", "eco.polymorphisms.per", 
+      "eco.taxa.NAs.per")
+  for (t in 1:ncol(taxon.bins[[i]])) {
+    wh <- which(taxon.bins[[i]][, t])
+    taxa <- morph.anc[[i]]$matrix_1$matrix[wh, ]
+    dt <- dim(taxa)
+    # Calculate for morphological data set
+    morph.NAs <- sum(is.na(c(taxa)))
+    morph.polymorphisms <- length(grep("/|&", taxa))
+    morph.taxa.NAs <- nrow(taxa) - nrow(na.omit(taxa))
+    morph.NAs.per <- morph.NAs / (dt[1] * dt[2])
+    morph.polymorphisms.per <- morph.polymorphisms / (dt[1] * dt[2])
+    morph.taxa.NAs.per <- morph.taxa.NAs / dt[1]
+    t.missing.trend[t, 1:6] <- 
+      c(morph.NAs, morph.polymorphisms, morph.taxa.NAs, morph.NAs.per, 
+        morph.polymorphisms.per, morph.taxa.NAs.per)
+    # and same for ecological
+    taxa <- mode.anc[[i]]$matrix_1$matrix[wh, ]
+    dt <- dim(taxa)
+    eco.NAs <- sum(is.na(c(taxa)))
+    eco.polymorphisms <- length(grep("/|&", taxa))
+    eco.taxa.NAs <- nrow(taxa) - nrow(na.omit(taxa))
+    eco.NAs.per <- eco.NAs / (dt[1] * dt[2])
+    eco.polymorphisms.per <- eco.polymorphisms / (dt[1] * dt[2])
+    eco.taxa.NAs.per <- eco.taxa.NAs / dt[1]
+    t.missing.trend[t, 7:12] <- 
+      c(eco.NAs, eco.polymorphisms, eco.taxa.NAs, eco.NAs.per, 
+        eco.polymorphisms.per, eco.taxa.NAs.per)
+    }
+  missing.trend[[i]] <- t.missing.trend
+}
+beep() # ~ 10 sec.
+
+# Combine into data frame of median and SDs (using median because distributions
+# across trees are not normally distributed)
+missing.medians <-
+  data.frame(age = colnames(taxon.bins[[1]]),
+             apply(simplify2array(missing.trend), 1:2, median, na.rm = TRUE))
+missing.SDs <-
+  data.frame(age = colnames(taxon.bins[[1]]),
+             apply(simplify2array(missing.trend), 1:2, sd, na.rm = TRUE))
+
+
+
+## Plot trends through time
+
+# 1. Proportion of taxa with missing states
+# pdf(file = "MissingStates_Taxa.pdf")
+par(mar = c(0, 4, 2, 2))
+cols <- viridisLite::plasma(4)         # Uses RGB-sensitive red and blue
+trans.cols <- viridisLite::plasma(4, alpha = 0.5)
+# % taxa through time with NAs
+var_md <- missing.medians$eco.taxa.NAs.per
+var_md_top <- var_md + missing.SDs$eco.taxa.NAs.per
+var_md_bottom <- var_md - missing.SDs$eco.taxa.NAs.per
+var_mr <- missing.medians$morph.taxa.NAs.per
+var_mr_top <- var_mr + missing.SDs$morph.taxa.NAs.per
+var_mr_bottom <- var_mr - missing.SDs$morph.taxa.NAs.per
+lim <- range(c(var_md, var_mr), na.rm = TRUE)
+geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+              ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
+              label = "Proportion of taxa")
+mtext(text = "Taxa with missing states", side = 3, cex = 1.25)
+column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[2], lwd = 2, border = NA)
+column <- cbind(c(mids, rev(mids)), c(var_mr_bottom, rev(var_mr_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+lines(mids, var_mr, lwd = 4, lty = 1, col = cols[1])
+lines(mids, var_md, lwd = 4, lty = 2, col = cols[2])
+legend("bottomright", legend = c("morph", "eco"), col = cols, bty = "n", 
+       lty = c(1, 2, 3, 4), lwd = 4, inset = 0.05)
+
+# dev.off()
+
+# 2. Proportion of missing states
+# pdf(file = "MissingStates_States.pdf")
+par(mar = c(0, 4, 2, 2))
+cols <- viridisLite::plasma(4)         # Uses RGB-sensitive red and blue
+trans.cols <- viridisLite::plasma(4, alpha = 0.5)
+# % character states through time with NAs
+var_md <- missing.medians$eco.NAs.per
+var_md_top <- var_md + missing.SDs$eco.NAs.per
+var_md_bottom <- var_md - missing.SDs$eco.NAs.per
+var_mr <- missing.medians$morph.NAs.per
+var_mr_top <- var_mr + missing.SDs$morph.NAs.per
+var_mr_bottom <- var_mr - missing.SDs$morph.NAs.per
+lim <- range(c(var_md, var_mr), na.rm = TRUE)
+geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+              ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
+              label = "Proportion of taxon-characters")
+mtext(text = "Missing states", side = 3, cex = 1.25)
+column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[2], lwd = 2, border = NA)
+column <- cbind(c(mids, rev(mids)), c(var_mr_bottom, rev(var_mr_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+lines(mids, var_mr, lwd = 4, lty = 1, col = cols[1])
+lines(mids, var_md, lwd = 4, lty = 2, col = cols[2])
+legend("topright", legend = c("morph", "eco"), col = cols, bty = "n", 
+       lty = c(1, 2, 3, 4), lwd = 4, inset = 0.05)
+
+# dev.off()
+
+# 2. Proportion of uncertain polymorphic states
+# pdf(file = "MissingStates_Polymorphisms.pdf")
+par(mar = c(0, 4, 2, 2))
+cols <- viridisLite::plasma(4)         # Uses RGB-sensitive red and blue
+trans.cols <- viridisLite::plasma(4, alpha = 0.5)
+# % character states through time with uncertain polymorphisms
+var_md <- missing.medians$eco.polymorphisms.per
+var_md_top <- var_md + missing.SDs$eco.polymorphisms.per
+var_md_bottom <- var_md - missing.SDs$eco.polymorphisms.per
+var_mr <- missing.medians$morph.polymorphisms.per
+var_mr_top <- var_mr + missing.SDs$morph.polymorphisms.per
+var_mr_bottom <- var_mr - missing.SDs$morph.polymorphisms.per
+lim <- range(c(var_md, var_mr), na.rm = TRUE)
+geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+              ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
+              label = "Proportion of taxon-characters")
+mtext(text = "Polymorphic states", side = 3, cex = 1.25)
+column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[2], lwd = 2, border = NA)
+column <- cbind(c(mids, rev(mids)), c(var_mr_bottom, rev(var_mr_top)))
+column <- na.omit(column)
+polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+lines(mids, var_mr, lwd = 4, lty = 1, col = cols[1])
+lines(mids, var_md, lwd = 4, lty = 2, col = cols[2])
+legend("topright", legend = c("morph", "eco"), col = cols, bty = "n", 
+       lty = c(1, 2, 3, 4), lwd = 4, inset = 0.05)
+
+# dev.off()
+par(op)
 
 
 
