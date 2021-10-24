@@ -297,7 +297,7 @@ plot_rates_character(test_rates_output = AIC.rates[[50]], model_number = 2)
 
 
 
-## SUBSAMPLING ALGORITHM FOR CHARACTER PARTITIONS ##############################
+## SUBSAMPLING ALGORITHM FOR STANDARD SIZE OF CHARACTER PARTITIONS #############
 
 # The lambda rates returned above are sensitive to the number of characters.
 # (All things equal, more characters in a partition can produce an inflated
@@ -366,7 +366,7 @@ for(t in 1:length(data)) {
 (Sys.time() - start)     # 76.5 minutes on 8-core laptop
 
 # Save output
-save(sub.AIC.results, file = "sub.AIC.results")
+# save(sub.AIC.results, file = "sub.AIC.results")
 # load("sub.AIC.results")
 beep(3)
 
@@ -383,25 +383,26 @@ for(r in 1:l.aic) {
 }
 head(resampled.aic)
 round(apply(resampled.aic, 2, mean), 3)
+round(apply(resampled.aic, 2, sd), 3)
 round(apply(resampled.aic, 2, median), 3)
-round(apply(resampled.aic, 2, quartile), 3)
+round(apply(resampled.aic, 2, quantile), 3)
 round(apply(resampled.aic, 2, quantile, probs = 0.1), 3)
-summary(resampled.aic$AW2) # mean weight = 0.955, median = 1.000
+summary(resampled.aic$AW2) # mean weight = 0.950, median = 1.000
 
 # Mean global (overall) rate = 0.520 character changes / lineage Myr (SD = 0.072)
 #       Mean morphology rate = 0.837 character changes / lineage Myr (SD = 0.433)
 #          Mean ecology rate = 0.463 character changes / lineage Myr (SD = 0.042)
 #
 # Mean AIC results:        AICc        Akaike weight
-# Model 1 (Single-rate)    4621.05     0.050
-# Model 2 (Diff-rates)     4524.04     0.950 ***
+# Model 1 (Single-rate)    5112.08     0.050
+# Model 2 (Diff-rates)     4793.99     0.950 ***
 #                                            median = 1.000,
-#                                            25% quantile = 0.9995
+#                                            25% quantile = 1.000
 #                                            10% quantile = 0.918
 
 # pdf(file = "SubsampledRates.pdf")
 breaks <- pretty(c(resampled.aic$rate.morph, resampled.aic$rate.eco), 20)
-hist(resampled.aic$rate.eco, main = "Subsampled rates", 
+hist(resampled.aic$rate.eco, main = "Subsampled rates (30 characters each)", 
      xlab = "Rate (character changes / lineage Myr)", ylab = "Density", 
      breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
 hist(resampled.aic$rate.eco, add = TRUE, border = "white", col = "darkgray", 
@@ -431,6 +432,186 @@ par(op)
 
 100 * length(resampled.aic$AW2[resampled.aic$AW2 >= 0.999]) / nrow(resampled.aic)
 # 76.8% ~ = 1
+
+
+
+
+
+
+## SUBSAMPLING ALGORITHM FOR STANDARD NUMBER OF TAXA & CHARACTER PARTITIONS ####
+
+# Same as above, but also standardizing for (approximately) constant number of
+# taxa per time interval.
+
+# Needed to identify taxa within time intervals
+load("taxon.bins")
+
+# Subsample to 30 characters
+n.char <- 30
+# Specify the subsampled partitions
+character_partitions.aic <- list(list(1:(n.char * 2)), list(1:n.char))
+
+# How many reps per tree?
+nreps <- 40
+cat("There will be", nreps * length(data), "total replicates across", 
+    length(data), "trees\n")
+
+# How many taxa per bin? (using 30 for Cambrian and 15 for Ordovician tends to
+# produce relatively constant sample of mean = 59 [median = 66, interquartile
+# range = 51 - 75] taxa per bin)
+std.g <- 30
+
+# Store output (with index for pre-allocating position)
+subTC.AIC.results <- vector("list", nreps * length(data))
+index.seq <- vector("list", length(data))
+for (i in 1:length(index.seq)) {
+  index.seq[[i]] <- seq.int(nreps) + (nreps * (i - 1))
+}
+
+# Loop through each tree
+(start <- Sys.time())
+for(t in 1:length(data)) {
+  
+  cat("Subsampling tree", t, "\n")
+  
+  # Initialize and run in parallel
+  cl <- makeCluster(detectCores())
+  registerDoParallel(cl)
+  clusterSetRNGStream(cl, 3142)  # Set L-Ecuyer RNG seed
+  tree.subs <- foreach(i = 1:nreps, .inorder = FALSE, 
+                       .packages = "Claddis") %dopar% {
+
+    # Choose std.g subsampled taxa within each bin
+    keep <- NULL
+    # Use std.g for Cambrian bins and half std.g for Ordovician (because
+    # Ordovician taxa tend to have longer ranges)
+    O.bins <- as.vector(which(apply(taxon.bins[[t]], 2, sum) >= std.g / 2))
+    O.bins <- O.bins[O.bins <= 7]
+    C.bins <- as.vector(which(apply(taxon.bins[[t]], 2, sum) >= std.g))
+    C.bins <- C.bins[C.bins > 7]
+    for (b in O.bins) {
+      keep <-
+        c(keep, names(sample(which(taxon.bins[[t]][, b]), std.g / 2, replace = FALSE)))
+    }
+    for (b in C.bins) {
+      keep <-
+        c(keep, names(sample(which(taxon.bins[[t]][, b]), std.g, replace = FALSE)))
+    }
+    keep <- unique(keep)
+    # Confirm:
+    # wh.keep <- which(rownames(taxon.bins[[t]]) %in% keep)
+    # apply(taxon.bins[[t]][wh.keep, ], 2, sum)
+    # plot(rev(apply(taxon.bins[[t]][wh.keep, ], 2, sum)))
+    # summary(rev(apply(taxon.bins[[t]][wh.keep, ], 2, sum)))
+
+    taxa2prune <- setdiff(rownames(taxon.bins[[t]]), keep)
+    
+    # Prune taxa from cladistic matrix, remove invariant characters, and
+    # reassign character lengths. Because the number and names of taxon rows in
+    # the pruned cladistic matrix needs to match that of the $tree, easier to
+    # replace the matrix states with NAs than to prune both $tree and $matrix,
+    # as trimming the tree can alter the names of ancestral states.
+    class(data[[t]]) <- "cladisticMatrix"
+    sub.data <- data[[t]]
+    sub.data$matrix_1$matrix[taxa2prune, ] <- 
+      matrix(NA, ncol = ncol(sub.data$matrix_1$matrix), 
+             nrow = length(taxa2prune))
+    sub.data$matrix_2$matrix[taxa2prune, ] <- 
+      matrix(NA, ncol = ncol(sub.data$matrix_2$matrix), 
+             nrow = length(taxa2prune))
+    no.invars <- prune_cladistic_matrix(cladistic_matrix = sub.data,
+                                       remove_invariant = TRUE)
+    n.morph.char <- ncol(no.invars$matrix_1$matrix)
+    n.eco.char <- ncol(no.invars$matrix_2$matrix)
+    total.chars <- n.morph.char + n.eco.char
+
+    # Choose subsampled characters and prune cladistic matrix accordingly
+    wh.morph.chars <- sample(1:n.morph.char, n.char, replace = FALSE)
+    wh.eco.chars <- sample(1:n.eco.char, n.char, replace = FALSE)
+    characters2prune <-
+     setdiff(1:total.chars, c(wh.morph.chars, wh.eco.chars + n.morph.char))
+    
+    subsample <- prune_cladistic_matrix(cladistic_matrix = no.invars, 
+                                       characters2prune = characters2prune)
+     # Calculate subsampled AIC on subsample
+     sub.rates <- 
+       test_rates2(cladistic_matrix = subsample, time_tree = subsample$topper$tree,
+                   time_bins = TimeBins, character_partitions = character_partitions.aic,
+                   polymorphism_state = "missing", uncertainty_state = "missing",
+                   inapplicable_state = "missing", time_binning_approach = "lloyd",
+                   test_type = "aic")
+   }
+  stopCluster(cl)
+  subTC.AIC.results[index.seq[[t]]] <- tree.subs
+}
+(Sys.time() - start)     # 2.13 hours on 8-core laptop
+
+# Save output
+save(subTC.AIC.results, file = "subTC.AIC.results")
+# load("subTC.AIC.results")
+beep(3)
+
+# Convert into clean data table
+l.aic <- length(subTC.AIC.results)
+resampled.aic <- 
+  data.frame(rate1 = NA, AIC1 = NA, AICc1 = NA, rate.morph = NA, rate.eco = NA, 
+             AIC2 = NA, AICc2 = NA, AW1 = NA, AW2 = NA)
+for(r in 1:l.aic) {
+  resampled.aic[r, 1:7] <-
+    as.numeric(unlist(subTC.AIC.results[[r]]$character_test_results)[c(1:3, 5:8)])
+  resampled.aic[r, 8:9] <-
+    geiger::aicw(c(resampled.aic$AICc1[r], resampled.aic$AICc2[r]))$w
+}
+head(resampled.aic)
+round(apply(resampled.aic, 2, mean), 3)
+round(apply(resampled.aic, 2, sd), 3)
+round(apply(resampled.aic, 2, median), 3)
+summary(resampled.aic$AW2) # mean weight = 0.778, median = 0.986
+
+# Mean global (overall) rate = 0.434 character changes / lineage Myr (SD = 0.084)
+#       Mean morphology rate = 0.679 character changes / lineage Myr (SD = 0.344)
+#          Mean ecology rate = 0.390 character changes / lineage Myr (SD = 0.074)
+#
+# Mean AIC results:        AICc        Akaike weight
+# Model 1 (Single-rate)    661.53      0.222
+# Model 2 (Diff-rates)     634.71      0.778 *
+#                                            median = 0.986,
+#                                            60% above 0.999
+#                                            100% at or above 0.255
+
+# pdf(file = "SubsampledTCRates.pdf")
+breaks <- pretty(c(resampled.aic$rate.morph, resampled.aic$rate.eco), 20)
+hist(resampled.aic$rate.eco, main = "Subsampled rates (30 characters, ~ 60 taxa each)", 
+     xlab = "Rate (character changes / lineage Myr)", ylab = "Density", 
+     breaks = breaks, col = "transparent", border = "transparent", prob = TRUE)
+hist(resampled.aic$rate.eco, add = TRUE, border = "white", col = "darkgray", 
+     breaks = breaks, prob = TRUE)
+hist(resampled.aic$rate.morph, add = TRUE, border = "black", col = "transparent", 
+     breaks = breaks, prob = TRUE)
+legend("topright", inset = .05, c("ecology", "morphology"), pch = c(22, 22), 
+       pt.bg = c("darkgray", "transparent"), col = c("darkgray", "black"), 
+       cex = 1, pt.cex = 2)
+par(op)
+# dev.off()
+
+
+# pdf(file = "TwoModelAkaikeWeight_TC.pdf")
+breaks <- seq(0.25, 1, by = 0.01)
+hist(resampled.aic$AW2, main = "Akaike support for two-rate model", 
+     xlab = "Akaike weight", ylab = "Density", breaks = breaks, prob = TRUE, 
+     col = "black")
+abline(v = 0.99, lty = 2, lwd = 2, col = "red")
+par(op)
+# dev.off()
+
+
+# What proportion >= 0.9?
+100 * length(resampled.aic$AW2[resampled.aic$AW2 >= 0.9]) / nrow(resampled.aic)
+# 59.1% greater than or equal to 0.90
+
+100 * length(resampled.aic$AW2[resampled.aic$AW2 >= 0.999]) / nrow(resampled.aic)
+# 41.2% ~ = 1
+
 
 
 
@@ -526,10 +707,10 @@ for(t in 1:length(morph.anc)) {
 beep(3)
 
 # Save objects
-save(eco.branch.changes, file = "eco.branch.changes")
-save(morph.branch.changes, file = "morph.branch.changes")
-save(constant.branch.changes, file = "constant.branch.changes")
-save(raw.branch.changes, file = "raw.branch.changes")
+# save(eco.branch.changes, file = "eco.branch.changes")
+# save(morph.branch.changes, file = "morph.branch.changes")
+# save(constant.branch.changes, file = "constant.branch.changes")
+# save(raw.branch.changes, file = "raw.branch.changes")
 # load("eco.branch.changes")
 # load("morph.branch.changes")
 # load("constant.branch.changes")
@@ -1209,7 +1390,7 @@ stopCluster(cl)
 (Sys.time() - start)     # 3.9 minutes on 8-core laptop
 
 # Save output
-save(morph.rates, file = "morph.rates")
+# save(morph.rates, file = "morph.rates")
 beep(3)
 
 # Initialize and run the ecological data set in parallel
@@ -1237,7 +1418,7 @@ stopCluster(cl)
 (Sys.time() - start)     # 3 minutes on 8-core laptop
 
 # Save output
-save(eco.rates, file = "eco.rates")
+# save(eco.rates, file = "eco.rates")
 
 
 # Load output (if needed):
