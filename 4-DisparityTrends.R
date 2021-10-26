@@ -161,6 +161,7 @@ for(t in 1:length(mode.anc)) {
 }
 # Save for later use
 # save(ranges, file = "ranges")
+# load("ranges")
 
 # Observe mean ranges for tips and nodes
 sq <- 1:length(ranges)
@@ -227,14 +228,20 @@ which(morph.distances.GED.5[[50]]$distance_matrix[367, ] < 1.1)
 ## Total D, total number of taxa in interval (X-FL + X-bL + X-Ft + X-bt)
 
 # Switch between using 'mean.ranges' and 'ranges[[x]]' depending on what want
-# diversity curve you wish to calculate and plot
+# diversity curve you wish to calculate and plot. Or load and use 'ranges' if
+# want non-time-scaled stratigraphic ranges directly from PBDB.
+
+# ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", header = TRUE)
+# rownames(ranges) <- ranges$Genus
+# ranges <- ranges[, -1]
+# mean.ranges <- ranges
 
 # Genus-level diversity curve (using database occurrences above)
 mids <- apply(ages[ ,9:10], 1, mean)
 divs <- data.frame(interval = ages$interval_name, base = ages$max_ma,
                    top = ages$min_ma, midpt = mids, div = NA)
 # Use if wish to restrict to tips (i.e., to not run as a phylogenetic lineage
-# richness)
+# richness). Irrelevant if using the raw PBDB strat 'ranges'
 incl.nodes <- TRUE
 inc.rows <- if(incl.nodes) 1:nrow(mean.ranges) else 1:Ntip(tree)
 for(t in 1:nrow(divs)) {
@@ -308,7 +315,7 @@ for(t in 1:length(mode.anc)) {
   t.taxon.bins <- matrix(FALSE, nrow = (ape::Ntip(tree) + ape::Nnode(tree)),
                          ncol = nrow(ages))
   colnames(t.taxon.bins) <- ages$interval_name
-  rownames(t.taxon.bins) <- rownames(morph.anc[[t]]$matrix_1$matrix)
+  rownames(t.taxon.bins) <- rownames(mode.anc[[t]]$matrix_1$matrix)
   for (i in 1:ncol(t.taxon.bins)) {
     wh.row <- which(ranges[[t]][, 1] >= ages$min_ma[i] &
                       ranges[[t]][, 2] <= ages$max_ma[i])
@@ -329,6 +336,24 @@ new.div <- apply(taxon.bins[[1]], 2, sum)
 data.frame(divs$div, new.div)
 identical(divs$div, as.vector(new.div)) # TRUE (if use 'ranges[[1]]' above when calc divs)
 
+
+
+# Version using raw PBDB ranges
+PBDB.ranges <- read.csv("~/Manuscripts/CamOrdEchinos/Data files/GenusStratRanges.csv", header = TRUE)
+PBDB.taxon.bin <- matrix(FALSE, nrow = nrow(PBDB.ranges), ncol = nrow(ages))
+colnames(PBDB.taxon.bin) <- ages$interval_name
+rownames(PBDB.taxon.bin) <- PBDB.ranges$Genus
+for (i in 1:ncol(PBDB.taxon.bin)) {
+  wh.row <- which(ranges[, 1] > ages$min_ma[i] &
+                    ranges[, 2] < ages$max_ma[i])
+  PBDB.taxon.bin[wh.row, i] <- TRUE
+}
+head(PBDB.taxon.bin)
+apply(PBDB.taxon.bin, 2, sum)
+
+# Save object
+# save(PBDB.taxon.bin, file = "PBDB.taxon.bin")
+# load("PBDB.taxon.bin")
 
 
 
@@ -446,15 +471,25 @@ sort(table(taxon.list[[50]][, "class"]), decreasing = FALSE)
 sort(table(orig.subphyla), decreasing = FALSE)
 sort(table(taxon.list[[50]][, "subphylum"]), decreasing = FALSE)
 
+
 ## CLASS DIVERSITY TRENDS ######################################################
 unique.classes <- sort(unique(taxon.list[[1]][, "class"]))
 class.bins <- vector("list", 50)
+
+# Switch to control whether to plot only the 366 tip taxa or all (= tips +
+# nodes)
+Ntips <- 366
+all.taxa <- TRUE
+
 for (t in 1:length(class.bins)){
   t.class.bins <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
   colnames(t.class.bins) <- ages$interval_name
   rownames(t.class.bins) <- unique.classes
   for (c in 1:nrow(t.class.bins)) {
-    wh.class <- which(taxon.list[[t]][, "class"] == rownames(t.class.bins)[c])
+    if (all.taxa)
+      wh.class <- which(taxon.list[[t]][, "class"] == rownames(t.class.bins)[c])
+    else
+      wh.class <- which(taxon.list[[t]][1:Ntips, "class"] == rownames(t.class.bins)[c])
     if (length(wh.class) == 1L)
       t.class.bins[c, ] <- as.numeric(taxon.bins[[t]][wh.class, ])
     else
@@ -469,10 +504,33 @@ head(class.bins[[50]])
 # Save (and reload)
 # save("class.bins", file = "class.bins")
 # load("class.bins")
+# Version with only tips:
+# classtips.bins <- class.bins; save("classtips.bins", file = "classtips.bins")
+# load("classtips.bins")
 
 # Calculate median class.bins
 mean.class.bins <- apply(simplify2array(class.bins), 1:2, median)
 head(mean.class.bins)
+
+
+# Version using raw PBDB ranges
+PBDB.class.bin <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
+colnames(PBDB.class.bin) <- ages$interval_name
+rownames(PBDB.class.bin) <- unique.classes
+for (c in 1:nrow(PBDB.class.bin)) {
+  wh.class <- which(taxon.list[[1]][1:366, "class"] == rownames(PBDB.class.bin)[c])
+  if (length(wh.class) == 1L)
+    PBDB.class.bin[c, ] <- as.numeric(PBDB.taxon.bin[wh.class, ])
+  else
+    PBDB.class.bin[c, ] <- apply(PBDB.taxon.bin[wh.class, ], 2, sum)
+}
+
+
+
+
+
+
+
 
 # Plot diversity curve
 cl.div <-
@@ -487,6 +545,7 @@ lines(mids, cl.div, lwd=3)
 
 # Plot stacked plot version
 # pdf(file = "Stacked class richness.pdf")
+# pdf(file = "Stacked tip class richness.pdf")
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
 class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
@@ -503,6 +562,30 @@ legend("topleft", legend = rev(unique.classes[class.order]), pch = 15, ncol = 3,
        pt.cex = 1, cex = .55, col = rev(stack.color), bty = "n")
 par(op)
 # dev.off()
+
+# Same, but using raw PBDB ranges
+load("PBDB.taxon.bin")
+
+
+
+
+par(mar = c(5, 4, 2, 2))
+# Put most diverse at bottom
+class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
+# stack.color <- rev(viridisLite::turbo(nrow(mean.class.bins)))
+# Use next if prefer non-adjacents
+set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(mean.class.bins))))
+stackpoly(x = -mids, y = t(mean.class.bins[class.order, ]), col = stack.color,
+          xlab = "time", ylab = "number of genera", stack = TRUE, 
+          xlim = c(-541, -443.8), main = "genus richness (by class)")
+abline(v = -series.boundaries, col = "white", lty = 5)
+abline(v = -pd.boundaries, col = "white", lty = 1, lwd = 2)
+box()
+legend("topleft", legend = rev(unique.classes[class.order]), pch = 15, ncol = 3, 
+       pt.cex = 1, cex = .55, col = rev(stack.color), bty = "n")
+par(op)
+# dev.off()
+
 
 
 
@@ -1496,7 +1579,7 @@ round(diag(cor(diff.morph[, means], diff.constant[, means],
 round(diag(cor(diff.mode[, means], diff.constant[, means], 
                use = "pairwise.complete.obs")), 4)
 
-# LH-mode vs. LH-raw: Moderately: Moderately positively, except FEve; mean r = 0.43
+# LH-mode vs. LH-raw: Moderately positively, except FEve; mean r = 0.43
 round(diag(cor(diff.mode[, means], diff.raw[, means], 
                use = "pairwise.complete.obs")), 4)
 
