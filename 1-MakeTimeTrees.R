@@ -65,7 +65,7 @@ for(t in 1:nrow(l5s)) {
 }
 timeList <- list(int.times = l5s[, 9:10], taxon.times = taxon.times)
 # save(timeList, file = "timeList")
-# load("timeList")
+# load("~/Manuscripts/CamOrdEchinos/timeList")
 
 
 
@@ -150,7 +150,7 @@ divRate # 0.047 genus extinctions per million years
 # (0.001 Myr) length, and the root of the tree is adjusted accordingly.
 
 # We implement dataTreatment = 'firstLast' (the default treatment) because genus
-# ranges are resolved to epochs. (David Bapst, e-mail 8/3/2021, confirms this is
+# ranges are resolved to stages. (David Bapst, e-mail 8/3/2021, confirms this is
 # the appropriate choice for our data.) Sensitivity analyses comparing the
 # 'firstLast' algorithm to the 'randObs' show negligible differences in terms of
 # resulting phylogenetic diversity, ZLBs, and time-scaled ranges. FAD.only =
