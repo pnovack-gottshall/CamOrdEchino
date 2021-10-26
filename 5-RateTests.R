@@ -1364,6 +1364,7 @@ tbins <- matrix(data = c(t.seq[1:64], t.seq[2:65]), nrow = 64,
 class(tbins) <- "timeBins"
 mean(apply(tbins, 1, diff)) # 2 Myr bins
 time.partitions <- list(c(list(1), list(2:(nrow(tbins) - 1))))
+# save(tbins, file = "tbins") # Save to import for later figures
 
 # Initialize and run the morphological data set in parallel
 (start <- Sys.time())
