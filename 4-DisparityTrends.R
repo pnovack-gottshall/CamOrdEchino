@@ -237,6 +237,7 @@ which(morph.distances.GED.5[[50]]$distance_matrix[367, ] < 1.1)
 # mean.ranges <- ranges
 
 # Genus-level diversity curve (using database occurrences above)
+tree <- mode.anc[[1]]$topper$tree # Just used for counting Ntip and Nnode
 mids <- apply(ages[ ,9:10], 1, mean)
 divs <- data.frame(interval = ages$interval_name, base = ages$max_ma,
                    top = ages$min_ma, midpt = mids, div = NA)
@@ -317,8 +318,8 @@ for(t in 1:length(mode.anc)) {
   colnames(t.taxon.bins) <- ages$interval_name
   rownames(t.taxon.bins) <- rownames(mode.anc[[t]]$matrix_1$matrix)
   for (i in 1:ncol(t.taxon.bins)) {
-    wh.row <- which(ranges[[t]][, 1] >= ages$min_ma[i] &
-                      ranges[[t]][, 2] <= ages$max_ma[i])
+    wh.row <- which(ranges[[t]][, 1] > ages$min_ma[i] &
+                      ranges[[t]][, 2] < ages$max_ma[i])
     t.taxon.bins[wh.row, i] <- TRUE
   }
   taxon.bins[[t]] <- t.taxon.bins
@@ -344,8 +345,8 @@ PBDB.taxon.bin <- matrix(FALSE, nrow = nrow(PBDB.ranges), ncol = nrow(ages))
 colnames(PBDB.taxon.bin) <- ages$interval_name
 rownames(PBDB.taxon.bin) <- PBDB.ranges$Genus
 for (i in 1:ncol(PBDB.taxon.bin)) {
-  wh.row <- which(ranges[, 1] > ages$min_ma[i] &
-                    ranges[, 2] < ages$max_ma[i])
+  wh.row <- which(PBDB.ranges$max_ma > ages$min_ma[i] &
+                    PBDB.ranges$min_ma < ages$max_ma[i])
   PBDB.taxon.bin[wh.row, i] <- TRUE
 }
 head(PBDB.taxon.bin)
@@ -506,30 +507,11 @@ head(class.bins[[50]])
 # load("class.bins")
 # Version with only tips:
 # classtips.bins <- class.bins; save("classtips.bins", file = "classtips.bins")
-# load("classtips.bins")
+# load("classtips.bins"); class.bins <- classtips.bins
 
 # Calculate median class.bins
 mean.class.bins <- apply(simplify2array(class.bins), 1:2, median)
 head(mean.class.bins)
-
-
-# Version using raw PBDB ranges
-PBDB.class.bin <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
-colnames(PBDB.class.bin) <- ages$interval_name
-rownames(PBDB.class.bin) <- unique.classes
-for (c in 1:nrow(PBDB.class.bin)) {
-  wh.class <- which(taxon.list[[1]][1:366, "class"] == rownames(PBDB.class.bin)[c])
-  if (length(wh.class) == 1L)
-    PBDB.class.bin[c, ] <- as.numeric(PBDB.taxon.bin[wh.class, ])
-  else
-    PBDB.class.bin[c, ] <- apply(PBDB.taxon.bin[wh.class, ], 2, sum)
-}
-
-
-
-
-
-
 
 
 # Plot diversity curve
@@ -543,9 +525,33 @@ geoscalePlot2(mids, cl.div, units = c("Epoch", "Period"),
 mtext(text = "class lineage richness", side = 3, cex = 1.25)
 lines(mids, cl.div, lwd=3)
 
-# Plot stacked plot version
+# Plot diversity curve (PBDB version)
+# Version using raw PBDB ranges
+PBDB.class.bin <- matrix(NA, nrow = length(unique.classes), ncol = nrow(ages))
+colnames(PBDB.class.bin) <- ages$interval_name
+rownames(PBDB.class.bin) <- unique.classes
+for (c in 1:nrow(PBDB.class.bin)) {
+  wh.class <- which(taxon.list[[1]][1:366, "class"] == rownames(PBDB.class.bin)[c])
+  if (length(wh.class) == 1L)
+    PBDB.class.bin[c, ] <- as.numeric(PBDB.taxon.bin[wh.class, ])
+  else
+    PBDB.class.bin[c, ] <- apply(PBDB.taxon.bin[wh.class, ], 2, sum)
+}
+cl.div <-
+  sapply(1:ncol(PBDB.class.bin), function(x) sum(PBDB.class.bin[, x] > 0))
+geoscalePlot2(mids, cl.div, units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), 
+              data.lim = c(0, max(cl.div) + 1), ts.col = TRUE, label = "class richness", 
+              timescale = ICS2020, type = "n", abbrev = "Period")
+mtext(text = "class lineage richness (using raw PBDB ranges)", side = 3, cex = 1.25)
+lines(mids, cl.div, lwd=3)
+
+
+
+## Plot stacked plot version
 # pdf(file = "Stacked class richness.pdf")
-# pdf(file = "Stacked tip class richness.pdf")
+# pdf(file = "Stacked tip class richness.pdf") # Use redefined objects above
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
 class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
@@ -554,7 +560,7 @@ class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
 set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(mean.class.bins))))
 stackpoly(x = -mids, y = t(mean.class.bins[class.order, ]), col = stack.color,
           xlab = "time", ylab = "number of genera", stack = TRUE, 
-          xlim = c(-541, -443.8), main = "genus richness (by class)")
+          xlim = c(-541, -443.8), main = "genus richness (by class, tips only)")
 abline(v = -series.boundaries, col = "white", lty = 5)
 abline(v = -pd.boundaries, col = "white", lty = 1, lwd = 2)
 box()
@@ -564,20 +570,16 @@ par(op)
 # dev.off()
 
 # Same, but using raw PBDB ranges
-load("PBDB.taxon.bin")
-
-
-
-
+# pdf(file = "Stacked PBDB class richness.pdf")
 par(mar = c(5, 4, 2, 2))
 # Put most diverse at bottom
 class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
 # stack.color <- rev(viridisLite::turbo(nrow(mean.class.bins)))
 # Use next if prefer non-adjacents
-set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(mean.class.bins))))
-stackpoly(x = -mids, y = t(mean.class.bins[class.order, ]), col = stack.color,
+set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(PBDB.class.bin))))
+stackpoly(x = -mids, y = t(PBDB.class.bin[class.order, ]), col = stack.color,
           xlab = "time", ylab = "number of genera", stack = TRUE, 
-          xlim = c(-541, -443.8), main = "genus richness (by class)")
+          xlim = c(-541, -443.8), main = "genus richness (by class, PBDB ranges)")
 abline(v = -series.boundaries, col = "white", lty = 5)
 abline(v = -pd.boundaries, col = "white", lty = 1, lwd = 2)
 box()
