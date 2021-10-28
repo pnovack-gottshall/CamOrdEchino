@@ -559,8 +559,8 @@ class.order <- order(table(taxon.list[[1]][, "class"]), decreasing = TRUE)
 # Use next if prefer non-adjacents
 set.seed(4); stack.color <- sample(rev(viridisLite::turbo(nrow(mean.class.bins))))
 stackpoly(x = -mids, y = t(mean.class.bins[class.order, ]), col = stack.color,
-          xlab = "time", ylab = "number of genera", stack = TRUE, 
-          xlim = c(-541, -443.8), main = "genus richness (by class, tips only)")
+          xlab = "time", ylab = "number of lineages", stack = TRUE, 
+          xlim = c(-541, -443.8), main = "lineage richness (by class, tips only)")
 abline(v = -series.boundaries, col = "white", lty = 5)
 abline(v = -pd.boundaries, col = "white", lty = 1, lwd = 2)
 box()
@@ -1562,9 +1562,6 @@ diff.raw <- as.data.frame(apply(raw, 2, diff))
 diff.raw <- diff.raw / diff.raw$Age
 
 
-# Because there are no duplicated morphotypes, H = 50 for all intervals. Ignore
-# "H" (and warning) in comparisons with the morphological data set.
-
 # morphological vs. LH-mode: not very correlated (R & FDiv highest)
 round(diag(cor(diff.morph[, means], diff.mode[, means], 
                use = "pairwise.complete.obs")), 4)
@@ -1631,7 +1628,7 @@ metrics_raw <- read.csv(file = "metrics_StdG50_LH_raw.csv", header = TRUE)
 std.g <- 50
 
 # Plot trends
-# pdf(file = "3EcoTrends_StdG.pdf"); 
+# pdf(file = "3EcoTrends_StdG.pdf")
 par(mar = c(0, 4, 4, 2))
 mids <- metrics_mode$Age
 var.cols <- c(3, 5, 7, 9, 11, 13, 15, 17, 19)
@@ -1656,10 +1653,13 @@ for (c in var.cols) {
     (max(var_c, na.rm = TRUE) - min(var_c, na.rm = TRUE))
   lim <- range(c(var_m, var_c, var_r), na.rm = TRUE)
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
-                tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
-                cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+                tick.scale = "Period", boxes = "Age", cex.age = 1, 
+                cex.ts = 1, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
                 ts.col = TRUE, label = colnames(metrics_mode)[c],
-                timescale = ICS2020, type = "n", abbrev = "Period")
+                timescale = ICS2020, type = "n", abbrev = "Period", 
+                no.axis = TRUE)
+  axis(2)
+  mtext(text = colnames(metrics_mode)[c], side = 2, line = 2, cex = 2)
   mtext(text = paste(colnames(metrics_mode)[c], " (G = ", std.g, ")", sep = ""), 
         side = 3, cex = 1.25)
   column <- cbind(c(mids, rev(mids)), c(var_m_bottom, rev(var_m_top)))
@@ -1734,11 +1734,10 @@ load("raw.stdG.metrics"); metrics_raw <- raw.stdG.metrics
 std.g <- 50
 
 # Because of rounding errors, several intervals in the morphological data set
-# contain H values that are rounded to 50 life habits, but negligibly different.
-# (E.g., 49.999 instead of 50.) The 100% maximum transformation below causes
-# this to be treated as a true value less than 50. The following code overrides
-# rounded-to-50 values with 50 so that the standardized plots ar sensible.
-metrics_morph$H <- replace(metrics_morph$H, metrics_morph$H > 49.99, 50)
+# contain H values that are close to but not exactly 50 morphotypes (e.g.,
+# 49.999 instead of 50.) The 100% range transformation below causes the non-50s
+# to be transformed to non-sensible 0s. The following corrects this.
+metrics_morph$H[18] <- metrics_morph$H[18] <- 0
 
 # Plot trends
 # pdf(file = "Morph&3EcoTrends_StdG.pdf")
@@ -1765,16 +1764,12 @@ for (c in var.cols) {
     (max(var_r, na.rm = TRUE) - min(var_r, na.rm = TRUE))
   var_c <- (var_c - min(var_c, na.rm = TRUE)) / 
     (max(var_c, na.rm = TRUE) - min(var_c, na.rm = TRUE))
-  # Sample-standardization made H constant (=StdG) for morphological data set,
-  # so treated differently to force to equal S (or 1 when %-max transformed)
-  if (length(unique(na.omit(var_mr))) ==  1L)
-    var_mr <- replace(na.omit(var_mr), !is.na(var_mr), 1) else
-    var_mr <- (var_mr - min(var_mr, na.rm = TRUE)) / 
-      (max(var_mr, na.rm = TRUE) - min(var_mr, na.rm = TRUE))
+  # Re-correction for morphological H:
+  var_mr[18] <- var_mr_bottom[18] <- var_mr_top[18] <- NA
   lim <- range(c(var_md, var_c, var_r, var_mr), na.rm = TRUE)
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
                 tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
-                cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+                cex.ts = 1, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
                 ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
                 label = paste(colnames(metrics_mode)[c], "(% transformed)"))
   mtext(text = paste(colnames(metrics_mode)[c], " (G = ", std.g, ")", sep = ""), 
@@ -1822,17 +1817,17 @@ for (c in var.cols) {
     (max(var_md, na.rm = TRUE) - min(var_md, na.rm = TRUE))
   var_md <- (var_md - min(var_md, na.rm = TRUE)) / 
     (max(var_md, na.rm = TRUE) - min(var_md, na.rm = TRUE))
-  # Sample-standardization made H constant (=StdG) for morphological data set,
-  # so treated differently to force to equal S (or 1 when %-max transformed).
-  # Because constant, no error bar.
-  if (length(na.omit(var_mr)) ==  0L)
-    var_mr <- replace(var_mr, is.nan(var_mr), 1)
+  # Re-correction for morphological H:
+  var_mr[18] <- var_mr_bottom[18] <- var_mr_top[18] <- NA
   lim <- range(c(var_md, var_mr), na.rm = TRUE)
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
-                tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
-                cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+                tick.scale = "Period", boxes = "Age", cex.age = 1, 
+                cex.ts = 1, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
                 ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
-                label = paste(colnames(metrics_mode)[c], "(% transformed)"))
+                no.axis = TRUE)
+  axis(2)
+  mtext(text = paste(colnames(metrics_mode)[c], "(% transformed)"), side = 2, 
+        line = 2, cex = 3)
   mtext(text = paste(colnames(metrics_mode)[c], " (G = ", std.g, ")", sep = ""), 
         side = 3, cex = 1.25)
   # Add error bars:
@@ -1846,9 +1841,9 @@ for (c in var.cols) {
   lines(mids, var_md, lwd = 4, lty = 1, col = cols[1])
   lines(mids, var_mr, lwd = 4, lty = 2, col = cols[2])
   # Only add legend to first plot:
-  if (length(unique(na.omit(var_mr))) ==  1L)
+  if (c ==  var.cols[1])
     legend("bottomright", legend = c("ecology", "morphology"), col = cols, 
-           bty = "n", lty = c(1, 2), lwd = 4, inset = 0.02, cex = 1.5)
+           bty = "n", lty = c(1, 2), lwd = 5, inset = 0.02, cex = 2)
 }
 par(op)
 # dev.off()
