@@ -2453,9 +2453,9 @@ km <- kmeans(mode.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
 cols <- plasma(k)[km$cluster]
 pchs <-as.character(km$cluster)
-plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
-plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
-plot(mode.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
+plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 1, cex.lab = 1.5)
+plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 1, cex.lab = 1.5)
+plot(mode.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 1, cex.lab = 1.5)
 (cl.table <- table(taxon.list[, "class"], km$cluster))
 sort(cl.table[ ,1])
 sort(cl.table[ ,2])
@@ -2467,8 +2467,8 @@ legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
                    "aster, ech, oph, holo, somas & stenur")
 par(mar = c(0, 0, 0, 0))
 plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
-legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1,
-       pch = as.character(1:k), col = plasma(k)[1:k], bty = "n", pt.cex = 1.5)
+legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1.1,
+       pch = as.character(1:k), col = plasma(k)[1:k], bty = "n", pt.cex = 1.75)
 # dev.off()
 par(op)
 
