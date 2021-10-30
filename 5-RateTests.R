@@ -897,6 +897,7 @@ Sys.time() - t.start # 3.3 minutes on 8-core laptop
 stopCluster(cl)
 # Save
 # save(all.char.partitions, file = "all.char.partitions")
+# load(all.char.partitions, file = "all.char.partitions")
 beep(3)
 
 # Convert to cleaner output (and reporting mean rates across 50 time-trees for
