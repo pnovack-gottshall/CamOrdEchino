@@ -413,7 +413,7 @@ Mode <- function(x, na.rm = FALSE) {
   ux[which.max(tabulate(match(x, ux)))]
 }
 
-# Calculate median convergence statistics (using median because not normally
+# Calculate mode convergence statistics (using mode because not normally
 # distributed). Because x.conv is a data frame, less easy than using 
 # 'apply(simplify2array(x.conv), 1:2, Mode)' directly.
 
