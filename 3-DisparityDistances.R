@@ -385,16 +385,16 @@ min(mean.dists, na.rm = TRUE)
 sort(((rowSums(mean.dists, na.rm = TRUE) + colSums(mean.dists, na.rm = TRUE)))/ 6)
 
 # RESULTS (only removing NAs/zeros for "raw" treatment"):
-# Mode:     All strongly correlated (min R = 0.966); RED == GED. GEDs and RED 
+# Mode:     All strongly correlated (min R = 0.966; w/o RED = 0.966); RED == GED. GEDs and RED 
 #                    most highly correlated with each other; GC and MORD 
 #                    slightly less correlated with others.
-# Constant: All strongly correlated (min R = 0.954); GEDs and RED most highly 
+# Constant: All strongly correlated (min R = 0.954; w/o RED = 0.954); GEDs and RED most highly 
 #                    correlated with each other; GC and MORD slightly less 
 #                    correlated with others.
-# Raw:      All strongly correlated (min R = 0.931), but had to remove many NAs 
+# Raw:      All strongly correlated (min R = 0.931; w/o RED = 0.934), but had to remove many NAs 
 #                    and zeros. GEDs and RED most highly correlated with each 
 #                    other; GC and MORD slightly less correlated with others.
-# Morph:    All moderately strongly correlated (min R = 0.645), with RED lowest
+# Morph:    All moderately strongly correlated (min R = 0.645; w/o RED = 0.819), with RED lowest
 #                    among all pairs, and GED most strongly correlated with the
 #                    others. GED, GED1, GC, and GED.5 are most correlated, with 
 #                    MORD, GED0, and RED lowest, on average.
@@ -407,5 +407,3 @@ sort(((rowSums(mean.dists, na.rm = TRUE) + colSums(mean.dists, na.rm = TRUE)))/ 
 # that GED is consistently very highly correlated with GED1 because in the
 # morphological data set they use 89% identical data and in the ecological data
 # set they use 98% identical data.)
-
-
