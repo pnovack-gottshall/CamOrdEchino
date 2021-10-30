@@ -318,7 +318,7 @@ cal3trees <- c(cal3trees.0anc, cal3trees.1anc)
 
 # Save trees
 # save(cal3trees, file = "cal3trees")
-# load("cal3trees")
+# load("~/Manuscripts/CamOrdEchinos/cal3trees")
 
 
 
@@ -384,7 +384,7 @@ consensus.cal3.tree <- phytools::ls.consensus(trees = cal3trees)
 (Sys.time() - t.start) # 15 minutes
 beep(3)
 # save(consensus.cal3.tree, file = "consensus.cal3.tree")
-# load("consensus.cal3.tree")
+# load("~/Manuscripts/CamOrdEchinos/consensus.cal3.tree")
 
 # This consensus tree lacks time-calibrated branch lengths (and other output
 # from paleoTS). Use minTreeDist() to find the tree that is most similar to use
