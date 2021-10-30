@@ -1276,7 +1276,7 @@ wilcox.test(morph.rates$rate[-which.multi.morph], eco.rates$rate[-which.multi.ec
 ## Conclusion: Although characters with greater numbers of states do evolve at
 ## faster rates than those with fewer states, the two data sets do not differ in
 ## this regard, overall. (However, the statistical p-values are marginally
-## significant, suggesting a weak but statistically insignficant influence on
+## significant, suggesting a weak but statistically insignificant influence on
 ## the rate differences.)
 
 
