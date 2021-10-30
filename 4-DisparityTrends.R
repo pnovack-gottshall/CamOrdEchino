@@ -227,7 +227,7 @@ which(morph.distances.GED.5[[50]]$distance_matrix[367, ] < 1.1)
 #
 ## Total D, total number of taxa in interval (X-FL + X-bL + X-Ft + X-bt)
 
-# Switch between using 'mean.ranges' and 'ranges[[x]]' depending on what want
+# Switch between using 'mean.ranges' and 'ranges[[x]]' depending on what
 # diversity curve you wish to calculate and plot. Or load and use 'ranges' if
 # want non-time-scaled stratigraphic ranges directly from PBDB.
 
@@ -952,6 +952,7 @@ na.omit(loadings.raw)
 #    filtering, and #6 for mobile vs. dense filterers on soft-substrate), but
 #    with very low loading scores.
 
+# RAW DATA SET:  -                                +
 #  PCO 1:        6, 13, 16, (24, 26, 31)          1-5, 12, 15, (28-29)
 #  PCO 2:      (23, 25, 28, 39)                     1, (6), 24, 26, 31, (32, 36)
 #  PCO 3:     (2-4, 24, 26, 29-32, 36, 40)        (23, 25, 28)
@@ -1023,6 +1024,13 @@ load("morph.pcoa")
 load("mode.pcoa")
 load("constant.pcoa")
 load("raw.pcoa")
+
+# How many unique morphotypes and life habits in each data set?
+sq <- 1:length(mode.anc)
+summary(sapply(sq, function(sq) nrow(unique(morph.distances.GED.5[[sq]]$distance_matrix))))
+summary(sapply(sq, function(sq) nrow(unique(mode.distances.GED.5[[sq]]$distance_matrix))))
+summary(sapply(sq, function(sq) nrow(unique(constant.distances.GED.5[[sq]]$distance_matrix))))
+summary(sapply(sq, function(sq) nrow(unique(raw.distances.GED.5[[sq]]$distance_matrix))))
 
 # Choose ancestral states, Wills GED-0.5 distance matrices, and PCoA output
 # anc <- morph.anc; dist.matrix <- morph.distances.GED.5; pcoa.results <- morph.pcoa
@@ -1572,6 +1580,10 @@ summary(lm(diff.morph$FRic ~ diff.mode$FRic))
 
 # morphological vs. LH-constant: not very correlated (R & FRic highest)
 round(diag(cor(diff.morph[, means], diff.constant[, means], 
+               use = "pairwise.complete.obs")), 4)
+
+# morphological vs. LH-raw: not very correlated (D & FDis highest)
+round(diag(cor(diff.morph[, means], diff.raw[, means], 
                use = "pairwise.complete.obs")), 4)
 
 # LH-mode vs. LH-constant: Moderately positively, except FEve; mean r = 0.71
@@ -2473,6 +2485,22 @@ legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1.1,
 par(op)
 
 
+# Plot within-cluster sum-of-squares vs no. of clusters
+# pdf(file = "morph.kmeans.choice.pdf")
+no.axes <- 6
+ks <- c(1:10, seq(20, 50, by = 10), 75, 100)
+sum.sq <- array(dim = length(ks))
+for(k in 1:length(ks)){
+  sum.sq[k] <- kmeans(morph.pcoa$vectors.cor[, 1:no.axes], centers = ks[k],
+                      nstart = 25, iter.max = 1000)$tot.withinss
+}
+plot(ks, sum.sq, type = "b", pch = 16, xlab = "No. k-means clusters",
+     ylab = "Total within-cluster sum of squares",
+     main = "Morphological PCoA k-means clusters")
+par(op)
+# dev.off()
+
+
 
 # Plot within-cluster sum-of-squares vs no. of clusters
 # pdf(file = "constant.kmeans.choice.pdf")
@@ -2505,6 +2533,55 @@ pchs <-as.character(km$cluster)
 plot(constant.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
 plot(constant.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
+(cl.table <- table(taxon.list[, "class"], km$cluster))
+sort(cl.table[ ,1])
+sort(cl.table[ ,2])
+sort(cl.table[ ,3])
+sort(cl.table[ ,4])
+legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
+                   "edr, eocr, dipl, paracr, rh, hel & more cri",
+                   "stylo, homo, solut, ctenoc, cyclo, some rhomb",
+                   "aster, ech, oph, stenur, somas & holo")
+par(mar = c(0, 0, 0, 0))
+plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
+legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1,
+       pch = as.character(1:k), col = plasma(k)[1:k], bty = "n", pt.cex = 1.5)
+# dev.off()
+par(op)
+
+
+
+# Plot within-cluster sum-of-squares vs no. of clusters
+# pdf(file = "raw.kmeans.choice.pdf")
+no.axes <- 6
+ks <- c(1:10, seq(20, 50, by = 10), 75, 100)
+sum.sq <- array(dim = length(ks))
+for(k in 1:length(ks)){
+  sum.sq[k] <- kmeans(raw.pcoa$vectors.cor[, 1:no.axes], centers = ks[k],
+                      nstart = 25, iter.max = 1000)$tot.withinss
+}
+plot(ks, sum.sq, type = "b", pch = 16, xlab = "No. k-means clusters",
+     ylab = "Total within-cluster sum of squares",
+     main = "Ecological (raw) PCoA k-means clusters")
+par(op)
+# dev.off()
+
+# For raw, k = 3 (or 4) provides clean breaks; 9 divides most classes
+# pdf(file = "kmeans_eco_raw.pdf")
+k <- 4
+set.seed(3) # To allow replication of order
+km <- kmeans(raw.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 100)
+# Modify so matches 'mode' (switch 1 and 4)
+k.1 <- which(km$cluster == 1)
+k.4 <- which(km$cluster == 4)
+km$cluster[k.1] <- 4
+km$cluster[k.4] <- 1
+par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
+cols <- plasma(k)[km$cluster]
+pchs <-as.character(km$cluster)
+plot(raw.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 0.75)
+plot(raw.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 0.75)
+plot(raw.pcoa$vectors.cor[, 5:6], col = cols, pch = pchs, cex = 0.75)
 (cl.table <- table(taxon.list[, "class"], km$cluster))
 sort(cl.table[ ,1])
 sort(cl.table[ ,2])
