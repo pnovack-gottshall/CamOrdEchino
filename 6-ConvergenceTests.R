@@ -537,14 +537,26 @@ h.mode3 <- hist(Mode.mode.conv$C3[Mode.mode.conv$C3 <= 1.00001], breaks = breaks
 # dev.off()
 
 # Median pairwise convergence:
-round(apply(Mode.morph.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(Mode.mode.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(Mode.constant.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-round(apply(Mode.raw.conv[, 5:8], 2, median, na.rm = TRUE), 2)
-# Morphology: median C1 = 0.09, C3 = 0.03, branch.distance = 19.79
-# Eco.(mode): median C1 = 0.11, C3 = 0.03, branch.distance = 11.18
-# Eco.(con.): median C1 = 0.21, C3 = 0.06, branch.distance =  9.46
-# Eco.(raw):  median C1 = 0.14, C3 = 0.04, branch.distance =  7.58
+round(apply(Mode.morph.conv[, 5:8], 2, median, na.rm = TRUE), 3)
+round(apply(Mode.mode.conv[, 5:8], 2, median, na.rm = TRUE), 3)
+round(apply(Mode.constant.conv[, 5:8], 2, median, na.rm = TRUE), 3)
+round(apply(Mode.raw.conv[, 5:8], 2, median, na.rm = TRUE), 3)
+# Morphology: median C1 = 0.093, C3 = 0.030, branch.distance = 19.788
+# Eco.(mode): median C1 = 0.106, C3 = 0.027, branch.distance = 11.180
+# Eco.(con.): median C1 = 0.211, C3 = 0.065, branch.distance =  9.461
+# Eco.(raw):  median C1 = 0.136, C3 = 0.040, branch.distance =  7.584
+
+# Number greater than 0.90
+length(Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.90)])       #  696 pairs
+length(Mode.mode.conv$C1[which(Mode.mode.conv$C1 >= 0.90)])         # 2320 pairs
+length(Mode.constant.conv$C1[which(Mode.constant.conv$C1 >= 0.90)]) # 8794 pairs
+length(Mode.raw.conv$C1[which(Mode.raw.conv$C1 >= 0.90)])           # 2562 pairs
+
+length(Mode.morph.conv$C3[which(Mode.morph.conv$C3 >= 0.90)])       #    6 pairs
+length(Mode.mode.conv$C3[which(Mode.mode.conv$C3 >= 0.90)])         #  120 pairs
+length(Mode.constant.conv$C3[which(Mode.constant.conv$C3 >= 0.90)]) #  602 pairs
+length(Mode.raw.conv$C3[which(Mode.raw.conv$C3 >= 0.90)])           #  192 pairs
+
 
 # Are the distributions different?
 ks.test(Mode.morph.conv$C1, Mode.mode.conv$C1)     # D = 0.082, p < 2.2e-16
@@ -604,10 +616,16 @@ lm.C1 <-
   lm(Mode.mode.conv$C1[which(Mode.morph.conv$C1 >= 0.9)] ~ Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.9)])
 plot(Mode.morph.conv$C1[which(Mode.morph.conv$C1 >= 0.9)], 
     Mode.mode.conv$C1[which(Mode.morph.conv$C1 >= 0.9)])
-summary(lm.C1) # p = 0.0435, r2 = 0.004
+summary(lm.C1) # p = 0.0435, r2 = 0.006
 abline(lm.C1, col = "red")
 # Although statistically correlated, the low r and r2 mean essentially
 # independent.
+
+# Genera that are more than 98% morphologically identical
+wh <- which(Mode.mode.conv$C1 >= 0.98)
+unique(unlist(c(Mode.mode.conv[wh , 1:2])))      #  295 genera in mode data set
+Mode.mode.conv[wh[order(Mode.mode.conv$C1[wh], decreasing = TRUE)], ]
+nrow(Mode.mode.conv[wh[order(Mode.mode.conv$C1[wh], decreasing = TRUE)], ])
 
 # Which taxa are 100% convergent?
 wh <- which(Mode.mode.conv$C1 == 1)
@@ -630,7 +648,8 @@ wh <- which(Mode.raw.conv$C1 == 1)
 unique(unlist(c(Mode.raw.conv[wh , 1:2])))      # 209 genera in raw treatment
 
 # Confirm some examples (showing role of some missing states):
-gens <- c("Cincinnaticrinus", "Doliocrinus", "Ramseyocrinus", "Serendipocrinus")
+gens <- c("Aristocystites", "Cigara", "Bizarroglobus")
+# gens <- c("Eopetalocrinus", "Morenacrinus")
 data[match(gens, data$Genus), c(10, 21:60)]
 
 # 42 major clusters of functionally identical (or nearly so, depending on
@@ -661,7 +680,7 @@ data[match(gens, data$Genus), c(10, 21:60)]
 # Class: Cigara = Comarocystites = Lepidocystis = Llanocystis = Nolichuckia
 # Class: Dendrocystites = Iowacystis
 # Class: Dibrachicystis = Sanducystis = Velieuxicystis = Vizcainoia
-# Class: Eopatelliocrinus = Morenacrinus
+# Class: Eopetalocrinus = Morenacrinus
 # Class: Glenocrinus = Reteocrinus
 # Class: Macrostylocrinus = Praecupulocrinus
 # Class: Ottawacrinus = Trichinocrinus
@@ -685,6 +704,7 @@ data[match(gens, data$Genus), c(10, 21:60)]
 wh <- which(Mode.morph.conv$C1 >= 0.98)
 unique(unlist(c(Mode.morph.conv[wh , 1:2])))      #  31 genera in morphological data set
 Mode.morph.conv[wh[order(Mode.morph.conv$C1[wh], decreasing = TRUE)], ]
+nrow(Mode.morph.conv[wh[order(Mode.morph.conv$C1[wh], decreasing = TRUE)], ])
 # Class: Eopetalocrinus & Grammocrinus & Pentamerocrinus & Putilovocrinus *** = 1 ***
 #        *** NOTE THESE ARE FALSE POSITIVES, CAUSED BY PAIRINGS WITH
 #        EOPETALOCRINUS, WHICH HAS 27 MISSING STATES, WHICH THE WILLS GED
@@ -806,6 +826,7 @@ stopCluster(cl)
 (Sys.time() - start) # 6.3 minutes on 8-core laptop
 beep(3)
 # save(mantel.results, file = "mantel.results")
+# load("mantel.results")
 
 # Summarize using mean values
 mean.mantel <- matrix(apply(simplify2array(mantel.results), 1, mean, na.rm = TRUE), nrow = 1)
