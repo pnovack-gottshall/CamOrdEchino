@@ -1938,10 +1938,12 @@ var_mr_top <- var_mr + missing.SDs$morph.taxa.NAs.per
 var_mr_bottom <- var_mr - missing.SDs$morph.taxa.NAs.per
 lim <- range(c(var_md, var_mr), na.rm = TRUE)
 geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
-              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
-              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
+              tick.scale = "Period", boxes = "Age", cex.age = 1, 
+              cex.ts = 1, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
-              label = "Proportion of taxa")
+              no.axis = TRUE)
+axis(2)
+mtext(text = "Proportion of taxa", side = 2, line = 2, cex = 2)
 mtext(text = "Taxa with missing states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -1973,7 +1975,9 @@ geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"),
               tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
               cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
-              label = "Proportion of taxon-characters")
+              no.axis = TRUE)
+axis(2)
+mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 2)
 mtext(text = "Missing states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -1988,7 +1992,7 @@ legend("topright", legend = c("morph", "eco"), col = cols, bty = "n",
 
 # dev.off()
 
-# 2. Proportion of uncertain polymorphic states
+# 3. Proportion of uncertain polymorphic states
 # pdf(file = "MissingStates_Polymorphisms.pdf")
 par(mar = c(0, 4, 2, 2))
 cols <- viridisLite::plasma(4)         # Uses RGB-sensitive red and blue
@@ -2005,7 +2009,9 @@ geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"),
               tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
               cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
-              label = "Proportion of taxon-characters")
+              no.axis = TRUE)
+axis(2)
+mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 2)
 mtext(text = "Polymorphic states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -2462,8 +2468,9 @@ par(op)
 k <- 4
 set.seed(1) # To allow replication of order
 km <- kmeans(mode.pcoa$vectors.cor[, 1:6], centers = k, nstart = 25, iter.max = 100)
-par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25))
-cols <- plasma(k)[km$cluster]
+par(mfrow = c(2, 2), mar = c(4, 4.25, 1, 0.25))
+# cols <- plasma(k)[km$cluster]
+cols <- rev(turbo(5))[km$cluster]
 pchs <-as.character(km$cluster)
 plot(mode.pcoa$vectors.cor[, 1:2], col = cols, pch = pchs, cex = 1, cex.lab = 1.5)
 plot(mode.pcoa$vectors.cor[, 3:4], col = cols, pch = pchs, cex = 1, cex.lab = 1.5)
@@ -2480,7 +2487,8 @@ legend.groups <- c("crinoids (& some eocr, edrio & rhomb)",
 par(mar = c(0, 0, 0, 0))
 plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
 legend("left", title = "Ecological PCoA", legend = legend.groups, cex = 1.1,
-       pch = as.character(1:k), col = plasma(k)[1:k], bty = "n", pt.cex = 1.75)
+       pch = as.character(1:k), col = rev(turbo(5)), bty = "n", pt.cex = 1.75)
+#      pch = as.character(1:k), col = plasma(k)[1:k], bty = "n", pt.cex = 1.75)
 # dev.off()
 par(op)
 
@@ -2948,6 +2956,7 @@ phylum.results
 
 
 
+
 ## PLOT PHYLOMORPHO/ECOSPACES THROUGH TIME #####################################
 
 # Plot PCO through time, plotting both spaces to examine convergence. Only
@@ -2976,7 +2985,7 @@ for(t in nt:1) {
   wh.gr <- unname(which(taxon.bins[, t]))
   wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   wh.node <- wh.gr[which(wh.gr > Ntip(Tree))]
-
+  
   phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
                              A = morph.pcoa$vectors.cor[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
@@ -2986,7 +2995,7 @@ for(t in nt:1) {
          y = morph.pcoa$vectors.cor[wh.node, 2], col = node.col, pch = 16)
   points(x = morph.pcoa$vectors.cor[wh.tip, 1], 
          y = morph.pcoa$vectors.cor[wh.tip, 2], col = tip.col, pch = 16)
-
+  
   phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
                              A = mode.pcoa$vectors.cor[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
@@ -3016,8 +3025,8 @@ for(t in nt:1) {
          y = mode.pcoa$vectors.cor[wh.node, 4], col = node.col, pch = 16)
   points(x = mode.pcoa$vectors.cor[wh.tip, 3], 
          y = mode.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
-
-  }
+  
+}
 # dev.off()
 par(op)
 
@@ -3026,7 +3035,6 @@ par(op)
 
 
 ## PLOT PHYLOMORPHO/ECOSPACES FOR INDIVIDUAL CLASSES ###########################
-
 # Set phylomorphospace/phyloecospace plotting variables (same as above)
 # pdf(file = "Class_phylospaces.pdf")
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25), pty = "m")
@@ -3046,25 +3054,7 @@ taxon.list[which(taxon.list == "Homostelea")] <- "Cincta"
 (class.tab <- sort(table(taxon.list), decreasing = TRUE))
 classes <- names(class.tab)
 classes <- classes[which(classes != "UNCERTAIN")]
-
-# Camerata (Crinoidea) are plotted with separate color (but only for tips).
-# Import following because lists order names
-data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
-                 header = TRUE, stringsAsFactors = FALSE)
-wh.cam <- which(data$Subclass == "Camerata")
-
-ncl <- length(classes)
-for(cl in 1:ncl) {
-  wh.gr <- which(taxon.list == classes[cl])
-  
-  # Combine Diploporita with paraphyletic 'diploporitan'
-  if (classes[cl] == "'diploporitan'")
-    next
-  if (classes[cl] == "Diploporita") {
-    wh.gr <- which(taxon.list == "Diploporita" | taxon.list == "'diploporitan'")
-  }
-  
-  wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
+wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   wh.node <- wh.gr[which(wh.gr > Ntip(Tree))]
   
   phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
@@ -3130,7 +3120,134 @@ par(op)
 
 
 
+## PLOT PHYLOMORPHO/ECOSPACES THROUGH TIME, FOR INDIVIDUAL CLASSES #############
 
+# Hybrid of two prior scripts. Plot PCO through time, with select classes
+# color-coded. Only plotting the 'mode' ecology treatment.
+
+# Manually built new 'ages' data.frame by combining epochs.
+bins <- c("Mid/Late Ord.", "Early Ord.", "Miao./Furongian", "Terr./Series 2")
+max_ma <- c(470, 485.4, 509, 541)
+min_ma <- c(443.4, 470, 485.4, 509)
+ages <- data.frame(interval_name = bins, max_ma = max_ma, min_ma = min_ma)
+
+# Need to reconstruct a different 'taxon.bin' object because combining epochs.
+# Simplified because only plotting for tree #50.
+tr <- 50
+tree <- mode.anc[[tr]]$topper$tree
+load("ranges")
+binned.taxon.bins <- matrix(FALSE, nrow = (ape::Ntip(tree) + ape::Nnode(tree)),
+                            ncol = nrow(ages))
+colnames(binned.taxon.bins) <- ages$interval_name
+rownames(binned.taxon.bins) <- rownames(mode.anc[[tr]]$matrix_1$matrix)
+for (i in 1:ncol(binned.taxon.bins)) {
+  wh.row <- which(ranges[[tr]][, 1] > ages$min_ma[i] &
+                    ranges[[tr]][, 2] < ages$max_ma[i])
+  binned.taxon.bins[wh.row, i] <- TRUE
+}
+head(binned.taxon.bins)
+
+# Load (and redefine) PCoA spaces, focusing only on single tree
+load("morph.pcoa"); morph.pcoa <- morph.pcoa[[tr]]
+load("mode.pcoa"); mode.pcoa <- mode.pcoa[[tr]]
+
+# Choose which classes to plot (remainder combined into default tip color)
+load("taxon.list"); taxon.list <- taxon.list[[tr]]
+cl.labels <- c("Crinoidea", "Eocr/Rhomb/Diplo/Paracr", "Stylo/Homo/Solut/Cteno", 
+               "Ast/Oph/Ech/Somas/Sten", "Edrioasteroidea")
+
+# And assign colors (viridisLite::turbo(5) but converted to transparent)
+cl.tip.cols <- 
+  rev(c("#30123BAA", "#28BBECAA", "#A2FC3CAA", "#FB8022AA", "#7A0403AA"))
+cl.node.cols <- 
+  rev(c("#30123B66", "#28BBEC66", "#A2FC3C66", "#FB802266", "#7A040366") )
+# Default color is gray for everything else
+other.tip.cols <- "#BEBEBEAA"
+other.node.cols <- "#BEBEBE66"
+
+phylo.cols <- rep(other.node.cols, (Ntip(tree) + Nnode(tree)))
+phylo.cols[1:Ntip(tree)] <- other.tip.cols
+for(cl in 1:5){
+  if (cl == 1)
+    wh.class <- which(taxon.list[, "class"] == "Crinoidea")
+  if (cl == 2)
+    wh.class <- which(taxon.list[, "class"] == "Eocrinoidea" |
+                        taxon.list[, "class"] == "Rhombifera" | 
+                        taxon.list[, "class"] == "'diploporitan'" | 
+                        taxon.list[, "class"] == "Diploporita" | 
+                        taxon.list[, "class"] == "Paracrinoidea")
+  if (cl == 3)
+    wh.class <- which(taxon.list[, "class"] == "Stylophora" |
+                        taxon.list[, "class"] == "Homostelea" | 
+                        taxon.list[, "class"] == "Soluta" | 
+                        taxon.list[, "class"] == "Ctenocystoidea" | 
+                        taxon.list[, "class"] == "Ctenoimbricata")
+  if (cl == 4)
+    wh.class <- which(taxon.list[, "class"] == "Asteroidea" |
+                        taxon.list[, "class"] == "Ophiuroidea" | 
+                        taxon.list[, "class"] == "Echinoidea" | 
+                        taxon.list[, "class"] == "Somasteroidea" | 
+                        taxon.list[, "class"] == "Stenuroidea")
+  if (cl == 5)
+    wh.class <- which(taxon.list[, "class"] == "Edrioasteroidea")
+  
+  phylo.cols[wh.class[wh.class <= Ntip(tree)]] <- cl.tip.cols[cl]
+  phylo.cols[wh.class[wh.class > Ntip(tree)]] <- cl.node.cols[cl] 
+}
+# Confirm
+table(phylo.cols)
+
+# Set phylomorphospace/phyloecospace plotting variables
+# pdf(file = "Class_Phylospaces_through_time.pdf")
+par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25), pty = "m")
+branch.col <- "gray75"
+tree <- morph.pcoa$tree  # Same tree topology for both morphology and ecology
+con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
+                                as.character(tree$edge[, 2])))
+
+nt <- ncol(binned.taxon.bins)
+for(t in nt:1) {
+  wh.gr <- unname(which(binned.taxon.bins[, t]))
+  wh.tip <- wh.gr[which(wh.gr <= Ntip(tree))]
+  wh.node <- wh.gr[which(wh.gr > Ntip(tree))]
+  
+  phytools::phylomorphospace(tree = tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
+                             A = morph.pcoa$vectors.cor[node.seq, 1:2], 
+                             control = con, label = "off", xlab = "PCO 1", 
+                             ylab = "PCO 2", pch = NA)
+  mtext(paste(colnames(binned.taxon.bins)[t], "morphospace"))
+  points(x = morph.pcoa$vectors.cor[wh.node, 1],
+         y = morph.pcoa$vectors.cor[wh.node, 2], col = phylo.cols[wh.node], pch = 16)
+  points(x = morph.pcoa$vectors.cor[wh.tip, 1], 
+         y = morph.pcoa$vectors.cor[wh.tip, 2], col = phylo.cols[wh.tip], pch = 16)
+  
+  phytools::phylomorphospace(tree = tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
+                             A = mode.pcoa$vectors.cor[node.seq, 1:2], 
+                             control = con, label = "off", xlab = "PCO 1", 
+                             ylab = "PCO 2", pch = NA)
+  mtext(paste(colnames(binned.taxon.bins)[t], "ecospace"))
+  points(x = mode.pcoa$vectors.cor[wh.node, 1],
+         y = mode.pcoa$vectors.cor[wh.node, 2], col = phylo.cols[wh.node], pch = 16)
+  points(x = mode.pcoa$vectors.cor[wh.tip, 1], 
+         y = mode.pcoa$vectors.cor[wh.tip, 2], col = phylo.cols[wh.tip], pch = 16)
+}
+
+legend.cols <- 
+  rev(c("gray", "#30123BFF", "#28BBECFF", "#A2FC3CFF", "#FB8022FF", "#7A0403FF"))
+leg.text <- c("Crinoidea", "eocr, rhomb, diplo & paracr", 
+              "stylo, homo, solut, ctenoc & Ctenoimbricata",
+              "aster, oph, ech, somas & stenur", "Edrioasteroidea", "others")
+par(op)
+par(mar = c(0, 0, 0, 0))
+plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
+legend("left", title = "", legend = leg.text, cex = 2, pch = 16, 
+       col = legend.cols, bty = "n", pt.cex = 4, ncol = 1)
+
+# dev.off()
+par(op)
+
+
+            
 
 
 ## COPHYLOGRAMS / TANGLEGRAMS ##################################################
