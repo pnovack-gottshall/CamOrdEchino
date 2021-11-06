@@ -744,6 +744,9 @@ round(100 * tab.mode / sum(tab.mode), 1)
 round(100 * cumsum(rev(tab.morph / sum(tab.morph))), 1)
 round(100 * cumsum(rev(tab.mode / sum(tab.mode))), 1)
 
+summary(Mode.morph.conv$C1[wh.morph]) # mean = 0.939
+summary(Mode.mode.conv$C1[wh.mode])   # mean = 1.000
+
 par(mfrow = c(2, 2), mar = c(3, 3, 2, 1))
 barplot(tab.morph, names.arg = abbr.ranks, cex.names = .4, main = "morphology")
 barplot(tab.mode, names.arg = abbr.ranks, cex.names = .4, main = "mode")
