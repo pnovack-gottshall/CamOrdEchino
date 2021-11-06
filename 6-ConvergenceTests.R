@@ -3,8 +3,8 @@
 # Prior to running, run 2-InferAncestralStates.R to infer ancestral states using
 # 'Claddis' package. The package 'convevol' assumes Brownian motion ancestral
 # reconstructions, which are not appropriate for the discrete characters we are
-# using. Instead, we will use Claddis::AncStateEstMatrix(), which wraps around
-# phytools::rerootingMethod(), to reconstruct ancestral states using the
+# using. Instead, we will use Claddis::estimate_ancestral_states(), which wraps
+# around phytools::rerootingMethod(), to reconstruct ancestral states using the
 # continuous-time Markov chain (Mk) model of discrete state changes. 'convevol'
 # also measures distances between tips and nodes using raw Euclidean distance.
 # Here (and like in Lloyd, 2018), we use the Wills generalized Euclidean
