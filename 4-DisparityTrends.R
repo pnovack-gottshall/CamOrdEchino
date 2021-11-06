@@ -1282,6 +1282,40 @@ legend("topleft", legend = c("ecology", "morphology"), col = cols,
 
 
 
+# Calculate detrended r for mode vs. morph H, across trees
+load("morph.metrics")
+load("mode.metrics")
+rs <- rep(NA, length(morph.metrics))
+ps <- rep(NA, length(morph.metrics))
+for(t in 1:length(morph.metrics)) {
+  diff.morph <- as.data.frame(apply(morph.metrics[[t]][, 1:3], 2, diff))
+  diff.morph <- diff.morph / diff.morph$Age
+  diff.mode <- as.data.frame(apply(mode.metrics[[t]][, 1:3], 2, diff))
+  diff.mode <- diff.mode / diff.mode$Age
+  rs[t] <- cor(diff.morph$H, diff.mode$H, use = "pairwise.complete.obs")
+  ps[t] <- summary(lm(diff.morph$H ~ diff.mode$H))$coefficients[2, "Pr(>|t|)"]
+}
+summary(rs) # Mean r = 0.954
+summary(ps) # Mean p-value = 9.27e-9
+
+
+# Extend of redundancy (= no. lineages / life habit) in raw data set
+load("mode.metrics")
+sq <- 1:length(morph.metrics)
+redundancy <- 
+  lapply(sq, function(sq) mode.metrics[[sq]]$S / mode.metrics[[sq]]$H)
+redundancy <- round(apply(simplify2array(redundancy), 1, mean), 2)
+data.frame(ages$interval_name, redundancy)
+# Plot raw H for morphology and mode
+geoscalePlot2(mids, redundancy, units = c("Epoch", "Period"), 
+              tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
+              cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), 
+              ts.col = TRUE, label = "# lineages / life habit", 
+              timescale = ICS2020, abbrev = "Period", type = "n")
+mtext(text = "life-habit redundancy", side = 3, cex = 1.25)
+cols <- viridisLite::plasma(3)         # Uses RGB-sensitive red and blue
+lines(mids, redundancy, lwd = 4, lty = 1, col = cols[1])
+
 
 
 ## DISPARITY / FD TRENDS (AT STANDARD SAMPLE SIZE) #############################
@@ -1943,7 +1977,7 @@ geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"),
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
               no.axis = TRUE)
 axis(2)
-mtext(text = "Proportion of taxa", side = 2, line = 2, cex = 2)
+mtext(text = "Proportion of taxa", side = 2, line = 2, cex = 1.5)
 mtext(text = "Taxa with missing states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -1977,7 +2011,7 @@ geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"),
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
               no.axis = TRUE)
 axis(2)
-mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 2)
+mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 1.5)
 mtext(text = "Missing states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -2011,7 +2045,7 @@ geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"),
               ts.col = TRUE, timescale = ICS2020, type = "n", abbrev = "Period",
               no.axis = TRUE)
 axis(2)
-mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 2)
+mtext(text = "Proportion of taxon-characters", side = 2, line = 2, cex = 1.5)
 mtext(text = "Polymorphic states", side = 3, cex = 1.25)
 column <- cbind(c(mids, rev(mids)), c(var_md_bottom, rev(var_md_top)))
 column <- na.omit(column)
@@ -2960,13 +2994,19 @@ phylum.results
 ## PLOT PHYLOMORPHO/ECOSPACES THROUGH TIME #####################################
 
 # Plot PCO through time, plotting both spaces to examine convergence. Only
-# plotting the 'mode' ecology treatment.
+# plotting the 'mode' ecology treatment. Only using tree #50 for illustrative
+# purposes.
 
-# Note that for SI in manuscript, need to reconstruct a different 'taxon.bin'
-# object above, but using strat_names$scale_level == 4 so illustrated for
-# epoch-level.
+# Note that for SI in original version of manuscript, need to reconstruct a
+# different 'taxon.bin' object above, but using strat_names$scale_level == 4 so
+# illustrated for epoch-level.
 
 load("taxon.bins")
+taxon.bins <- taxon.bins[[50]]
+
+# Restrict PCoA outpt to tree #50
+morph.pcoa <- morph.pcoa[[50]]
+mode.pcoa <- mode.pcoa[[50]]
 
 # Set phylomorphospace/phyloecospace plotting variables
 # pdf(file = "Phylospaces_through_time.pdf")
@@ -3049,12 +3089,32 @@ con <- list(col.edge = setNames(rep(branch.col, nrow(Tree$edge)),
                                 as.character(Tree$edge[, 2])))
 # Process the classes (removing UNCERTAINs):
 load("taxon.list")
+taxon.list <- taxon.list[[50]]
 # Replace Class Homostelea with (here synonymous) Cincta instead
-taxon.list[which(taxon.list == "Homostelea")] <- "Cincta"
-(class.tab <- sort(table(taxon.list), decreasing = TRUE))
+taxon.list[which(taxon.list[, "class"] == "Homostelea")] <- "Cincta"
+(class.tab <- sort(table(taxon.list[, "class"]), decreasing = TRUE))
 classes <- names(class.tab)
 classes <- classes[which(classes != "UNCERTAIN")]
-wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
+
+# Camerata (Crinoidea) are plotted with separate color (but only for tips).
+# Import following because lists order names
+data <- read.csv(file = "EchinoLHData_Mode_NAreformatted.csv", 
+                 header = TRUE, stringsAsFactors = FALSE)
+wh.cam <- which(data$Subclass == "Camerata")
+
+ncl <- length(classes)
+for(cl in 1:ncl) {
+  wh.gr <- which(taxon.list[, "class"] == classes[cl])
+  
+  # Combine Diploporita with paraphyletic 'diploporitan'
+  if (classes[cl] == "'diploporitan'")
+    next
+  if (classes[cl] == "Diploporita") {
+    wh.gr <- which(taxon.list[, "class"] == "Diploporita" | 
+                     taxon.list[, "class"] == "'diploporitan'")
+  }
+  
+  wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   wh.node <- wh.gr[which(wh.gr > Ntip(Tree))]
   
   phytools::phylomorphospace(tree = Tree, X = morph.pcoa$vectors.cor[tip.seq, 1:2], 
@@ -3070,7 +3130,7 @@ wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
   if (classes[cl] == "Crinoidea")
     points(x = morph.pcoa$vectors.cor[wh.cam, 1],
            y = morph.pcoa$vectors.cor[wh.cam, 2], col = cam.col, pch = 16)
-
+  
   phytools::phylomorphospace(tree = Tree, X = mode.pcoa$vectors.cor[tip.seq, 1:2], 
                              A = mode.pcoa$vectors.cor[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
@@ -3108,8 +3168,7 @@ wh.tip <- wh.gr[which(wh.gr <= Ntip(Tree))]
          y = mode.pcoa$vectors.cor[wh.tip, 4], col = tip.col, pch = 16)
   if (classes[cl] == "Crinoidea")
     points(x = mode.pcoa$vectors.cor[wh.cam, 3],
-           y = mode.pcoa$vectors.cor[wh.cam, 4], col = cam.col, pch = 16)
-  
+           y = mode.pcoa$vectors.cor[wh.cam, 4], col = cam.col, pch = 16)  
 }
 # dev.off()
 par(op)
@@ -3198,10 +3257,13 @@ for(cl in 1:5){
 table(phylo.cols)
 
 # Set phylomorphospace/phyloecospace plotting variables
+# pdf.options(width = 5, height = 3.5)
 # pdf(file = "Class_Phylospaces_through_time.pdf")
 par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.25), pty = "m")
 branch.col <- "gray75"
 tree <- morph.pcoa$tree  # Same tree topology for both morphology and ecology
+tip.seq <- seq.int(Ntip(tree))
+node.seq <-(Ntip(tree) + 1):(Ntip(tree) + Nnode(tree))
 con <- list(col.edge = setNames(rep(branch.col, nrow(tree$edge)), 
                                 as.character(tree$edge[, 2])))
 
@@ -3215,7 +3277,7 @@ for(t in nt:1) {
                              A = morph.pcoa$vectors.cor[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
-  mtext(paste(colnames(binned.taxon.bins)[t], "morphospace"))
+  mtext(paste(colnames(binned.taxon.bins)[t], "morphospace"), cex = 0.75)
   points(x = morph.pcoa$vectors.cor[wh.node, 1],
          y = morph.pcoa$vectors.cor[wh.node, 2], col = phylo.cols[wh.node], pch = 16)
   points(x = morph.pcoa$vectors.cor[wh.tip, 1], 
@@ -3225,7 +3287,7 @@ for(t in nt:1) {
                              A = mode.pcoa$vectors.cor[node.seq, 1:2], 
                              control = con, label = "off", xlab = "PCO 1", 
                              ylab = "PCO 2", pch = NA)
-  mtext(paste(colnames(binned.taxon.bins)[t], "ecospace"))
+  mtext(paste(colnames(binned.taxon.bins)[t], "ecospace"), cex = 0.75)
   points(x = mode.pcoa$vectors.cor[wh.node, 1],
          y = mode.pcoa$vectors.cor[wh.node, 2], col = phylo.cols[wh.node], pch = 16)
   points(x = mode.pcoa$vectors.cor[wh.tip, 1], 
@@ -3240,11 +3302,12 @@ leg.text <- c("Crinoidea", "eocr, rhomb, diplo & paracr",
 par(op)
 par(mar = c(0, 0, 0, 0))
 plot(1, type = "n", axes = FALSE, xlab="", ylab = "")
-legend("left", title = "", legend = leg.text, cex = 2, pch = 16, 
-       col = legend.cols, bty = "n", pt.cex = 4, ncol = 1)
+legend("left", title = "", legend = leg.text, cex = 1.35, pch = 16, 
+       col = legend.cols, bty = "n", pt.cex = 3, ncol = 1)
 
 # dev.off()
 par(op)
+pdf.options(reset = TRUE)
 
 
             
