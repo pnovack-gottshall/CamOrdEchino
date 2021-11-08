@@ -10,7 +10,7 @@
 
 # The ecological data set has 40 characters: 5 numerics, 1 ordered factors, and
 # 34 binaries. Because the ecology of many early echinoderm genera have not been
-# formally studies, missing ecological character states were inferred using
+# formally studied, missing ecological character states were inferred using
 # three data treatments spanning a range of conservative to liberal assumptions.
 
 #  * 'Mode' infers missing life-habit states using the most frequent state of
@@ -104,23 +104,22 @@ sort(table(eco$Class))
 
 ## How many unique morphotypes and life habits?
 # Using the Wills GED distance matrices as they better accommodate differences
-# due to missing or inapplicable data.
+# due to missing or inapplicable data. Using time-scaled tree #50 as an example.
 
-# See 4-DisparityTrends.R for lineage-richness (taxon-through-time) diversity
-# curves.
+# See 3-DisparityDistances.R for code used to build these objects.
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/mode.distances.GED.5")
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/constant.distances.GED.5")
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/raw.distances.GED.5")
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/morph.distances.GED.5")
 
-nrow(unique(mode.distances.GED.5$DistanceMatrix))
+nrow(unique(mode.distances.GED.5[[50]]$distance_matrix))
 # 203 unique life habits in mode treatment
 
-nrow(unique(constant.distances.GED.5$DistanceMatrix))
-# 316 unique life habits in constant treatment
+nrow(unique(constant.distances.GED.5[[50]]$distance_matrix))
+# 309 unique life habits in constant treatment
 
-nrow(unique(raw.distances.GED.5$DistanceMatrix))
-# 392 unique life habits in raw treatment
+nrow(unique(raw.distances.GED.5[[50]]$distance_matrix))
+# 395 unique life habits in raw treatment
 
-nrow(unique(morph.distances.GED.5$DistanceMatrix))
+nrow(unique(morph.distances.GED.5[[50]]$distance_matrix))
 # 731 unique morphotypes (all unique!)
