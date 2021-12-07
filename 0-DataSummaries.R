@@ -112,14 +112,19 @@ load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/constant.distances.G
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/raw.distances.GED.5")
 load("~/Manuscripts/CamOrdEchinos/Data files/NA reformatted/morph.distances.GED.5")
 
-nrow(unique(mode.distances.GED.5[[50]]$distance_matrix))
-# 203 unique life habits in mode treatment
+sq <- seq.int(mode.distances.GED.5)
+summary(sapply(sq, function(sq) 
+  nrow(unique(mode.distances.GED.5[[sq]]$distance_matrix))))
+# 206 unique life habits in mode treatment, on average across 50 trees
 
-nrow(unique(constant.distances.GED.5[[50]]$distance_matrix))
-# 309 unique life habits in constant treatment
+summary(sapply(sq, function(sq) 
+  nrow(unique(constant.distances.GED.5[[sq]]$distance_matrix))))
+# 314 unique life habits in constant treatment, on average across 50 trees
 
-nrow(unique(raw.distances.GED.5[[50]]$distance_matrix))
-# 395 unique life habits in raw treatment
+summary(sapply(sq, function(sq) 
+  nrow(unique(raw.distances.GED.5[[50]]$distance_matrix))))
+# 395 unique life habits in raw treatment, on average across 50 trees
 
-nrow(unique(morph.distances.GED.5[[50]]$distance_matrix))
-# 731 unique morphotypes (all unique!)
+summary(sapply(sq, function(sq) 
+  nrow(unique(morph.distances.GED.5[[50]]$distance_matrix))))
+# 731 unique morphotypes (all unique!), on average across 50 trees
