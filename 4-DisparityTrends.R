@@ -1654,8 +1654,9 @@ for (c in c(2:11)) {
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
                tick.scale = "Period", boxes = "Age", cex.age = 0.65, 
                cex.ts = 0.7, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
-               ts.col = TRUE, label = colnames(metrics_mode)[c],
-               timescale = ICS2020, type = "n", abbrev = "Period")
+               ts.col = TRUE, timescale = ICS2020, 
+               paste(colnames(metrics_mode)[c], "(% transformed)"),
+               type = "n", abbrev = "Period")
   mtext(text = colnames(metrics_mode)[c], side = 3, cex = 1.25)
   lines(mids, var_r, lwd = 3, lty = 1)
   lines(mids, var_m, lwd = 3, lty = 2, col = "blue")
@@ -1701,21 +1702,27 @@ for (c in var.cols) {
   geoscalePlot2(mids, rep(lim[1], length(mids)), units = c("Epoch", "Period"), 
                 tick.scale = "Period", boxes = "Age", cex.age = 1, 
                 cex.ts = 1, cex.pt = 1, age.lim = c(540, 445), data.lim = lim, 
-                ts.col = TRUE, label = colnames(metrics_mode)[c],
-                timescale = ICS2020, type = "n", abbrev = "Period", 
+                ts.col = TRUE, timescale = ICS2020,  
+                label = paste(colnames(metrics_mode)[c], "(% transformed)"),
+                type = "n", abbrev = "Period", 
                 no.axis = TRUE)
   axis(2)
-  mtext(text = colnames(metrics_mode)[c], side = 2, line = 2, cex = 2)
-  mtext(text = paste(colnames(metrics_mode)[c], " (G = ", std.g, ")", sep = ""), 
-        side = 3, cex = 1.25)
+  mtext(text = paste(colnames(metrics_mode)[c], "(% transformed)"), side = 2, 
+        line = 2, cex = 2)
+#  mtext(text = paste(colnames(metrics_mode)[c], " (G = ", std.g, ")", sep = ""), 
+#        side = 3, cex = 1.25)
   column <- cbind(c(mids, rev(mids)), c(var_m_bottom, rev(var_m_top)))
   column <- na.omit(column)
-  polygon(column[ ,1], column[ ,2], col = trans.cols[2], lwd = 2, border = NA)
-  lines(mids, var_r, lwd = 5, lty = 1, col = cols[1])
-  lines(mids, var_m, lwd = 5, lty = 2, col = cols[2])
-  lines(mids, var_c, lwd = 5, lty = 3, col = cols[3])
-  legend("topleft", legend = c("raw", "mode", "constant"), col = cols, 
-         bty = "n", lty = c(1, 2, 3), lwd = 4, inset = 0.05)
+  polygon(column[ ,1], column[ ,2], col = trans.cols[1], lwd = 2, border = NA)
+  lines(mids, var_r, lwd = 10, lty = 3, col = cols[3])
+  lines(mids, var_m, lwd = 10, lty = 1, col = cols[1])
+  lines(mids, var_c, lwd = 10, lty = 2, col = cols[2])
+  # Only plot legend for V
+  if(c == 9){
+    legend("topleft", legend = c("raw", "mode", "constant"), 
+           col = cols[c(3, 1, 2)], bty = "n", lty = c(3, 1, 2), lwd = 8, 
+           inset = 0, cex = 2.5)
+  }
 }
 par(op)
 # dev.off()
